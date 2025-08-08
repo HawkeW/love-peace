@@ -1,0 +1,335 @@
+---
+import GalleryLayout from '../../layouts/GalleryLayout.astro';
+import CSSWaveEffect from '../../components/CSSWaveEffect.astro';
+import WaveDistortion from '../../components/WaveDistortion.astro';
+
+// 演示页面配置
+const demoConfig = {
+	title: "Wave Distortion Effects Demo",
+	images: [
+		{
+			src: "https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&h=1200&fit=crop",
+			alt: "Wedding moment with wave effect",
+			title: "CSS Wave Effect - Light"
+		},
+		{
+			src: "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=1000&fit=crop",
+			alt: "Wedding ceremony with medium wave",
+			title: "CSS Wave Effect - Medium"
+		},
+		{
+			src: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&h=1000&fit=crop",
+			alt: "Wedding details with strong wave",
+			title: "CSS Wave Effect - Strong"
+		},
+		{
+			src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1600&h=900&fit=crop",
+			alt: "Wedding reception with WebGL effect",
+			title: "WebGL Wave Distortion"
+		}
+	]
+};
+---
+
+<GalleryLayout title={demoConfig.title}>
+	<main class="wave-demo-container lenis lenis-smooth">
+		<!-- 标题部分 -->
+		<section class="hero-section">
+			<h1 class="demo-title">Wave Distortion Effects</h1>
+			<p class="demo-subtitle">图片边缘凹凸波浪效果演示</p>
+		</section>
+
+		<!-- CSS波浪效果演示 -->
+		<section class="demo-section">
+			<h2 class="section-title">CSS Wave Effects</h2>
+			
+			<!-- 轻微效果 -->
+			<div class="effect-demo">
+				<h3>Light Intensity - Slow Speed</h3>
+				<div class="image-container">
+					<CSSWaveEffect intensity="light" speed="slow">
+						<img 
+							src={demoConfig.images[0].src} 
+							alt={demoConfig.images[0].alt}
+						/>
+					</CSSWaveEffect>
+				</div>
+				<p class="effect-description">
+					轻微的波浪扭曲效果，适合优雅的展示场景。缓慢的动画速度营造宁静氛围。
+				</p>
+			</div>
+
+			<!-- 中等效果 -->
+			<div class="effect-demo">
+				<h3>Medium Intensity - Normal Speed</h3>
+				<div class="image-container">
+					<CSSWaveEffect intensity="medium" speed="normal">
+						<img 
+							src={demoConfig.images[1].src} 
+							alt={demoConfig.images[1].alt}
+						/>
+					</CSSWaveEffect>
+				</div>
+				<p class="effect-description">
+					中等强度的波浪效果，平衡了视觉冲击力和优雅感。适合大多数应用场景。
+				</p>
+			</div>
+
+			<!-- 强烈效果 -->
+			<div class="effect-demo">
+				<h3>Strong Intensity - Fast Speed</h3>
+				<div class="image-container">
+					<CSSWaveEffect intensity="strong" speed="fast">
+						<img 
+							src={demoConfig.images[2].src} 
+							alt={demoConfig.images[2].alt}
+						/>
+					</CSSWaveEffect>
+				</div>
+				<p class="effect-description">
+					强烈的波浪扭曲效果，快速的动画节奏。适合需要吸引注意力的场景。
+				</p>
+			</div>
+		</section>
+
+		<!-- WebGL波浪效果演示 -->
+		<section class="demo-section">
+			<h2 class="section-title">WebGL Wave Distortion</h2>
+			
+			<div class="effect-demo">
+				<h3>Advanced WebGL Effect</h3>
+				<div class="image-container webgl-container">
+					<WaveDistortion>
+						<img 
+							src={demoConfig.images[3].src} 
+							alt={demoConfig.images[3].alt}
+						/>
+					</WaveDistortion>
+				</div>
+				<p class="effect-description">
+					使用WebGL着色器实现的高级波浪扭曲效果。提供更真实的液体变形感觉，支持滚动交互。
+				</p>
+			</div>
+		</section>
+
+		<!-- 使用说明 -->
+		<section class="usage-section">
+			<h2 class="section-title">使用方法</h2>
+			
+			<div class="usage-grid">
+				<div class="usage-card">
+					<h3>CSS Wave Effect</h3>
+					<pre><code>&lt;CSSWaveEffect intensity="medium" speed="normal"&gt;
+  &lt;img src="your-image.jpg" alt="description" /&gt;
+&lt;/CSSWaveEffect&gt;</code></pre>
+					<ul>
+						<li><strong>intensity:</strong> 'light' | 'medium' | 'strong'</li>
+						<li><strong>speed:</strong> 'slow' | 'normal' | 'fast'</li>
+					</ul>
+				</div>
+				
+				<div class="usage-card">
+					<h3>WebGL Wave Distortion</h3>
+					<pre><code>&lt;WaveDistortion&gt;
+  &lt;img src="your-image.jpg" alt="description" /&gt;
+&lt;/WaveDistortion&gt;</code></pre>
+					<ul>
+						<li>自动响应滚动事件</li>
+						<li>支持实时波浪变形</li>
+						<li>需要WebGL支持</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+
+		<!-- 技术说明 -->
+		<section class="tech-section">
+			<h2 class="section-title">技术实现</h2>
+			
+			<div class="tech-grid">
+				<div class="tech-card">
+					<h3>CSS方案</h3>
+					<ul>
+						<li>使用CSS transform和filter</li>
+						<li>@keyframes动画</li>
+						<li>mix-blend-mode混合模式</li>
+						<li>IntersectionObserver滚动检测</li>
+						<li>兼容性好，性能稳定</li>
+					</ul>
+				</div>
+				
+				<div class="tech-card">
+					<h3>WebGL方案</h3>
+					<ul>
+						<li>顶点着色器变形</li>
+						<li>片段着色器纹理扭曲</li>
+						<li>实时数学计算</li>
+						<li>滚动位置响应</li>
+						<li>效果更真实，但需要WebGL支持</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+	</main>
+</GalleryLayout>
+
+<style>
+	.wave-demo-container {
+		width: 100%;
+		margin: 0;
+		padding: 0;
+	}
+	
+	.hero-section {
+		height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 0 2rem;
+		text-align: center;
+	}
+	
+	.demo-title {
+		font-size: clamp(3rem, 8vw, 6rem);
+		font-weight: 100;
+		letter-spacing: 0.1em;
+		margin: 0 0 1rem 0;
+		color: #fff;
+		text-transform: uppercase;
+		font-family: 'Helvetica Neue', Arial, sans-serif;
+	}
+	
+	.demo-subtitle {
+		font-size: 1.2rem;
+		font-weight: 300;
+		color: #ccc;
+		margin: 0;
+		letter-spacing: 0.05em;
+	}
+	
+	.demo-section {
+		min-height: 100vh;
+		padding: 5rem 2rem;
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+	
+	.section-title {
+		font-size: 2.5rem;
+		font-weight: 200;
+		color: #fff;
+		margin-bottom: 3rem;
+		text-align: center;
+		letter-spacing: 0.05em;
+	}
+	
+	.effect-demo {
+		margin-bottom: 5rem;
+	}
+	
+	.effect-demo h3 {
+		font-size: 1.5rem;
+		font-weight: 300;
+		color: #fff;
+		margin-bottom: 1.5rem;
+		text-align: center;
+	}
+	
+	.image-container {
+		width: 100%;
+		height: 60vh;
+		margin-bottom: 2rem;
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+	}
+	
+	.webgl-container {
+		position: relative;
+		background: #111;
+	}
+	
+	.effect-description {
+		font-size: 1rem;
+		line-height: 1.6;
+		color: #ccc;
+		text-align: center;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+	
+	.usage-section,
+	.tech-section {
+		min-height: auto;
+		padding: 3rem 2rem;
+	}
+	
+	.usage-grid,
+	.tech-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 2rem;
+		margin-top: 2rem;
+	}
+	
+	.usage-card,
+	.tech-card {
+		background: rgba(255,255,255,0.05);
+		padding: 2rem;
+		border-radius: 12px;
+		border: 1px solid rgba(255,255,255,0.1);
+	}
+	
+	.usage-card h3,
+	.tech-card h3 {
+		font-size: 1.3rem;
+		font-weight: 400;
+		color: #fff;
+		margin-bottom: 1rem;
+	}
+	
+	.usage-card pre {
+		background: rgba(0,0,0,0.3);
+		padding: 1rem;
+		border-radius: 6px;
+		overflow-x: auto;
+		margin: 1rem 0;
+	}
+	
+	.usage-card code {
+		color: #a8e6cf;
+		font-family: 'Courier New', monospace;
+		font-size: 0.9rem;
+	}
+	
+	.usage-card ul,
+	.tech-card ul {
+		color: #ccc;
+		line-height: 1.6;
+	}
+	
+	.usage-card li strong {
+		color: #fff;
+	}
+	
+	@media (max-width: 768px) {
+		.demo-section {
+			padding: 3rem 1rem;
+		}
+		
+		.usage-grid,
+		.tech-grid {
+			grid-template-columns: 1fr;
+		}
+		
+		.image-container {
+			height: 50vh;
+		}
+		
+		.usage-card,
+		.tech-card {
+			padding: 1.5rem;
+		}
+	}
+</style>

@@ -1,0 +1,311 @@
+---
+// CSS-based Wave Distortion Effect for Images
+export interface Props {
+	intensity?: 'light' | 'medium' | 'strong';
+	speed?: 'slow' | 'normal' | 'fast';
+}
+
+const { intensity = 'medium', speed = 'normal' } = Astro.props;
+---
+
+<div class={`css-wave-container intensity-${intensity} speed-${speed}`}>
+	<div class="wave-overlay"></div>
+	<div class="content-wrapper">
+		<slot />
+	</div>
+</div>
+
+<style>
+	.css-wave-container {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		border-radius: 0;
+	}
+	
+	.wave-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 2;
+		pointer-events: none;
+		background: transparent;
+	}
+	
+	.wave-overlay::before,
+	.wave-overlay::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: 
+			radial-gradient(ellipse at center, transparent 30%, rgba(255,255,255,0.1) 70%),
+			linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.05) 50%, transparent 52%),
+			linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.05) 50%, transparent 52%);
+		animation: waveDistortion var(--wave-duration) ease-in-out infinite;
+		mix-blend-mode: overlay;
+	}
+	
+	.wave-overlay::after {
+		animation-delay: calc(var(--wave-duration) / 2);
+		animation-direction: reverse;
+	}
+	
+	.content-wrapper {
+		position: relative;
+		z-index: 1;
+		width: 100%;
+		height: 100%;
+		transition: transform 0.3s ease;
+	}
+	
+	/* 强度变化 */
+	.intensity-light {
+		--wave-amplitude: 1px;
+		--wave-frequency: 10;
+	}
+	
+	.intensity-medium {
+		--wave-amplitude: 2px;
+		--wave-frequency: 8;
+	}
+	
+	.intensity-strong {
+		--wave-amplitude: 3px;
+		--wave-frequency: 6;
+	}
+	
+	/* 速度变化 */
+	.speed-slow {
+		--wave-duration: 8s;
+	}
+	
+	.speed-normal {
+		--wave-duration: 4s;
+	}
+	
+	.speed-fast {
+		--wave-duration: 2s;
+	}
+	
+	/* 滚动时的波浪效果 */
+	.css-wave-container:hover .content-wrapper {
+		animation: subtleWave 3s ease-in-out infinite;
+	}
+	
+	/* 图片特殊处理 */
+	.content-wrapper img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		filter: contrast(1.05) brightness(1.02);
+	}
+	
+	.css-wave-container:hover .content-wrapper img {
+		transform: scale(1.02);
+		filter: contrast(1.1) brightness(1.05) saturate(1.1);
+	}
+	
+	/* 动画定义 */
+	@keyframes waveDistortion {
+		0%, 100% {
+			transform: 
+				scaleX(1) 
+				scaleY(1) 
+				skewX(0deg) 
+				rotate(0deg);
+			filter: 
+				hue-rotate(0deg) 
+				contrast(1) 
+				brightness(1);
+		}
+		
+		25% {
+			transform: 
+				scaleX(1.002) 
+				scaleY(0.999) 
+				skewX(0.2deg) 
+				rotate(0.1deg);
+			filter: 
+				hue-rotate(1deg) 
+				contrast(1.01) 
+				brightness(1.005);
+		}
+		
+		50% {
+			transform: 
+				scaleX(0.999) 
+				scaleY(1.001) 
+				skewX(-0.1deg) 
+				rotate(-0.05deg);
+			filter: 
+				hue-rotate(-0.5deg) 
+				contrast(0.99) 
+				brightness(0.995);
+		}
+		
+		75% {
+			transform: 
+				scaleX(1.001) 
+				scaleY(0.9995) 
+				skewX(0.1deg) 
+				rotate(0.08deg);
+			filter: 
+				hue-rotate(0.5deg) 
+				contrast(1.005) 
+				brightness(1.002);
+		}
+	}
+	
+	@keyframes subtleWave {
+		0%, 100% {
+			transform: translateY(0) scaleX(1);
+		}
+		
+		33% {
+			transform: translateY(-1px) scaleX(1.001);
+		}
+		
+		66% {
+			transform: translateY(1px) scaleX(0.999);
+		}
+	}
+	
+	/* 滚动触发的效果 */
+	.css-wave-container.scroll-active .content-wrapper {
+		animation: scrollWave 2s ease-out;
+	}
+	
+	@keyframes scrollWave {
+		0% {
+			transform: scaleX(1) scaleY(1) skewX(0deg);
+		}
+		
+		20% {
+			transform: scaleX(1.01) scaleY(0.99) skewX(1deg);
+		}
+		
+		40% {
+			transform: scaleX(0.99) scaleY(1.01) skewX(-0.5deg);
+		}
+		
+		60% {
+			transform: scaleX(1.005) scaleY(0.995) skewX(0.3deg);
+		}
+		
+		80% {
+			transform: scaleX(0.995) scaleY(1.005) skewX(-0.2deg);
+		}
+		
+		100% {
+			transform: scaleX(1) scaleY(1) skewX(0deg);
+		}
+	}
+	
+	/* 响应式调整 */
+	@media (max-width: 768px) {
+		.intensity-light {
+			--wave-amplitude: 1px;
+		}
+		
+		.intensity-medium {
+			--wave-amplitude: 2px;
+		}
+		
+		.intensity-strong {
+			--wave-amplitude: 3px;
+		}
+	}
+	
+	/* 减少动画以提高性能 */
+	@media (prefers-reduced-motion: reduce) {
+		.wave-overlay::before,
+		.wave-overlay::after {
+			animation: none;
+		}
+		
+		.css-wave-container:hover .content-wrapper {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	// 添加滚动监听以触发波浪效果
+	class ScrollWaveEffect {
+		constructor() {
+			this.containers = document.querySelectorAll('.css-wave-container');
+			this.init();
+		}
+		
+		init() {
+			if ('IntersectionObserver' in window) {
+				this.setupIntersectionObserver();
+			} else {
+				// Fallback for older browsers
+				this.setupScrollListener();
+			}
+		}
+		
+		setupIntersectionObserver() {
+			const observer = new IntersectionObserver((entries) => {
+				entries.forEach(entry => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('scroll-active');
+						
+						// Remove class after animation
+						setTimeout(() => {
+							entry.target.classList.remove('scroll-active');
+						}, 2000);
+					}
+				});
+			}, {
+				threshold: 0.3,
+				rootMargin: '0px 0px -10% 0px'
+			});
+			
+			this.containers.forEach(container => {
+				observer.observe(container);
+			});
+		}
+		
+		setupScrollListener() {
+			let ticking = false;
+			
+			const checkVisibility = () => {
+				this.containers.forEach(container => {
+					const rect = container.getBoundingClientRect();
+					const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+					
+					if (isVisible && !container.classList.contains('scroll-active')) {
+						container.classList.add('scroll-active');
+						
+						setTimeout(() => {
+							container.classList.remove('scroll-active');
+						}, 2000);
+					}
+				});
+				
+				ticking = false;
+			};
+			
+			window.addEventListener('scroll', () => {
+				if (!ticking) {
+					requestAnimationFrame(checkVisibility);
+					ticking = true;
+				}
+			});
+		}
+	}
+	
+	// 初始化
+	document.addEventListener('DOMContentLoaded', () => {
+		new ScrollWaveEffect();
+	});
+</script>

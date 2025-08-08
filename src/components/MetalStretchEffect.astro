@@ -1,0 +1,214 @@
+---
+// Metal Stretch Effect Component - 铁片延展效果
+---
+
+<div class="metal-stretch-container">
+	<slot />
+</div>
+
+<style>
+	.metal-stretch-container {
+		position: relative;
+		overflow: hidden;
+		display: inline-block;
+		width: 100%;
+		height: 100%;
+	}
+	
+	.metal-stretch-container img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		transform-origin: center;
+		will-change: transform;
+	}
+	
+	/* 延展效果 - 模拟铁片变形 */
+	.metal-stretch-container.stretching img {
+		transform: 
+			scaleX(1.08) 
+			scaleY(0.96) 
+			skewX(1.2deg) 
+			perspective(1000px) 
+			rotateY(2deg);
+		filter: 
+			brightness(1.1) 
+			contrast(1.05) 
+			saturate(1.1);
+		transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+	}
+	
+	/* 恢复效果 */
+	.metal-stretch-container.recovering img {
+		transform: 
+			scaleX(0.98) 
+			scaleY(1.02) 
+			skewX(-0.5deg) 
+			perspective(1000px) 
+			rotateY(-1deg);
+		filter: 
+			brightness(0.95) 
+			contrast(0.98);
+		transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	}
+	
+	/* 最终恢复到原始状态 */
+	.metal-stretch-container.restored img {
+		transform: 
+			scaleX(1) 
+			scaleY(1) 
+			skewX(0deg) 
+			perspective(1000px) 
+			rotateY(0deg);
+		filter: 
+			brightness(1) 
+			contrast(1) 
+			saturate(1);
+		transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+	}
+	
+	/* 响应式调整 */
+	@media (max-width: 768px) {
+		.metal-stretch-container.stretching img {
+			transform: 
+				scaleX(1.05) 
+				scaleY(0.98) 
+				skewX(0.8deg) 
+				perspective(800px) 
+				rotateY(1.5deg);
+		}
+	}
+</style>
+
+<script>
+	class MetalStretchEffect {
+		constructor() {
+			this.containers = document.querySelectorAll('.metal-stretch-container');
+			this.isScrolling = false;
+			this.scrollTimeout = null;
+			this.lastScrollY = window.scrollY;
+			this.init();
+		}
+		
+		init() {
+			this.setupIntersectionObserver();
+			this.setupScrollListener();
+		}
+		
+		setupIntersectionObserver() {
+			const observer = new IntersectionObserver((entries) => {
+				entries.forEach(entry => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('in-viewport');
+					} else {
+						entry.target.classList.remove('in-viewport');
+						this.resetContainer(entry.target);
+					}
+				});
+			}, {
+				threshold: 0.3,
+				rootMargin: '-10% 0px -10% 0px'
+			});
+			
+			this.containers.forEach(container => {
+				observer.observe(container);
+			});
+		}
+		
+		setupScrollListener() {
+			let ticking = false;
+			
+			window.addEventListener('scroll', () => {
+				if (!ticking) {
+					requestAnimationFrame(() => {
+						this.handleScroll();
+						ticking = false;
+					});
+					ticking = true;
+				}
+			}, { passive: true });
+		}
+		
+		handleScroll() {
+			const currentScrollY = window.scrollY;
+			const scrollDelta = Math.abs(currentScrollY - this.lastScrollY);
+			
+			// 只有在滚动速度足够快时才触发效果
+			if (scrollDelta > 5) {
+				this.triggerStretchEffect();
+			}
+			
+			this.lastScrollY = currentScrollY;
+			
+			// 清除之前的超时
+			if (this.scrollTimeout) {
+				clearTimeout(this.scrollTimeout);
+			}
+			
+			// 设置新的超时来恢复效果
+			this.scrollTimeout = setTimeout(() => {
+				this.restoreAllContainers();
+			}, 150);
+		}
+		
+		triggerStretchEffect() {
+			const visibleContainers = Array.from(this.containers)
+				.filter(container => container.classList.contains('in-viewport'));
+			
+			visibleContainers.forEach((container, index) => {
+				// 添加延迟以创建连锁效果
+				setTimeout(() => {
+					this.stretchContainer(container);
+				}, index * 50);
+			});
+		}
+		
+		stretchContainer(container) {
+			// 清除所有状态类
+			container.classList.remove('recovering', 'restored');
+			// 添加延展效果
+			container.classList.add('stretching');
+			
+			// 短暂延展后开始恢复
+			setTimeout(() => {
+				container.classList.remove('stretching');
+				container.classList.add('recovering');
+				
+				// 恢复到原始状态
+				setTimeout(() => {
+					container.classList.remove('recovering');
+					container.classList.add('restored');
+				}, 400);
+			}, 300);
+		}
+		
+		resetContainer(container) {
+			container.classList.remove('stretching', 'recovering', 'restored');
+		}
+		
+		restoreAllContainers() {
+			this.containers.forEach(container => {
+				if (container.classList.contains('stretching') || 
+					container.classList.contains('recovering')) {
+					container.classList.remove('stretching', 'recovering');
+					container.classList.add('restored');
+				}
+			});
+		}
+	}
+	
+	// 初始化效果
+	document.addEventListener('DOMContentLoaded', () => {
+		new MetalStretchEffect();
+	});
+	
+	// 如果页面已经加载完成
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', () => {
+			new MetalStretchEffect();
+		});
+	} else {
+		new MetalStretchEffect();
+	}
+</script>

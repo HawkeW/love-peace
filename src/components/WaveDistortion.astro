@@ -1,0 +1,288 @@
+---
+// Wave Distortion Component for Image Effects
+---
+
+<div class="wave-distortion-container">
+	<canvas id="waveCanvas" class="wave-canvas"></canvas>
+	<div class="image-overlay">
+		<slot />
+	</div>
+</div>
+
+<script>
+	// WebGL Wave Distortion Effect
+	class WaveDistortion {
+		canvas: HTMLCanvasElement;
+		gl: RenderingContext  | null;
+		time: number;
+		scrollY: number;
+		animationId: number | null;
+		shaderProgram: WebGLProgram | null;
+		vertexShader: WebGLShader | null;
+		fragmentShader: WebGLShader | null;
+		vertexBuffer: WebGLBuffer | null;
+		texCoordBuffer: WebGLBuffer | null;
+		indexBuffer: WebGLBuffer | null;
+		uniforms: {
+			u_time: WebGLUniformLocation | null;
+			u_scroll: WebGLUniformLocation | null;
+			u_texture: WebGLUniformLocation | null;
+		};
+		attributes: {
+			a_position: number;
+			a_texCoord: number;
+		};
+		constructor(canvas: HTMLCanvasElement) {
+			this.canvas = canvas;
+			this.gl = canvas.getContext('webgl2') || canvas.getContext('experimental-webgl2');
+			this.time = 0;
+			this.scrollY = 0;
+			this.animationId = null;
+			
+			if (!this.gl) {
+				console.error('WebGL not supported');
+				return;
+			}
+			
+			this.init();
+		}
+		
+		init() {
+			this.setupShaders();
+			this.setupGeometry();
+			this.setupTexture();
+			this.resize();
+			this.animate();
+			
+			// Listen for scroll events
+			window.addEventListener('scroll', () => {
+				this.scrollY = window.scrollY;
+			});
+			
+			// Listen for resize events
+			window.addEventListener('resize', () => this.resize());
+		}
+		
+		setupShaders() {
+			// Vertex Shader
+			const vertexShaderSource = `
+				attribute vec2 a_position;
+				attribute vec2 a_texCoord;
+				varying vec2 v_texCoord;
+				uniform float u_time;
+				uniform float u_scroll;
+				
+				void main() {
+					vec2 position = a_position;
+					
+					// Create wave distortion based on position and time
+					float wave = sin(position.x * 8.0 + u_time * 2.0) * 0.02;
+					float scrollWave = sin(position.y * 6.0 + u_scroll * 0.01) * 0.03;
+					
+					position.x += wave;
+					position.y += scrollWave;
+					
+					gl_Position = vec4(position, 0.0, 1.0);
+					v_texCoord = a_texCoord;
+				}
+			`;
+			
+			// Fragment Shader
+			const fragmentShaderSource = `
+				precision mediump float;
+				varying vec2 v_texCoord;
+				uniform sampler2D u_texture;
+				uniform float u_time;
+				uniform float u_scroll;
+				
+				void main() {
+					vec2 uv = v_texCoord;
+					
+					// Add subtle distortion to texture coordinates
+					float distortion = sin(uv.x * 10.0 + u_time) * 0.005;
+					float scrollDistortion = sin(uv.y * 8.0 + u_scroll * 0.02) * 0.008;
+					
+					uv.x += distortion;
+					uv.y += scrollDistortion;
+					
+					gl_FragColor = texture2D(u_texture, uv);
+				}
+			`;
+			
+			this.program = this.createProgram(vertexShaderSource, fragmentShaderSource);
+			this.gl?.useProgram(this.program);
+			
+			// Get attribute and uniform locations
+			this.positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+			this.texCoordLocation = this.gl.getAttribLocation(this.program, 'a_texCoord');
+			this.timeLocation = this.gl.getUniformLocation(this.program, 'u_time');
+			this.scrollLocation = this.gl.getUniformLocation(this.program, 'u_scroll');
+			this.textureLocation = this.gl.getUniformLocation(this.program, 'u_texture');
+		}
+		
+		setupGeometry() {
+			// Create a rectangle that covers the entire canvas
+			const positions = [
+				-1, -1,
+				 1, -1,
+				-1,  1,
+				 1,  1,
+			];
+			
+			const texCoords = [
+				0, 1,
+				1, 1,
+				0, 0,
+				1, 0,
+			];
+			
+			// Position buffer
+			this.positionBuffer = this.gl.createBuffer();
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+			this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
+			
+			// Texture coordinate buffer
+			this.texCoordBuffer = this.gl.createBuffer();
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+			this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(texCoords), this.gl.STATIC_DRAW);
+		}
+		
+		setupTexture() {
+			// Create a simple gradient texture for demonstration
+			const texture = this.gl.createTexture();
+			this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+			
+			// Create a simple gradient
+			const width = 256;
+			const height = 256;
+			const data = new Uint8Array(width * height * 4);
+			
+			for (let y = 0; y < height; y++) {
+				for (let x = 0; x < width; x++) {
+					const index = (y * width + x) * 4;
+					data[index] = (x / width) * 255;     // Red
+					data[index + 1] = (y / height) * 255; // Green
+					data[index + 2] = 100;                // Blue
+					data[index + 3] = 255;                // Alpha
+				}
+			}
+			
+			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+		}
+		
+		createShader(type, source) {
+			const shader = this.gl.createShader(type);
+			this.gl.shaderSource(shader, source);
+			this.gl.compileShader(shader);
+			
+			if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+				console.error('Shader compilation error:', this.gl.getShaderInfoLog(shader));
+				this.gl.deleteShader(shader);
+				return null;
+			}
+			
+			return shader;
+		}
+		
+		createProgram(vertexSource, fragmentSource) {
+			const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexSource);
+			const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentSource);
+			
+			const program = this.gl.createProgram();
+			this.gl.attachShader(program, vertexShader);
+			this.gl.attachShader(program, fragmentShader);
+			this.gl.linkProgram(program);
+			
+			if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+				console.error('Program linking error:', this.gl.getProgramInfoLog(program));
+				return null;
+			}
+			
+			return program;
+		}
+		
+		resize() {
+			const rect = this.canvas.getBoundingClientRect();
+			this.canvas.width = rect.width * window.devicePixelRatio;
+			this.canvas.height = rect.height * window.devicePixelRatio;
+			this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+		}
+		
+		animate() {
+			this.time += 0.016; // Roughly 60fps
+			
+			// Clear canvas
+			this.gl.clearColor(0, 0, 0, 0);
+			this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+			
+			// Use shader program
+			this.gl.useProgram(this.program);
+			
+			// Set uniforms
+			this.gl.uniform1f(this.timeLocation, this.time);
+			this.gl.uniform1f(this.scrollLocation, this.scrollY);
+			this.gl.uniform1i(this.textureLocation, 0);
+			
+			// Bind position buffer
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+			this.gl.enableVertexAttribArray(this.positionLocation);
+			this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+			
+			// Bind texture coordinate buffer
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+			this.gl.enableVertexAttribArray(this.texCoordLocation);
+			this.gl.vertexAttribPointer(this.texCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
+			
+			// Draw
+			this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+			
+			this.animationId = requestAnimationFrame(() => this.animate());
+		}
+		
+		destroy() {
+			if (this.animationId) {
+				cancelAnimationFrame(this.animationId);
+			}
+		}
+	}
+	
+	// Initialize when DOM is loaded
+	document.addEventListener('DOMContentLoaded', () => {
+		const canvas = document.getElementById('waveCanvas');
+		if (canvas) {
+			new WaveDistortion(canvas);
+		}
+	});
+</script>
+
+<style>
+	.wave-distortion-container {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+	}
+	
+	.wave-canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 1;
+		pointer-events: none;
+		mix-blend-mode: multiply;
+		opacity: 0.3;
+	}
+	
+	.image-overlay {
+		position: relative;
+		z-index: 2;
+		width: 100%;
+		height: 100%;
+	}
+</style>

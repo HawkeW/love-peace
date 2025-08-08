@@ -1,0 +1,408 @@
+---
+import GalleryLayout from '../../layouts/GalleryLayout.astro';
+import MetalStretchEffect from '../../components/MetalStretchEffect.astro';
+
+// 页面配置 - 可以根据需要修改
+const galleryConfig = {
+	title: "Wedding",
+	sections: [
+		{
+			id: "hero",
+			type: "hero",
+			content: {
+				title: "Wedding"
+			}
+		},
+		{
+			id: "section1",
+			type: "single-image",
+			content: {
+				image: {
+					src: "https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&h=1200&fit=crop",
+					alt: "Wedding moment",
+					width: "80%",
+					height: "80vh"
+				},
+				text: {
+					content: "The First Look",
+					position: "left"
+				}
+			}
+		},
+		{
+			id: "section2",
+			type: "dual-image",
+			content: {
+				images: [
+					{
+						src: "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=1000&fit=crop",
+						alt: "Wedding ceremony",
+						width: "45%",
+						height: "70vh"
+					},
+					{
+						src: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&h=1000&fit=crop",
+						alt: "Wedding details",
+						width: "35%",
+						height: "50vh"
+					}
+				],
+				text: {
+					content: "Sacred Vows",
+					position: "right"
+				}
+			}
+		},
+		{
+			id: "section3",
+			type: "single-image",
+			content: {
+				image: {
+					src: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1600&h=900&fit=crop",
+					alt: "Wedding reception",
+					width: "90%",
+					height: "60vh"
+				},
+				text: {
+					content: "Celebration",
+					position: "left"
+				}
+			}
+		},
+		{
+			id: "section4",
+			type: "triple-image",
+			content: {
+				images: [
+					{
+						src: "https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600&h=800&fit=crop",
+						alt: "Wedding portraits",
+						width: "25%",
+						height: "60vh"
+					},
+					{
+						src: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=600&h=800&fit=crop",
+						alt: "Wedding dancing",
+						width: "30%",
+						height: "70vh"
+					},
+					{
+						src: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=600&h=800&fit=crop",
+						alt: "Wedding rings",
+						width: "20%",
+						height: "50vh"
+					}
+				],
+				text: {
+					content: "Moments",
+					position: "right"
+				}
+			}
+		},
+		{
+			id: "final",
+			type: "final",
+			content: {
+				text: "Love & Peace Photography"
+			}
+		}
+	]
+};
+---
+
+<GalleryLayout title={galleryConfig.title + " Gallery"}>
+	<main class="gallery-container lenis lenis-smooth">
+		{galleryConfig.sections.map((section) => {
+			if (section.type === 'hero') {
+				return (
+					<section class="hero-section" id={section.id}>
+						<h1 class="gallery-title">{section.content.title}</h1>
+					</section>
+				);
+			} else if (section.type === 'single-image') {
+				return (
+					<section class="image-section single-image" id={section.id}>
+						<div class="image-container">
+							<MetalStretchEffect>
+								<img 
+									src={section.content.image.src} 
+									alt={section.content.image.alt}
+									style={`width: ${section.content.image.width}; height: ${section.content.image.height};`}
+								/>
+							</MetalStretchEffect>
+							{section.content.text && (
+								<div class={`image-text ${section.content.text.position}`}>
+									<p>{section.content.text.content}</p>
+								</div>
+							)}
+						</div>
+					</section>
+				);
+			} else if (section.type === 'dual-image') {
+				return (
+					<section class="image-section dual-image" id={section.id}>
+						<div class="image-container dual">
+							{section.content.images.map((image, index) => (
+								<MetalStretchEffect key={index}>
+									<img 
+										src={image.src} 
+										alt={image.alt}
+										style={`width: ${image.width}; height: ${image.height};`}
+									/>
+								</MetalStretchEffect>
+							))}
+							{section.content.text && (
+								<div class={`image-text ${section.content.text.position}`}>
+									<p>{section.content.text.content}</p>
+								</div>
+							)}
+						</div>
+					</section>
+				);
+			} else if (section.type === 'triple-image') {
+				return (
+					<section class="image-section triple-image" id={section.id}>
+						<div class="image-container triple">
+							{section.content.images.map((image, index) => (
+								<MetalStretchEffect key={index}>
+								<img 
+									src={image.src} 
+									alt={image.alt}
+									style={`width: ${image.width}; height: ${image.height};`}
+								/>
+							</MetalStretchEffect>
+							))}
+							{section.content.text && (
+								<div class={`image-text ${section.content.text.position}`}>
+									<p>{section.content.text.content}</p>
+								</div>
+							)}
+						</div>
+					</section>
+				);
+			} else if (section.type === 'final') {
+				return (
+					<section class="final-section" id={section.id}>
+						<p class="final-text">{section.content.text}</p>
+					</section>
+				);
+			}
+		})}
+	</main>
+</GalleryLayout>
+
+<style>
+	.gallery-container {
+		width: 100%;
+		margin: 0;
+		padding: 0;
+	}
+	
+	.hero-section {
+		height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 2rem;
+	}
+	
+	.gallery-title {
+		font-size: clamp(4rem, 12vw, 8rem);
+		font-weight: 100;
+		letter-spacing: 0.1em;
+		margin: 0;
+		color: #fff;
+		text-transform: uppercase;
+		font-family: 'Helvetica Neue', Arial, sans-serif;
+	}
+	
+	.image-section {
+		height: 100vh;
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 5vw;
+	}
+	
+	/* Single Image Layout */
+	.single-image .image-container {
+		position: relative;
+		width: 100%;
+		height: 80vh;
+		max-width: 1200px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.single-image .image-container img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 0;
+		transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	}
+	
+	/* Dual Image Layout */
+	.dual-image .image-container {
+		position: relative;
+		width: 100%;
+		max-width: 1200px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 3rem;
+		flex-wrap: wrap;
+	}
+	
+	.dual-image .image-container img {
+		object-fit: cover;
+		border-radius: 0;
+		transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		flex-shrink: 0;
+	}
+	
+	/* Triple Image Layout */
+	.triple-image .image-container {
+		position: relative;
+		width: 100%;
+		max-width: 1200px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 2rem;
+		flex-wrap: wrap;
+	}
+	
+	.triple-image .image-container img {
+		object-fit: cover;
+		border-radius: 0;
+		transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		flex-shrink: 0;
+	}
+	
+	/* Lenis Smooth Scrolling */
+	.lenis.lenis-smooth {
+		scroll-behavior: auto !important;
+	}
+	
+	.lenis.lenis-smooth [data-lenis-prevent] {
+		overscroll-behavior: contain;
+	}
+	
+	.image-text {
+		position: absolute;
+		top: 50%;
+		left: -120px;
+		transform: translateY(-50%) rotate(-90deg);
+		transform-origin: center;
+		z-index: 10;
+	}
+	
+	.image-text.right {
+		left: auto;
+		right: -120px;
+		transform: translateY(-50%) rotate(90deg);
+	}
+	
+	.image-text p {
+		color: #fff;
+		font-size: 0.9rem;
+		font-weight: 300;
+		letter-spacing: 0.3em;
+		margin: 0;
+		text-transform: uppercase;
+		font-family: 'Helvetica Neue', Arial, sans-serif;
+		white-space: nowrap;
+	}
+	
+	.final-section {
+		height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 2rem;
+	}
+	
+	.final-text {
+		font-size: 1.2rem;
+		font-weight: 100;
+		color: #666;
+		margin: 0;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		font-family: 'Helvetica Neue', Arial, sans-serif;
+	}
+	
+	@media (max-width: 1024px) {
+		.image-text {
+			left: -80px;
+		}
+		
+		.image-text.right {
+			right: -80px;
+		}
+		
+		.image-text p {
+			font-size: 0.8rem;
+		}
+	}
+	
+	@media (max-width: 768px) {
+		.image-section {
+			padding: 0 2rem;
+		}
+		
+		.single-image .image-container {
+			height: 70vh;
+		}
+		
+		.dual-image .image-container,
+		.triple-image .image-container {
+			flex-direction: column;
+			gap: 1.5rem;
+			align-items: center;
+		}
+		
+		.dual-image .image-container img,
+		.triple-image .image-container img {
+			width: 80% !important;
+			height: 50vh !important;
+			max-width: 400px;
+		}
+		
+		.image-text {
+			left: -60px;
+			transform: translateY(-50%) rotate(-90deg);
+		}
+		
+		.image-text.right {
+			right: -60px;
+			transform: translateY(-50%) rotate(90deg);
+		}
+		
+		.image-text p {
+			font-size: 0.7rem;
+			letter-spacing: 0.2em;
+		}
+		
+		.gallery-title {
+			font-size: clamp(3rem, 10vw, 5rem);
+		}
+	}
+	
+	@media (max-width: 480px) {
+		.image-text {
+			left: -40px;
+		}
+		
+		.image-text.right {
+			right: -40px;
+		}
+		
+		.image-text p {
+			font-size: 0.6rem;
+		}
+	}
+</style>
