@@ -94,6 +94,46 @@
             <label>相位差 (Phase): <span class="value" id="phase-value">1.5</span></label>
             <input type="range" id="phase" min="0" max="6.28" step="0.1" value="1.5">
         </div>
+        
+        <div class="control-group">
+            <label>左边振幅 (Left Amplitude): <span class="value" id="left-amp-value">0.2</span></label>
+            <input type="range" id="leftAmplitude" min="0" max="0.3" step="0.01" value="0.2">
+        </div>
+        
+        <div class="control-group">
+            <label>右边振幅 (Right Amplitude): <span class="value" id="right-amp-value">0.2</span></label>
+            <input type="range" id="rightAmplitude" min="0" max="0.3" step="0.01" value="0.2">
+        </div>
+        
+        <div class="control-group">
+            <label>上边振幅 (Top Amplitude): <span class="value" id="top-amp-value">0.2</span></label>
+            <input type="range" id="topAmplitude" min="0" max="0.3" step="0.01" value="0.2">
+        </div>
+        
+        <div class="control-group">
+            <label>下边振幅 (Bottom Amplitude): <span class="value" id="bottom-amp-value">0.2</span></label>
+            <input type="range" id="bottomAmplitude" min="0" max="0.3" step="0.01" value="0.2">
+        </div>
+        
+        <div class="control-group">
+            <label>左边方向 (Left Direction): <span class="value" id="left-dir-value">1</span></label>
+            <input type="range" id="leftDirection" min="-1" max="1" step="2" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label>右边方向 (Right Direction): <span class="value" id="right-dir-value">1</span></label>
+            <input type="range" id="rightDirection" min="-1" max="1" step="2" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label>上边方向 (Top Direction): <span class="value" id="top-dir-value">1</span></label>
+            <input type="range" id="topDirection" min="-1" max="1" step="2" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label>下边方向 (Bottom Direction): <span class="value" id="bottom-dir-value">-1</span></label>
+            <input type="range" id="bottomDirection" min="-1" max="1" step="2" value="-1">
+        </div>
     </div>
 
     <script>
@@ -110,6 +150,16 @@
             uniform float u_speed;
             uniform vec2 u_resolution;
             
+            // 独立边缘控制参数
+            uniform float u_leftAmplitude;
+            uniform float u_rightAmplitude;
+            uniform float u_topAmplitude;
+            uniform float u_bottomAmplitude;
+            uniform float u_leftDirection;
+            uniform float u_rightDirection;
+            uniform float u_topDirection;
+            uniform float u_bottomDirection;
+            
             // 传递给片段着色器的变量
             varying vec2 v_position;
             
@@ -117,21 +167,42 @@
                 v_position = a_position;
                 vec2 pos = a_position;
                 
-                // 检测左右边缘顶点（容差0.01）
+                // 检测边缘顶点（容差0.01）
                 bool isLeftEdge = abs(pos.x + 0.8) < 0.01;
                 bool isRightEdge = abs(pos.x - 0.8) < 0.01;
+                bool isTopEdge = abs(pos.y - 0.6) < 0.01;
+                bool isBottomEdge = abs(pos.y + 0.6) < 0.01;
                 
-                // 对左右边缘应用同步弯曲效果
-                if (isLeftEdge || isRightEdge) {
-                    // 时间波动函数
-                    float wave = sin(u_time * u_speed) * u_amplitude;
-                    
-                    // 抛物线弯曲因子：中间最大，两端为0
+                // 对左边缘应用水平弯曲效果
+                if (isLeftEdge) {
+                    float wave = sin(u_time * u_speed) * u_leftAmplitude;
                     float yNormalized = (pos.y + 0.6) / 1.2;
                     float bendFactor = 4.0 * yNormalized * (1.0 - yNormalized);
-                    
-                    // 应用同向弯曲（都向右）
-                    pos.x += wave * bendFactor;
+                    pos.x += wave * bendFactor * u_leftDirection;
+                }
+                
+                // 对右边缘应用水平弯曲效果
+                if (isRightEdge) {
+                    float wave = sin(u_time * u_speed) * u_rightAmplitude;
+                    float yNormalized = (pos.y + 0.6) / 1.2;
+                    float bendFactor = 4.0 * yNormalized * (1.0 - yNormalized);
+                    pos.x += wave * bendFactor * u_rightDirection;
+                }
+                
+                // 对上边缘应用垂直弯曲效果
+                if (isTopEdge) {
+                    float wave = sin(u_time * u_speed + 1.57) * u_topAmplitude;
+                    float xNormalized = (pos.x + 0.8) / 1.6;
+                    float bendFactor = 4.0 * xNormalized * (1.0 - xNormalized);
+                    pos.y += wave * bendFactor * u_topDirection;
+                }
+                
+                // 对下边缘应用垂直弯曲效果
+                if (isBottomEdge) {
+                    float wave = sin(u_time * u_speed + 1.57) * u_bottomAmplitude;
+                    float xNormalized = (pos.x + 0.8) / 1.6;
+                    float bendFactor = 4.0 * xNormalized * (1.0 - xNormalized);
+                    pos.y += wave * bendFactor * u_bottomDirection;
                 }
                 
                 gl_Position = vec4(pos, 0.0, 1.0);
@@ -205,7 +276,15 @@
                     frequency: 3.0,
                     amplitude: 0.2,
                     speed: 2.0,
-                    phase: 1.5
+                    phase: 1.5,
+                    leftAmplitude: 0.2,
+                    rightAmplitude: 0.2,
+                    topAmplitude: 0.2,
+                    bottomAmplitude: 0.2,
+                    leftDirection: 1,
+                    rightDirection: 1,
+                    topDirection: 1,
+                    bottomDirection: -1
                 };
                 
                 // 初始化应用
@@ -250,6 +329,16 @@
                 this.uniforms.amplitude = gl.getUniformLocation(this.program, 'u_amplitude');
                 this.uniforms.speed = gl.getUniformLocation(this.program, 'u_speed');
                 this.uniforms.resolution = gl.getUniformLocation(this.program, 'u_resolution');
+                
+                // 独立边缘控制uniform变量
+                this.uniforms.leftAmplitude = gl.getUniformLocation(this.program, 'u_leftAmplitude');
+                this.uniforms.rightAmplitude = gl.getUniformLocation(this.program, 'u_rightAmplitude');
+                this.uniforms.topAmplitude = gl.getUniformLocation(this.program, 'u_topAmplitude');
+                this.uniforms.bottomAmplitude = gl.getUniformLocation(this.program, 'u_bottomAmplitude');
+                this.uniforms.leftDirection = gl.getUniformLocation(this.program, 'u_leftDirection');
+                this.uniforms.rightDirection = gl.getUniformLocation(this.program, 'u_rightDirection');
+                this.uniforms.topDirection = gl.getUniformLocation(this.program, 'u_topDirection');
+                this.uniforms.bottomDirection = gl.getUniformLocation(this.program, 'u_bottomDirection');
             }
             
             /**
@@ -359,14 +448,30 @@
                     frequency: document.getElementById('frequency'),
                     amplitude: document.getElementById('amplitude'),
                     speed: document.getElementById('speed'),
-                    phase: document.getElementById('phase')
+                    phase: document.getElementById('phase'),
+                    leftAmplitude: document.getElementById('leftAmplitude'),
+                    rightAmplitude: document.getElementById('rightAmplitude'),
+                    topAmplitude: document.getElementById('topAmplitude'),
+                    bottomAmplitude: document.getElementById('bottomAmplitude'),
+                    leftDirection: document.getElementById('leftDirection'),
+                    rightDirection: document.getElementById('rightDirection'),
+                    topDirection: document.getElementById('topDirection'),
+                    bottomDirection: document.getElementById('bottomDirection')
                 };
                 
                 const valueDisplays = {
                     frequency: document.getElementById('freq-value'),
                     amplitude: document.getElementById('amp-value'),
                     speed: document.getElementById('speed-value'),
-                    phase: document.getElementById('phase-value')
+                    phase: document.getElementById('phase-value'),
+                    leftAmplitude: document.getElementById('left-amp-value'),
+                    rightAmplitude: document.getElementById('right-amp-value'),
+                    topAmplitude: document.getElementById('top-amp-value'),
+                    bottomAmplitude: document.getElementById('bottom-amp-value'),
+                    leftDirection: document.getElementById('left-dir-value'),
+                    rightDirection: document.getElementById('right-dir-value'),
+                    topDirection: document.getElementById('top-dir-value'),
+                    bottomDirection: document.getElementById('bottom-dir-value')
                 };
                 
                 // 为每个控制元素添加事件监听器
@@ -432,6 +537,16 @@
                 gl.uniform1f(this.uniforms.amplitude, this.animationParams.amplitude);
                 gl.uniform1f(this.uniforms.speed, this.animationParams.speed);
                 gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+                
+                // 设置独立边缘控制参数
+                gl.uniform1f(this.uniforms.leftAmplitude, this.animationParams.leftAmplitude);
+                gl.uniform1f(this.uniforms.rightAmplitude, this.animationParams.rightAmplitude);
+                gl.uniform1f(this.uniforms.topAmplitude, this.animationParams.topAmplitude);
+                gl.uniform1f(this.uniforms.bottomAmplitude, this.animationParams.bottomAmplitude);
+                gl.uniform1f(this.uniforms.leftDirection, this.animationParams.leftDirection);
+                gl.uniform1f(this.uniforms.rightDirection, this.animationParams.rightDirection);
+                gl.uniform1f(this.uniforms.topDirection, this.animationParams.topDirection);
+                gl.uniform1f(this.uniforms.bottomDirection, this.animationParams.bottomDirection);
             }
             
             /**
