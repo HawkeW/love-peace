@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL 矩形扭动效果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        .value {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            color: #00ff88;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="webgl-canvas"></canvas>
+    
+    <div class="controls">
+        <h1>🎵 矩形扭动控制面板</h1>
+        
+        <div class="control-group">
+            <label>频率 (Frequency): <span class="value" id="freq-value">3.0</span></label>
+            <input type="range" id="frequency" min="1" max="10" step="0.1" value="3">
+        </div>
+        
+        <div class="control-group">
+            <label>幅度 (Amplitude): <span class="value" id="amp-value">0.2</span></label>
+            <input type="range" id="amplitude" min="0.01" max="0.3" step="0.01" value="0.2">
+        </div>
+        
+        <div class="control-group">
+            <label>速度 (Speed): <span class="value" id="speed-value">2.0</span></label>
+            <input type="range" id="speed" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        
+        <div class="control-group">
+            <label>相位差 (Phase): <span class="value" id="phase-value">1.5</span></label>
+            <input type="range" id="phase" min="0" max="6.28" step="0.1" value="1.5">
+        </div>
+    </div>
+
+    <script>
+        // 顶点着色器：处理矩形变形和弯曲动画
+        const vertexShaderSource = `
+            precision mediump float;
+            
+            // 输入属性
+            attribute vec2 a_position;
+            
+            // 动画参数
+            uniform float u_time;
+            uniform float u_amplitude;
+            uniform float u_speed;
+            uniform vec2 u_resolution;
+            
+            // 传递给片段着色器的变量
+            varying vec2 v_position;
+            
+            void main() {
+                v_position = a_position;
+                vec2 pos = a_position;
+                
+                // 检测左右边缘顶点（容差0.01）
+                bool isLeftEdge = abs(pos.x + 0.8) < 0.01;
+                bool isRightEdge = abs(pos.x - 0.8) < 0.01;
+                
+                // 对左右边缘应用同步弯曲效果
+                if (isLeftEdge || isRightEdge) {
+                    // 时间波动函数
+                    float wave = sin(u_time * u_speed) * u_amplitude;
+                    
+                    // 抛物线弯曲因子：中间最大，两端为0
+                    float yNormalized = (pos.y + 0.6) / 1.2;
+                    float bendFactor = 4.0 * yNormalized * (1.0 - yNormalized);
+                    
+                    // 应用同向弯曲（都向右）
+                    pos.x += wave * bendFactor;
+                }
+                
+                gl_Position = vec4(pos, 0.0, 1.0);
+            }
+        `;
+        
+        // 片段着色器：现代化渐变色彩和动态效果
+        const fragmentShaderSource = `
+            precision mediump float;
+            
+            // 输入参数
+            uniform float u_time;
+            uniform vec2 u_resolution;
+            varying vec2 v_position;
+            
+            void main() {
+                vec2 pos = v_position;
+                
+                // 定义现代化配色方案
+                vec3 deepBlue = vec3(0.1, 0.2, 0.8);   // 深蓝
+                vec3 purple = vec3(0.6, 0.2, 0.8);     // 紫色
+                vec3 pink = vec3(1.0, 0.4, 0.7);       // 粉色
+                vec3 cyan = vec3(0.2, 0.8, 0.9);       // 青色
+                
+                // 位置归一化到[0,1]范围
+                float gradientX = (pos.x + 1.0) * 0.5;
+                float gradientY = (pos.y + 1.0) * 0.5;
+                
+                // 创建双向渐变
+                vec3 topGradient = mix(deepBlue, purple, gradientX);
+                vec3 bottomGradient = mix(cyan, pink, gradientX);
+                vec3 baseColor = mix(bottomGradient, topGradient, gradientY);
+                
+                // 添加动态波动效果
+                float dynamicWave = sin(u_time * 2.0 + pos.x * 3.0 + pos.y * 2.0) * 0.1 + 0.9;
+                baseColor *= dynamicWave;
+                
+                // 边缘高光效果
+                float distanceFromCenter = length(pos);
+                float edgeHighlight = 1.0 - smoothstep(0.7, 1.0, distanceFromCenter);
+                baseColor += edgeHighlight * 0.2;
+                
+                gl_FragColor = vec4(baseColor, 1.0);
+            }
+        `;
+        
+        /**
+         * WebGL矩形扭动效果类
+         * 负责WebGL初始化、渲染和用户交互控制
+         */
+        class WaveEffect {
+            constructor() {
+                // 获取Canvas和WebGL上下文
+                this.canvas = document.getElementById('webgl-canvas');
+                this.gl = this.canvas.getContext('webgl');
+                
+                if (!this.gl) {
+                    alert('您的浏览器不支持WebGL');
+                    return;
+                }
+                
+                // WebGL程序和着色器相关
+                this.program = null;
+                this.uniforms = {};
+                this.attributes = {};
+                this.vertexBuffer = null;
+                this.vertexCount = 0;
+                
+                // 动画控制参数
+                this.animationParams = {
+                    frequency: 3.0,
+                    amplitude: 0.2,
+                    speed: 2.0,
+                    phase: 1.5
+                };
+                
+                // 初始化应用
+                this.initWebGL();
+                this.setupUserControls();
+                this.handleResize();
+                this.startAnimation();
+                
+                // 监听窗口大小变化
+                window.addEventListener('resize', () => this.handleResize());
+            }
+            
+            /**
+             * 初始化WebGL程序和顶点数据
+             */
+            initWebGL() {
+                const gl = this.gl;
+                
+                // 编译和链接着色器程序
+                const vertexShader = this.compileShader(gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = this.compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
+                this.program = this.linkShaderProgram(vertexShader, fragmentShader);
+                
+                // 获取着色器变量位置
+                this.getShaderLocations();
+                
+                // 创建顶点数据
+                this.createVertexData();
+            }
+            
+            /**
+             * 获取着色器中的属性和uniform变量位置
+             */
+            getShaderLocations() {
+                const gl = this.gl;
+                
+                // 顶点属性
+                this.attributes.position = gl.getAttribLocation(this.program, 'a_position');
+                
+                // Uniform变量
+                this.uniforms.time = gl.getUniformLocation(this.program, 'u_time');
+                this.uniforms.amplitude = gl.getUniformLocation(this.program, 'u_amplitude');
+                this.uniforms.speed = gl.getUniformLocation(this.program, 'u_speed');
+                this.uniforms.resolution = gl.getUniformLocation(this.program, 'u_resolution');
+            }
+            
+            /**
+             * 创建环状区域的顶点数据
+             */
+            createVertexData() {
+                
+                const gl = this.gl;
+                const vertices = [];
+                const segments = 20; // 每条边的分段数量
+                
+                // 中心点（用于TRIANGLE_FAN渲染）
+                vertices.push(0.0, 0.0);
+                
+                // 按逆时针方向创建边界顶点：左下→左上→右上→右下→闭合
+                
+                // 左边线段（从下到上）
+                for (let i = 0; i <= segments; i++) {
+                    const y = -0.6 + (1.2 * i / segments);
+                    vertices.push(-0.8, y);
+                }
+                
+                // 上边线段（从左到右，跳过左上角重复点）
+                for (let i = 1; i <= segments; i++) {
+                    const x = -0.8 + (1.6 * i / segments);
+                    vertices.push(x, 0.6);
+                }
+                
+                // 右边线段（从上到下，跳过右上角重复点）
+                for (let i = 1; i <= segments; i++) {
+                    const y = 0.6 - (1.2 * i / segments);
+                    vertices.push(0.8, y);
+                }
+                
+                // 下边线段（从右到左，跳过角点）
+                for (let i = 1; i < segments; i++) {
+                    const x = 0.8 - (1.6 * i / segments);
+                    vertices.push(x, -0.6);
+                }
+                
+                // 闭合形状：添加起始边界点
+                vertices.push(-0.8, -0.6);
+                
+                // 创建顶点缓冲区
+                const vertexArray = new Float32Array(vertices);
+                this.vertexCount = vertices.length / 2;
+                
+                this.vertexBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
+            }
+            
+            /**
+             * 编译着色器
+             * @param {number} type - 着色器类型（VERTEX_SHADER或FRAGMENT_SHADER）
+             * @param {string} source - 着色器源代码
+             * @returns {WebGLShader|null} 编译后的着色器对象
+             */
+            compileShader(type, source) {
+                const gl = this.gl;
+                const shader = gl.createShader(type);
+                
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                
+                // 检查编译状态
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    const errorLog = gl.getShaderInfoLog(shader);
+                    console.error(`着色器编译失败: ${errorLog}`);
+                    gl.deleteShader(shader);
+                    return null;
+                }
+                
+                return shader;
+            }
+            
+            /**
+             * 链接着色器程序
+             * @param {WebGLShader} vertexShader - 顶点着色器
+             * @param {WebGLShader} fragmentShader - 片段着色器
+             * @returns {WebGLProgram|null} 链接后的程序对象
+             */
+            linkShaderProgram(vertexShader, fragmentShader) {
+                const gl = this.gl;
+                const program = gl.createProgram();
+                
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                // 检查链接状态
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    const errorLog = gl.getProgramInfoLog(program);
+                    console.error(`程序链接失败: ${errorLog}`);
+                    gl.deleteProgram(program);
+                    return null;
+                }
+                
+                return program;
+            }
+            
+            /**
+             * 设置用户交互控制
+             */
+            setupUserControls() {
+                const controlElements = {
+                    frequency: document.getElementById('frequency'),
+                    amplitude: document.getElementById('amplitude'),
+                    speed: document.getElementById('speed'),
+                    phase: document.getElementById('phase')
+                };
+                
+                const valueDisplays = {
+                    frequency: document.getElementById('freq-value'),
+                    amplitude: document.getElementById('amp-value'),
+                    speed: document.getElementById('speed-value'),
+                    phase: document.getElementById('phase-value')
+                };
+                
+                // 为每个控制元素添加事件监听器
+                Object.keys(controlElements).forEach(paramName => {
+                    const control = controlElements[paramName];
+                    const display = valueDisplays[paramName];
+                    
+                    control.addEventListener('input', (event) => {
+                        const value = parseFloat(event.target.value);
+                        this.animationParams[paramName] = value;
+                        display.textContent = value.toFixed(2);
+                    });
+                });
+            }
+            
+            /**
+             * 处理窗口大小变化
+             */
+            handleResize() {
+                const gl = this.gl;
+                
+                // 更新Canvas尺寸
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                
+                // 更新WebGL视口
+                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            /**
+             * 渲染单帧
+             * @param {number} time - 当前时间戳（毫秒）
+             */
+            renderFrame(time) {
+                const gl = this.gl;
+                
+                // 清除画布为黑色
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                // 激活着色器程序
+                gl.useProgram(this.program);
+                
+                // 设置uniform变量
+                this.setUniforms(time);
+                
+                // 设置顶点属性
+                this.setupVertexAttributes();
+                
+                // 绘制环状填充区域
+                gl.drawArrays(gl.TRIANGLE_FAN, 0, this.vertexCount);
+            }
+            
+            /**
+             * 设置着色器uniform变量
+             * @param {number} time - 当前时间戳
+             */
+            setUniforms(time) {
+                const gl = this.gl;
+                const timeInSeconds = time * 0.001;
+                
+                gl.uniform1f(this.uniforms.time, timeInSeconds);
+                gl.uniform1f(this.uniforms.amplitude, this.animationParams.amplitude);
+                gl.uniform1f(this.uniforms.speed, this.animationParams.speed);
+                gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+            }
+            
+            /**
+             * 设置顶点属性
+             */
+            setupVertexAttributes() {
+                const gl = this.gl;
+                
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+                gl.enableVertexAttribArray(this.attributes.position);
+                gl.vertexAttribPointer(this.attributes.position, 2, gl.FLOAT, false, 0, 0);
+            }
+            
+            /**
+             * 启动动画循环
+             * @param {number} time - 当前时间戳
+             */
+            startAnimation(time = 0) {
+                this.renderFrame(time);
+                requestAnimationFrame((timestamp) => this.startAnimation(timestamp));
+            }
+        }
+        
+        // 启动应用
+        window.addEventListener('DOMContentLoaded', () => {
+            // 初始化波浪效果
+            const waveEffect = new WaveEffect();
+            waveEffect.initWebGL();
+            waveEffect.setupUserControls();
+            waveEffect.startAnimation();
+            
+            // 窗口大小变化处理
+            window.addEventListener('resize', () => {
+                waveEffect.handleResize();
+            });
+        });
+    </script>
+</body>
+</html>
