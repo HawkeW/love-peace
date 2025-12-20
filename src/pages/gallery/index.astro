@@ -1,0 +1,194 @@
+---
+import GalleryLayout from "../../layouts/GalleryLayout.astro";
+import LazyImage from "../../components/LazyImage.astro";
+import Carousel from "../../components/Carousel.astro";
+import Lightbox from "../../components/Lightbox.astro";
+
+const categories = [
+	{ id: "all", name: "全部" },
+	{ id: "outdoor", name: "室外" },
+	{ id: "indoor", name: "室内" },
+	{ id: "theme", name: "主题系列" },
+];
+
+const albums = [
+	{
+		id: "a1",
+		title: "法式轻奢",
+		categoryId: "outdoor",
+		coverImage: "/images/a1.jpg",
+	},
+	{
+		id: "a2",
+		title: "森系自然",
+		categoryId: "outdoor",
+		coverImage: "/images/a2.jpg",
+	},
+	{
+		id: "a3",
+		title: "室内复古",
+		categoryId: "indoor",
+		coverImage: "/images/a3.jpg",
+	},
+	{
+		id: "a4",
+		title: "轻奢主题",
+		categoryId: "theme",
+		coverImage: "/images/a4.jpg",
+	},
+];
+---
+
+<GalleryLayout title="婚纱摄影画廊">
+	<section class="hero">
+		<h1>婚纱摄影画廊</h1>
+		<p>精选室内与室外主题系列，支持分类筛选与高清查看</p>
+		<Carousel
+			slides={[
+				{ src: "/images/a1.jpg", alt: "法式轻奢" },
+				{ src: "/images/a2.jpg", alt: "森系自然" },
+				{ src: "/images/a3.jpg", alt: "室内复古" },
+			]}
+			interval={5000}
+		/>
+	</section>
+
+	<nav class="filter" aria-label="类别筛选">
+		{
+			categories.map((c) => (
+				<a href={`?category=${c.id}`} class="tab" data-id={c.id}>
+					{c.name}
+				</a>
+			))
+		}
+	</nav>
+
+	<section id="grid" class="grid">
+		{
+			albums.map((a) => (
+				<article class="card" data-category={a.categoryId}>
+					<LazyImage src={a.coverImage} alt={a.title} />
+					<div class="info">
+						<h3>{a.title}</h3>
+						<span class="tag">
+							{categories.find((c) => c.id === a.categoryId)?.name}
+						</span>
+					</div>
+				</article>
+			))
+		}
+	</section>
+	<Lightbox />
+
+	<script>
+		const params = new URLSearchParams(location.search);
+		const category = params.get("category") || "all";
+		const tabs = document.querySelectorAll(".tab");
+		tabs.forEach((t) => {
+			const selected = t.getAttribute("data-id") === category;
+			t.classList.toggle("active", selected);
+		});
+		const cards = document.querySelectorAll(".card");
+		cards.forEach((card) => {
+			const c = card.getAttribute("data-category");
+			const show = category === "all" || c === category;
+			card.classList.toggle("hidden", !show);
+		});
+	</script>
+</GalleryLayout>
+
+<style>
+	.hero {
+		padding: 64px 24px 24px;
+		text-align: center;
+	}
+	.hero h1 {
+		margin: 0 0 8px;
+		font-size: 32px;
+		letter-spacing: 2px;
+	}
+	.hero p {
+		margin: 0;
+		color: #bbb;
+	}
+	.filter {
+		display: flex;
+		gap: 8px;
+		padding: 12px 24px 24px;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+	.tab {
+		display: inline-block;
+		padding: 8px 14px;
+		border: 1px solid #333;
+		border-radius: 999px;
+		color: #ddd;
+		text-decoration: none;
+		transition: all 0.2s ease;
+	}
+	.tab:hover {
+		border-color: #555;
+		color: #fff;
+		transform: translateY(-1px);
+	}
+	.tab.active {
+		background: #fff;
+		color: #000;
+		border-color: #fff;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(1, 1fr);
+		gap: 12px;
+		padding: 0 24px 48px;
+	}
+	@media (min-width: 640px) {
+		.grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (min-width: 1024px) {
+		.grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+	.card {
+		position: relative;
+		overflow: hidden;
+		border-radius: 16px;
+		background: #111;
+		border: 1px solid #222;
+	}
+	.card img {
+		width: 100%;
+		height: 240px;
+		object-fit: cover;
+		display: block;
+		filter: saturate(1.05) contrast(1.02);
+	}
+	.info {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: 12px 14px;
+		background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+	}
+	.info h3 {
+		margin: 0;
+		font-size: 16px;
+	}
+	.tag {
+		display: inline-block;
+		margin-top: 6px;
+		font-size: 12px;
+		color: #ddd;
+		border: 1px solid #444;
+		border-radius: 999px;
+		padding: 2px 8px;
+	}
+	.hidden {
+		display: none;
+	}
+</style>

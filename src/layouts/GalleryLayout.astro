@@ -13,14 +13,32 @@ const { title = "Gallery" } = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
+		<meta
+			name="description"
+			content="婚纱摄影展示画廊，精选室内外与主题系列，高清浏览与分类筛选。"
+		/>
+		<link rel="canonical" href={Astro.url?.href} />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta
+			property="og:description"
+			content="婚纱摄影展示画廊，精选室内外与主题系列，高清浏览与分类筛选。"
+		/>
+		<meta property="og:url" content={Astro.url?.href} />
+		<meta name="twitter:card" content="summary_large_image" />
 		<title>{title}</title>
-		<link rel="stylesheet" href="https://unpkg.com/lenis@1.3.8/dist/lenis.css">
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/lenis@1.3.8/dist/lenis.css"
+		/>
+		<script src="https://unpkg.com/web-vitals@3.5.0/dist/web-vitals.iife.js"
+		></script>
 	</head>
 	<body>
 		<slot />
 		<script>
-			import Lenis from 'lenis';
-			
+			import Lenis from "lenis";
+
 			// Initialize Lenis with custom settings for smooth artistic scrolling
 			const lenis = new Lenis({
 				lerp: 0.05,
@@ -29,21 +47,40 @@ const { title = "Gallery" } = Astro.props;
 				syncTouch: false,
 				touchMultiplier: 1.5,
 				wheelMultiplier: 0.8,
-				autoRaf: false
+				autoRaf: false,
 			});
-			
+
 			// Custom RAF loop for better control
 			function raf(time) {
 				lenis.raf(time);
 				requestAnimationFrame(raf);
 			}
-			
+
 			requestAnimationFrame(raf);
-			
+
 			// Optional: Listen for scroll events
-			lenis.on('scroll', (e) => {
+			lenis.on("scroll", (e) => {
 				// console.log('Scroll progress:', e.progress);
 			});
+		</script>
+		<script>
+			const send = (name, value, id) => {
+				const body = JSON.stringify({ name, value, id });
+				if (navigator.sendBeacon) {
+					navigator.sendBeacon("/api/metrics", body);
+				} else {
+					fetch("/api/metrics", {
+						method: "POST",
+						body,
+						headers: { "Content-Type": "application/json" },
+					});
+				}
+			};
+			webVitals.onCLS(({ name, value, id }) => send(name, value, id));
+			webVitals.onLCP(({ name, value, id }) => send(name, value, id));
+			webVitals.onFID(({ name, value, id }) => send(name, value, id));
+			webVitals.onINP(({ name, value, id }) => send(name, value, id));
+			webVitals.onTTFB(({ name, value, id }) => send(name, value, id));
 		</script>
 	</body>
 </html>
@@ -55,13 +92,23 @@ const { title = "Gallery" } = Astro.props;
 		padding: 0;
 		width: 100%;
 		height: 100%;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		font-family:
+			-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 		background-color: #000;
 		color: #fff;
 		overflow-x: hidden;
 	}
-	
+
 	* {
 		box-sizing: border-box;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation: none !important;
+			transition: none !important;
+		}
 	}
 </style>

@@ -1,0 +1,104 @@
+---
+export interface Slide {
+  src: string;
+  alt: string;
+}
+export interface Props {
+  slides: Slide[];
+  interval?: number;
+}
+const { slides = [], interval = 4000 } = Astro.props;
+---
+<div class="carousel" data-interval={interval}>
+  <div class="track">
+    {slides.map((s) => (
+      <figure class="slide">
+        <img src={s.src} alt={s.alt} loading="lazy" decoding="async" />
+        <figcaption>{s.alt}</figcaption>
+      </figure>
+    ))}
+  </div>
+  <div class="dots">
+    {slides.map((_, i) => <button class="dot" data-index={i} aria-label={`第${i+1}张`}></button>)}
+  </div>
+</div>
+<script>
+  const root = document.currentScript?.previousElementSibling as HTMLElement;
+  if (root) {
+    const track = root.querySelector(".track") as HTMLElement;
+    const slides = Array.from(root.querySelectorAll(".slide")) as HTMLElement[];
+    const dots = Array.from(root.querySelectorAll(".dot")) as HTMLButtonElement[];
+    let i = 0;
+    const go = (n: number) => {
+      i = n;
+      const width = root.clientWidth;
+      track.style.transform = `translate3d(${-i * width}px,0,0)`;
+      dots.forEach((d, idx) => d.classList.toggle("active", idx === i));
+    };
+    const intervalAttr = Number(root.getAttribute("data-interval") || "4000");
+    let timer = setInterval(() => go((i + 1) % slides.length), intervalAttr);
+    dots.forEach((d) => {
+      d.addEventListener("click", () => {
+        clearInterval(timer);
+        go(Number(d.getAttribute("data-index")));
+        timer = setInterval(() => go((i + 1) % slides.length), intervalAttr);
+      });
+    });
+    window.addEventListener("resize", () => go(i));
+    go(0);
+  }
+</script>
+<style>
+  .carousel {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid #222;
+    background: #111;
+  }
+  .track {
+    display: flex;
+    transition: transform .5s ease;
+    will-change: transform;
+  }
+  .slide {
+    min-width: 100%;
+    margin: 0;
+    position: relative;
+  }
+  .slide img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    display: block;
+  }
+  .slide figcaption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #fff;
+    background: linear-gradient(transparent, rgba(0,0,0,.6));
+  }
+  .dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255,255,255,.6);
+    cursor: pointer;
+  }
+  .dot.active { background: #fff; }
+</style>

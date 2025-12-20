@@ -1,0 +1,43 @@
+---
+export interface Props {
+  src: string;
+  alt: string;
+  class?: string;
+}
+const { src, alt, class: cls = "" } = Astro.props;
+---
+<img src={src} alt={alt} class={`lazy ${cls}`} loading="lazy" decoding="async" />
+<script>
+  const img = document.currentScript?.previousElementSibling as HTMLImageElement | null;
+  if (img) {
+    const show = () => {
+      img.classList.add("loaded");
+    };
+    if (img.complete) {
+      show();
+    } else {
+      img.addEventListener("load", show, { once: true });
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          img.loading = "eager";
+          io.disconnect();
+        }
+      });
+    });
+    io.observe(img);
+  }
+  </script>
+<style>
+  .lazy {
+    opacity: 0;
+    transition: opacity .4s ease;
+    filter: blur(8px);
+  }
+  .lazy.loaded {
+    opacity: 1;
+    filter: blur(0);
+  }
+</style>
+

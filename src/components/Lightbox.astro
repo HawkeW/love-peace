@@ -1,0 +1,99 @@
+---
+export interface Props {
+  selector?: string;
+}
+const { selector = ".card img" } = Astro.props;
+---
+<div id="lightbox" class="lightbox" aria-hidden="true">
+  <button class="close" aria-label="关闭">×</button>
+  <button class="prev" aria-label="上一张">‹</button>
+  <button class="next" aria-label="下一张">›</button>
+  <img id="lightbox-img" alt="查看大图" />
+</div>
+<script>
+  const lb = document.getElementById("lightbox")!;
+  const img = document.getElementById("lightbox-img") as HTMLImageElement;
+  const close = lb.querySelector(".close") as HTMLButtonElement;
+  const prev = lb.querySelector(".prev") as HTMLButtonElement;
+  const next = lb.querySelector(".next") as HTMLButtonElement;
+  const nodes = Array.from(document.querySelectorAll(`${selector}`)) as HTMLImageElement[];
+  let index = 0;
+  const show = (i: number) => {
+    index = i;
+    const n = nodes[index];
+    if (!n) return;
+    img.src = n.currentSrc || n.src;
+    lb.setAttribute("aria-hidden", "false");
+    lb.classList.add("visible");
+  };
+  const hide = () => {
+    lb.setAttribute("aria-hidden", "true");
+    lb.classList.remove("visible");
+  };
+  nodes.forEach((n, i) => {
+    n.addEventListener("click", () => show(i));
+  });
+  close.addEventListener("click", hide);
+  lb.addEventListener("click", (e) => {
+    if (e.target === lb) hide();
+  });
+  const step = (d: number) => {
+    const visible = nodes.filter(n => !n.closest(".card")?.classList.contains("hidden"));
+    const current = visible.indexOf(nodes[index]);
+    const nextIdx = Math.max(0, Math.min(visible.length - 1, current + d));
+    const realIndex = nodes.indexOf(visible[nextIdx]);
+    if (realIndex >= 0) show(realIndex);
+  };
+  prev.addEventListener("click", () => step(-1));
+  next.addEventListener("click", () => step(1));
+  window.addEventListener("keydown", (e) => {
+    if (lb.classList.contains("visible")) {
+      if (e.key === "Escape") hide();
+      if (e.key === "ArrowLeft") step(-1);
+      if (e.key === "ArrowRight") step(1);
+    }
+  });
+</script>
+<style>
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.8);
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 50;
+  }
+  .lightbox.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .lightbox img {
+    max-width: 90vw;
+    max-height: 80vh;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    border-radius: 12px;
+  }
+  .lightbox .close,
+  .lightbox .prev,
+  .lightbox .next {
+    position: absolute;
+    background: rgba(255,255,255,.9);
+    color: #000;
+    border: none;
+    border-radius: 999px;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  .lightbox .close { top: 24px; right: 24px; }
+  .lightbox .prev { left: 24px; top: 50%; transform: translateY(-50%); }
+  .lightbox .next { right: 24px; top: 50%; transform: translateY(-50%); }
+  @media (max-width: 640px) {
+    .lightbox img { max-width: 95vw; max-height: 70vh; }
+  }
+</style>
+
