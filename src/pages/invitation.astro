@@ -1,0 +1,239 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Carousel from '../components/Carousel.astro';
+import fs from 'fs';
+import path from 'path';
+
+interface Item {
+  src: string;
+  alt: string;
+  title: string;
+  excerpt: string;
+}
+
+function cleanLine(s: string) {
+  return s.replace(/^#+\s*/, '').replace(/\s+$/, '');
+}
+
+function getTitleExcerpt(md: string) {
+  const lines = md.split(/\r?\n/).filter(Boolean);
+  const titleLine = lines.find(l => l.trim().startsWith('#')) ?? lines[0] ?? '';
+  const title = cleanLine(titleLine).slice(0, 60);
+  const body = lines.slice(1).join(' ').replace(/[*_`>]/g, '').replace(/\s+/g, ' ').trim();
+  const excerpt = body.slice(0, 120);
+  return { title, excerpt };
+}
+
+const weddingDir = path.resolve(process.cwd(), 'public/gallery/wedding');
+const descDir = path.resolve(process.cwd(), 'public/descs');
+const images = fs.readdirSync(weddingDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
+
+const items: Item[] = images.map((f) => {
+  const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
+  const mdPath = path.join(descDir, `${base}.md`);
+  let title = base;
+  let excerpt = '';
+  if (fs.existsSync(mdPath)) {
+    const md = fs.readFileSync(mdPath, 'utf8');
+    const parsed = getTitleExcerpt(md);
+    title = parsed.title || base;
+    excerpt = parsed.excerpt;
+  }
+  return {
+    src: `/gallery/wedding/${f}`,
+    alt: title,
+    title,
+    excerpt
+  };
+});
+
+const slides = items.map(i => ({ src: i.src, alt: i.alt }));
+const eventTitle = '婚礼电子请帖';
+const eventSub = '诚挚邀请您莅临见证我们的幸福时刻';
+const ctaText = '确认出席';
+---
+
+<Layout>
+  <main class="invite">
+    <section class="cover">
+      <h1 class="title">{eventTitle}</h1>
+      <p class="subtitle">{eventSub}</p>
+      <a class="cta" href="/api/reservations">{ctaText}</a>
+    </section>
+
+    <section class="slider">
+      <Carousel slides={slides} interval={4000} />
+    </section>
+
+    <section class="details">
+      <h2>照片故事精选</h2>
+      <ul class="cards">
+        {items.slice(0, 6).map((i) => (
+          <li class="card">
+            <img src={i.src} alt={i.alt} loading="lazy" decoding="async" />
+            <div class="info">
+              <h3>{i.title}</h3>
+              <p>{i.excerpt}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="gallery">
+      <h2>更多美好瞬间</h2>
+      <div class="grid">
+        {items.map((i) => (
+          <figure class="item">
+            <img src={i.src} alt={i.alt} loading="lazy" decoding="async" />
+            <figcaption>{i.title}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    <section class="footer">
+      <p>期待您的到来 · Love & Peace</p>
+      <a class="cta secondary" href="/api/reservations">立即回复</a>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  :root { color-scheme: light dark; }
+  .invite {
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: 64px;
+    background: #fff;
+    color: #222;
+  }
+  @media (prefers-color-scheme: dark) {
+    .invite { background: #000; color: #eee; }
+  }
+  .cover {
+    padding: 28px 16px 12px;
+    text-align: center;
+  }
+  .title {
+    font-size: clamp(24px, 7vw, 32px);
+    margin: 0 0 6px;
+    letter-spacing: 0.08em;
+  }
+  .subtitle {
+    font-size: 14px;
+    margin: 0 0 12px;
+    color: #666;
+  }
+  @media (prefers-color-scheme: dark) {
+    .subtitle { color: #aaa; }
+  }
+  .cta {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: #e94e77;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .cta.secondary { background: #1f8b4c; }
+
+  .slider {
+    padding: 10px 12px 0;
+  }
+
+  .details {
+    padding: 16px;
+  }
+  .details h2, .gallery h2 {
+    font-size: 18px;
+    margin: 12px 0;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  .cards {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(255,255,255,.7);
+  }
+  @media (prefers-color-scheme: dark) {
+    .card { border-color: rgba(255,255,255,.08); background: rgba(20,20,20,.7); }
+  }
+  .card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+  .card .info {
+    padding: 10px 12px 12px;
+  }
+  .card h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+  }
+  .card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #555;
+  }
+  @media (prefers-color-scheme: dark) {
+    .card p { color: #bbb; }
+  }
+
+  .gallery {
+    padding: 4px 12px 16px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  @media (min-width: 480px) {
+    .grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  .item {
+    margin: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    .item { border-color: rgba(255,255,255,.08); }
+  }
+  .item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+  }
+  .item figcaption {
+    font-size: 12px;
+    padding: 6px 8px;
+    color: #666;
+    background: rgba(0,0,0,.02);
+  }
+  @media (prefers-color-scheme: dark) {
+    .item figcaption { color: #bbb; background: rgba(255,255,255,.03); }
+  }
+
+  .footer {
+    text-align: center;
+    padding: 16px;
+    color: #777;
+  }
+  @media (prefers-color-scheme: dark) {
+    .footer { color: #aaa; }
+  }
+</style>

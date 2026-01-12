@@ -1,0 +1,166 @@
+---
+export interface Props {
+	src: string;
+	title: string;
+	copy: string;
+	index: number;
+	total: number;
+}
+const { src, title, copy, index, total } = Astro.props;
+---
+
+<section class="slide" data-index={index}>
+	<figure class="image">
+		<img src={src} alt={title} loading="lazy" decoding="async" />
+		<figcaption class="overlay">
+			<h2>{title}</h2>
+			<p>{copy}</p>
+		</figcaption>
+	</figure>
+	<div class="progress">{index + 1}/{total}</div>
+</section>
+<script>
+	const root = document.currentScript?.previousElementSibling as HTMLElement;
+	if (root) {
+		const img = root.querySelector("img")!;
+		const overlay = root.querySelector(".overlay") as HTMLElement;
+		const reveal = () => {
+			root.classList.add("visible");
+		};
+		const io = new IntersectionObserver(
+			(entries) => entries.forEach((e) => e.isIntersecting && reveal()),
+			{ threshold: 0.25 }
+		);
+		io.observe(root);
+		const next = () => {
+			const slides = Array.from(
+				document.querySelectorAll(".slide")
+			) as HTMLElement[];
+			const i = slides.indexOf(root);
+			const nextEl = slides[i + 1];
+			if (nextEl) nextEl.scrollIntoView({ behavior: "smooth", block: "start" });
+		};
+		const prev = () => {
+			const slides = Array.from(
+				document.querySelectorAll(".slide")
+			) as HTMLElement[];
+			const i = slides.indexOf(root);
+			const prevEl = slides[i - 1];
+			if (prevEl) prevEl.scrollIntoView({ behavior: "smooth", block: "start" });
+		};
+		root.addEventListener("click", next);
+		root.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") next();
+		});
+		let startY = 0;
+		root.addEventListener(
+			"touchstart",
+			(e) => {
+				startY = e.changedTouches[0].clientY;
+			},
+			{ passive: true }
+		);
+		root.addEventListener(
+			"touchend",
+			(e) => {
+				const endY = e.changedTouches[0].clientY;
+				const delta = endY - startY;
+				if (delta < -40) next();
+				else if (delta > 40) prev();
+			},
+			{ passive: true }
+		);
+	}
+	try {
+		if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			document.documentElement.classList.add("reduce-motion");
+		}
+	} catch {}
+</script>
+<style>
+	.slide {
+		height: 100vh;
+		width: 100%;
+		position: relative;
+		display: grid;
+		place-items: center;
+		background: #000;
+		overflow: hidden;
+	}
+	.image {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+		position: relative;
+	}
+	.image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		opacity: 0;
+		transform: scale(1.02);
+		will-change: opacity, transform;
+	}
+	.overlay {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: 18px 16px 22px;
+		background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+		color: #fff;
+		opacity: 0;
+		transform: translateY(12px);
+		will-change: opacity, transform;
+	}
+	.overlay h2 {
+		margin: 0 0 6px;
+		font-size: clamp(18px, 6vw, 22px);
+		letter-spacing: 0.06em;
+	}
+	.overlay p {
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.6;
+		color: rgba(255, 255, 255, 0.88);
+	}
+	.progress {
+		position: absolute;
+		bottom: 10px;
+		right: 12px;
+		font-size: 12px;
+		color: rgba(255, 255, 255, 0.8);
+	}
+	.slide.visible .image img {
+		animation: fadeIn 800ms ease forwards;
+	}
+	.slide.visible .overlay {
+		animation: textIn 800ms 120ms ease forwards;
+	}
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: scale(1.02);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+	@keyframes textIn {
+		from {
+			opacity: 0;
+			transform: translateY(12px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+	.reduce-motion .slide.visible .image img,
+	.reduce-motion .slide.visible .overlay {
+		animation: none !important;
+		opacity: 1;
+		transform: none;
+	}
+</style>

@@ -1,0 +1,78 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { slides } from '../data/slides';
+---
+<Layout>
+  <main class="swiper-page">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
+    <swiper-container
+      direction="vertical"
+      effect="fade"
+      speed="600"
+      allow-touch-move="true"
+      mousewheel="true"
+      keyboard="true"
+      pagination="true"
+      style="width:100%;height:100vh"
+    >
+      {slides.map((s) => (
+        <swiper-slide>
+          <figure class="slide">
+            <img src={s.src} alt={s.title} />
+            <figcaption class="overlay">
+              <h2>{s.title}</h2>
+              <p>{s.copy}</p>
+            </figcaption>
+          </figure>
+        </swiper-slide>
+      ))}
+      <swiper-slide>
+        <section class="invite-card">
+          <h3>婚礼信息</h3>
+          <p>日期：2026-06-06 周六 15:00</p>
+          <p>地点：爱与和平礼堂 · 二层宴会厅</p>
+          <p>着装：简约正式</p>
+          <div class="btns">
+            <a class="cta" href="/api/reservations">确认出席</a>
+            <a class="map" href="https://maps.example.com" target="_blank" rel="noopener">查看地图</a>
+          </div>
+        </section>
+      </swiper-slide>
+    </swiper-container>
+  </main>
+</Layout>
+<style>
+  .swiper-page { width: 100%; height: 100vh; background: #000; }
+  .slide { margin: 0; width: 100%; height: 100vh; position: relative; }
+  .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .overlay {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 18px 16px 22px;
+    color: #fff;
+    background: linear-gradient(transparent, rgba(0,0,0,.55));
+    opacity: 0; transform: translateY(10px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .overlay h2 { margin: 0 0 6px; font-size: clamp(18px,6vw,22px); letter-spacing: .06em; }
+  .overlay p { margin: 0; font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.88); }
+  .swiper-slide-active .overlay { opacity: 1; transform: translateY(0); }
+  .invite-card {
+    width: min(92vw, 560px); margin: 0 auto;
+    height: 100vh; display: grid; place-items: center;
+    color: #fff;
+  }
+  .invite-card > div, .invite-card { background: transparent; }
+  .invite-card h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: .06em; }
+  .invite-card p { margin: 4px 0; font-size: 14px; color: rgba(255,255,255,.86); }
+  .btns { display: flex; gap: 10px; margin-top: 10px; }
+  .cta {
+    display: inline-block; padding: 12px 18px; border-radius: 999px;
+    background: #e94e77; color: #fff; text-decoration: none; font-size: 15px;
+    box-shadow: 0 6px 20px rgba(233,78,119,.35);
+  }
+  .map {
+    display: inline-block; padding: 12px 16px; border-radius: 999px;
+    background: rgba(255,255,255,.12); color: #fff; text-decoration: none; font-size: 15px;
+    border: 1px solid rgba(255,255,255,.22);
+  }
+</style>
