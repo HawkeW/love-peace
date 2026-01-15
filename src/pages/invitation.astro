@@ -1,11 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Carousel from '../components/Carousel.astro';
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import fs from 'fs';
 import path from 'path';
 
 interface Item {
-  src: string;
+  src: ImageMetadata;
   alt: string;
   title: string;
   excerpt: string;
@@ -24,12 +26,17 @@ function getTitleExcerpt(md: string) {
   return { title, excerpt };
 }
 
-const weddingDir = path.resolve(process.cwd(), 'public/gallery/wedding');
-const descDir = path.resolve(process.cwd(), 'public/descs');
-const images = fs.readdirSync(weddingDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
+// Import all wedding images from src/assets
+const imageModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/gallery/wedding/*.jpeg',
+  { eager: true }
+);
 
-const items: Item[] = images.map((f) => {
-  const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
+const descDir = path.resolve(process.cwd(), 'public/descs');
+
+const items: Item[] = Object.entries(imageModules).map(([filepath, module]) => {
+  const filename = filepath.split('/').pop() ?? '';
+  const base = filename.replace(/\.(jpe?g|png|webp)$/i, '');
   const mdPath = path.join(descDir, `${base}.md`);
   let title = base;
   let excerpt = '';
@@ -40,37 +47,45 @@ const items: Item[] = images.map((f) => {
     excerpt = parsed.excerpt;
   }
   return {
-    src: `/gallery/wedding/${f}`,
+    src: module.default,
     alt: title,
     title,
     excerpt
   };
 });
 
-const slides = items.map(i => ({ src: i.src, alt: i.alt }));
+const slides = items.slice(0, 6).map(i => ({ src: i.src, alt: i.alt }));
 const eventTitle = '婚礼电子请帖';
 const eventSub = '诚挚邀请您莅临见证我们的幸福时刻';
 const ctaText = '确认出席';
 ---
 
-<Layout>
+<Layout title="婚礼电子请帖">
   <main class="invite">
-    <section class="cover">
+    <section class="cover" transition:name="hero">
       <h1 class="title">{eventTitle}</h1>
       <p class="subtitle">{eventSub}</p>
       <a class="cta" href="/api/reservations">{ctaText}</a>
     </section>
 
-    <section class="slider">
+    <section class="slider animate-on-scroll">
       <Carousel slides={slides} interval={4000} />
     </section>
 
-    <section class="details">
+    <section class="details animate-on-scroll">
       <h2>照片故事精选</h2>
       <ul class="cards">
-        {items.slice(0, 6).map((i) => (
-          <li class="card">
-            <img src={i.src} alt={i.alt} loading="lazy" decoding="async" />
+        {items.slice(0, 6).map((i, idx) => (
+          <li class="card" style={`--stagger: ${idx}`}>
+            <Picture
+              src={i.src}
+              alt={i.alt}
+              widths={[400, 640]}
+              sizes="(max-width: 640px) 100vw, 640px"
+              formats={['avif', 'webp']}
+              loading="lazy"
+              decoding="async"
+            />
             <div class="info">
               <h3>{i.title}</h3>
               <p>{i.excerpt}</p>
@@ -80,19 +95,27 @@ const ctaText = '确认出席';
       </ul>
     </section>
 
-    <section class="gallery">
+    <section class="gallery animate-on-scroll">
       <h2>更多美好瞬间</h2>
       <div class="grid">
-        {items.map((i) => (
-          <figure class="item">
-            <img src={i.src} alt={i.alt} loading="lazy" decoding="async" />
+        {items.map((i, idx) => (
+          <figure class="item" style={`--stagger: ${idx % 6}`}>
+            <Picture
+              src={i.src}
+              alt={i.alt}
+              widths={[200, 400]}
+              sizes="(max-width: 480px) 50vw, 33vw"
+              formats={['avif', 'webp']}
+              loading="lazy"
+              decoding="async"
+            />
             <figcaption>{i.title}</figcaption>
           </figure>
         ))}
       </div>
     </section>
 
-    <section class="footer">
+    <section class="footer animate-on-scroll">
       <p>期待您的到来 · Love & Peace</p>
       <a class="cta secondary" href="/api/reservations">立即回复</a>
     </section>
@@ -101,6 +124,31 @@ const ctaText = '确认出席';
 
 <style>
   :root { color-scheme: light dark; }
+
+  /* ===== Scroll-driven animation keyframes ===== */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* ===== Base styles ===== */
   .invite {
     max-width: 640px;
     margin: 0 auto;
@@ -111,9 +159,26 @@ const ctaText = '确认出席';
   @media (prefers-color-scheme: dark) {
     .invite { background: #000; color: #eee; }
   }
+
+  /* ===== Scroll-driven animations ===== */
+  .animate-on-scroll {
+    animation: fade-in-up 0.6s ease both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  /* Fallback for browsers without scroll-timeline support */
+  @supports not (animation-timeline: view()) {
+    .animate-on-scroll {
+      animation: fade-in-up 0.6s ease both;
+    }
+  }
+
+  /* ===== Cover section ===== */
   .cover {
     padding: 28px 16px 12px;
     text-align: center;
+    animation: scale-in 0.8s ease both;
   }
   .title {
     font-size: clamp(24px, 7vw, 32px);
@@ -128,6 +193,8 @@ const ctaText = '确认出席';
   @media (prefers-color-scheme: dark) {
     .subtitle { color: #aaa; }
   }
+
+  /* ===== CTA buttons with hover effects ===== */
   .cta {
     display: inline-block;
     padding: 10px 16px;
@@ -136,13 +203,28 @@ const ctaText = '确认出席';
     color: #fff;
     text-decoration: none;
     font-size: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
-  .cta.secondary { background: #1f8b4c; }
+  .cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(233, 78, 119, 0.4);
+  }
+  .cta:active {
+    transform: translateY(0);
+  }
+  .cta.secondary {
+    background: #1f8b4c;
+  }
+  .cta.secondary:hover {
+    box-shadow: 0 4px 12px rgba(31, 139, 76, 0.4);
+  }
 
+  /* ===== Slider section ===== */
   .slider {
     padding: 10px 12px 0;
   }
 
+  /* ===== Details section ===== */
   .details {
     padding: 16px;
   }
@@ -152,6 +234,8 @@ const ctaText = '确认出席';
     font-weight: 600;
     letter-spacing: 0.06em;
   }
+
+  /* ===== Cards with stagger animation ===== */
   .cards {
     list-style: none;
     padding: 0;
@@ -165,15 +249,48 @@ const ctaText = '确认出席';
     overflow: hidden;
     border: 1px solid rgba(0,0,0,.08);
     background: rgba(255,255,255,.7);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fade-in-up 0.5s ease both;
+    animation-delay: calc(var(--stagger, 0) * 80ms);
+    animation-timeline: view();
+    animation-range: entry 0% cover 40%;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
   }
   @media (prefers-color-scheme: dark) {
-    .card { border-color: rgba(255,255,255,.08); background: rgba(20,20,20,.7); }
+    .card {
+      border-color: rgba(255,255,255,.08);
+      background: rgba(20,20,20,.7);
+    }
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(255,255,255,.08);
+    }
   }
-  .card img {
+
+  /* Fallback for browsers without scroll-timeline */
+  @supports not (animation-timeline: view()) {
+    .card {
+      animation-timeline: auto;
+    }
+  }
+
+  .card :global(picture) {
+    display: block;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    overflow: hidden;
+  }
+  .card :global(img) {
     width: 100%;
-    height: 180px;
+    height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.4s ease;
+  }
+  .card:hover :global(img) {
+    transform: scale(1.05);
   }
   .card .info {
     padding: 10px 12px 12px;
@@ -192,6 +309,7 @@ const ctaText = '确认出席';
     .card p { color: #bbb; }
   }
 
+  /* ===== Gallery section ===== */
   .gallery {
     padding: 4px 12px 16px;
   }
@@ -203,31 +321,78 @@ const ctaText = '确认出席';
   @media (min-width: 480px) {
     .grid { grid-template-columns: 1fr 1fr 1fr; }
   }
+
+  /* ===== Grid items with stagger and hover ===== */
   .item {
     margin: 0;
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(0,0,0,.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: scale-in 0.4s ease both;
+    animation-delay: calc(var(--stagger, 0) * 50ms);
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+  .item:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 16px rgba(0,0,0,.15);
+    z-index: 1;
   }
   @media (prefers-color-scheme: dark) {
     .item { border-color: rgba(255,255,255,.08); }
+    .item:hover {
+      box-shadow: 0 6px 16px rgba(255,255,255,.1);
+    }
   }
-  .item img {
+
+  /* Fallback for browsers without scroll-timeline */
+  @supports not (animation-timeline: view()) {
+    .item {
+      animation-timeline: auto;
+    }
+  }
+
+  .item :global(picture) {
+    display: block;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    overflow: hidden;
+  }
+  .item :global(img) {
     width: 100%;
-    height: 120px;
+    height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.4s ease;
+  }
+  .item:hover :global(img) {
+    transform: scale(1.08);
   }
   .item figcaption {
     font-size: 12px;
     padding: 6px 8px;
     color: #666;
     background: rgba(0,0,0,.02);
+    transition: background 0.2s ease;
+  }
+  .item:hover figcaption {
+    background: rgba(0,0,0,.06);
   }
   @media (prefers-color-scheme: dark) {
     .item figcaption { color: #bbb; background: rgba(255,255,255,.03); }
+    .item:hover figcaption { background: rgba(255,255,255,.08); }
   }
 
+  /* ===== Focus effect using :has() ===== */
+  @supports selector(:has(*)) {
+    .grid:has(.item:hover) .item:not(:hover) {
+      opacity: 0.7;
+      transform: scale(0.98);
+    }
+  }
+
+  /* ===== Footer section ===== */
   .footer {
     text-align: center;
     padding: 16px;

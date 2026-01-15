@@ -1,8 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Picture } from 'astro:assets';
 import { slides } from '../data/slides';
 ---
-<Layout>
+<Layout title="婚礼请帖 - Swiper版">
   <main class="swiper-page">
     <script type="module" src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
     <swiper-container
@@ -15,10 +16,19 @@ import { slides } from '../data/slides';
       pagination="true"
       style="width:100%;height:100vh"
     >
-      {slides.map((s) => (
+      {slides.map((s, idx) => (
         <swiper-slide>
           <figure class="slide">
-            <img src={s.src} alt={s.title} />
+            <Picture
+              src={s.src}
+              alt={s.title}
+              widths={[640, 1024, 1600]}
+              sizes="100vw"
+              formats={['avif', 'webp']}
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchpriority={idx === 0 ? 'high' : undefined}
+            />
             <figcaption class="overlay">
               <h2>{s.title}</h2>
               <p>{s.copy}</p>
@@ -44,7 +54,8 @@ import { slides } from '../data/slides';
 <style>
   .swiper-page { width: 100%; height: 100vh; background: #000; }
   .slide { margin: 0; width: 100%; height: 100vh; position: relative; }
-  .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .slide :global(picture) { display: contents; }
+  .slide :global(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
   .overlay {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 18px 16px 22px;
@@ -55,7 +66,7 @@ import { slides } from '../data/slides';
   }
   .overlay h2 { margin: 0 0 6px; font-size: clamp(18px,6vw,22px); letter-spacing: .06em; }
   .overlay p { margin: 0; font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.88); }
-  .swiper-slide-active .overlay { opacity: 1; transform: translateY(0); }
+  :global(.swiper-slide-active) .overlay { opacity: 1; transform: translateY(0); }
   .invite-card {
     width: min(92vw, 560px); margin: 0 auto;
     height: 100vh; display: grid; place-items: center;
@@ -69,10 +80,19 @@ import { slides } from '../data/slides';
     display: inline-block; padding: 12px 18px; border-radius: 999px;
     background: #e94e77; color: #fff; text-decoration: none; font-size: 15px;
     box-shadow: 0 6px 20px rgba(233,78,119,.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(233,78,119,.45);
   }
   .map {
     display: inline-block; padding: 12px 16px; border-radius: 999px;
     background: rgba(255,255,255,.12); color: #fff; text-decoration: none; font-size: 15px;
     border: 1px solid rgba(255,255,255,.22);
+    transition: background 0.2s ease;
+  }
+  .map:hover {
+    background: rgba(255,255,255,.2);
   }
 </style>

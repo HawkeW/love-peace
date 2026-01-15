@@ -1,6 +1,9 @@
 ---
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
 export interface Slide {
-  src: string;
+  src: ImageMetadata | string;
   alt: string;
 }
 export interface Props {
@@ -8,12 +11,34 @@ export interface Props {
   interval?: number;
 }
 const { slides = [], interval = 4000 } = Astro.props;
+
+function isImageMetadata(src: ImageMetadata | string): src is ImageMetadata {
+  return typeof src === 'object' && 'src' in src;
+}
 ---
 <div class="carousel" data-interval={interval}>
   <div class="track">
-    {slides.map((s) => (
+    {slides.map((s, idx) => (
       <figure class="slide">
-        <img src={s.src} alt={s.alt} loading="lazy" decoding="async" />
+        {isImageMetadata(s.src) ? (
+          <Picture
+            src={s.src}
+            alt={s.alt}
+            widths={[400, 640, 800]}
+            sizes="(max-width: 640px) 100vw, 640px"
+            formats={['avif', 'webp']}
+            loading={idx === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchpriority={idx === 0 ? 'high' : undefined}
+          />
+        ) : (
+          <img
+            src={s.src}
+            alt={s.alt}
+            loading={idx === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        )}
         <figcaption>{s.alt}</figcaption>
       </figure>
     ))}
@@ -66,10 +91,15 @@ const { slides = [], interval = 4000 } = Astro.props;
     min-width: 100%;
     margin: 0;
     position: relative;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   }
-  .slide img {
+  .slide :global(picture) {
+    display: contents;
+  }
+  .slide :global(img) {
     width: 100%;
-    height: 240px;
+    height: 100%;
     object-fit: cover;
     display: block;
   }

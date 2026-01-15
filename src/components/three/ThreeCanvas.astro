@@ -1,0 +1,80 @@
+---
+/**
+ * ThreeCanvas.astro - Three.js canvas container
+ * Handles renderer setup, resize, and WebGL context
+ */
+interface Props {
+  class?: string;
+  id?: string;
+}
+
+const { class: className = '', id = 'three-canvas' } = Astro.props;
+---
+
+<div class:list={['three-container', className]} data-three-container>
+  <canvas id={id}></canvas>
+  <slot />
+</div>
+
+<style>
+  .three-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .three-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Fallback for no WebGL */
+  .three-container.no-webgl canvas {
+    display: none;
+  }
+
+  .three-container.no-webgl::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--midnight-blue, #0D1B2A), #1a2a3a);
+  }
+</style>
+
+<script>
+  import { detectDeviceCapabilities, getOptimalPixelRatio } from '../../utils/performance';
+
+  // Check WebGL support and add class if not supported
+  function checkWebGL() {
+    const containers = document.querySelectorAll('[data-three-container]');
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    
+    if (!gl) {
+      containers.forEach(container => {
+        container.classList.add('no-webgl');
+      });
+      return false;
+    }
+    return true;
+  }
+
+  // Expose capabilities globally for other components
+  if (typeof window !== 'undefined') {
+    const capabilities = detectDeviceCapabilities();
+    (window as any).__threeCapabilities = capabilities;
+    (window as any).__optimalPixelRatio = getOptimalPixelRatio(capabilities.tier);
+    
+    // Check WebGL support on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkWebGL);
+    } else {
+      checkWebGL();
+    }
+  }
+</script>

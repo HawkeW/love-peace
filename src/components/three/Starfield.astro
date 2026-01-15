@@ -1,0 +1,399 @@
+---
+/**
+ * Starfield.astro - Animated starfield background
+ * Creates an immersive constellation-like background
+ */
+interface Props {
+  class?: string;
+  starCount?: number;
+  interactive?: boolean;
+}
+
+const { 
+  class: className = '', 
+  starCount = 1500,
+  interactive = true
+} = Astro.props;
+---
+
+<div 
+  class:list={['starfield', className]} 
+  data-starfield
+  data-star-count={starCount}
+  data-interactive={interactive}
+>
+  <canvas class="starfield-canvas"></canvas>
+</div>
+
+<style>
+  .starfield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(
+      180deg,
+      var(--midnight-blue, #0D1B2A) 0%,
+      #1a2a3a 50%,
+      #0D1B2A 100%
+    );
+  }
+
+  .starfield-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* CSS fallback for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .starfield::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(2px 2px at 40% 70%, rgba(255,220,180,0.8), transparent),
+        radial-gradient(2px 2px at 60% 20%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 10% 80%, rgba(255,200,150,0.5), transparent);
+      background-size: 250px 250px;
+    }
+    .starfield-canvas {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import * as THREE from 'three';
+  import { createRenderer, disposeResources } from '../../utils/three-helpers';
+  import { prefersReducedMotion, getParticleCount, detectDeviceCapabilities } from '../../utils/performance';
+
+  class StarfieldScene {
+    private scene: THREE.Scene;
+    private camera: THREE.PerspectiveCamera;
+    private renderer: THREE.WebGLRenderer;
+    private stars: THREE.Points | null = null;
+    private shootingStars: THREE.Points | null = null;
+    private time = 0;
+    private isAnimating = true;
+    private container: HTMLElement;
+    private mouse = { x: 0, y: 0 };
+    private targetRotation = { x: 0, y: 0 };
+    private isInteractive: boolean;
+
+    constructor(container: HTMLElement, starCount: number, interactive: boolean) {
+      this.container = container;
+      this.isInteractive = interactive;
+      
+      const canvas = container.querySelector('.starfield-canvas') as HTMLCanvasElement;
+      if (!canvas) return;
+
+      this.scene = new THREE.Scene();
+      
+      // Camera
+      this.camera = new THREE.PerspectiveCamera(
+        60,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      );
+      this.camera.position.z = 1;
+
+      // Renderer
+      const capabilities = detectDeviceCapabilities();
+      const pixelRatio = Math.min(window.devicePixelRatio, capabilities.tier === 'low' ? 1 : 1.5);
+      
+      this.renderer = createRenderer(canvas, { pixelRatio, antialias: false, alpha: true });
+      this.renderer.setSize(container.clientWidth, container.clientHeight);
+      this.renderer.setClearColor(0x000000, 0);
+
+      // Adjust star count based on device
+      const adjustedCount = Math.min(starCount, getParticleCount(capabilities.tier));
+      
+      this.createStars(adjustedCount);
+      this.createShootingStars(20);
+      this.setupEvents();
+      this.animate();
+    }
+
+    private createStars(count: number) {
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+      const twinklePhase = new Float32Array(count);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        
+        // Distribute in a sphere
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        const r = 50 + Math.random() * 50;
+        
+        positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+        positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        positions[i3 + 2] = r * Math.cos(phi) - 30;
+        
+        // Star colors (warm to cool)
+        const colorType = Math.random();
+        if (colorType < 0.3) {
+          // Warm golden
+          colors[i3] = 1.0;
+          colors[i3 + 1] = 0.85 + Math.random() * 0.15;
+          colors[i3 + 2] = 0.7 + Math.random() * 0.2;
+        } else if (colorType < 0.6) {
+          // White
+          colors[i3] = 1.0;
+          colors[i3 + 1] = 1.0;
+          colors[i3 + 2] = 1.0;
+        } else {
+          // Cool blue-white
+          colors[i3] = 0.8 + Math.random() * 0.2;
+          colors[i3 + 1] = 0.9 + Math.random() * 0.1;
+          colors[i3 + 2] = 1.0;
+        }
+        
+        sizes[i] = Math.random() * 2 + 0.5;
+        twinklePhase[i] = Math.random() * Math.PI * 2;
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      geometry.setAttribute('twinklePhase', new THREE.BufferAttribute(twinklePhase, 1));
+
+      const material = new THREE.ShaderMaterial({
+        vertexShader: `
+          attribute float size;
+          attribute vec3 color;
+          attribute float twinklePhase;
+          varying vec3 vColor;
+          varying float vTwinkle;
+          uniform float uTime;
+          
+          void main() {
+            vColor = color;
+            vTwinkle = 0.7 + 0.3 * sin(uTime * 2.0 + twinklePhase);
+            
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * (200.0 / -mvPosition.z) * vTwinkle;
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vColor;
+          varying float vTwinkle;
+          
+          void main() {
+            float dist = length(gl_PointCoord - vec2(0.5));
+            if (dist > 0.5) discard;
+            
+            float alpha = 1.0 - dist * 2.0;
+            alpha = pow(alpha, 1.5) * vTwinkle;
+            
+            // Glow effect
+            vec3 glow = vColor * (1.0 + (1.0 - dist * 2.0) * 0.5);
+            
+            gl_FragColor = vec4(glow, alpha * 0.9);
+          }
+        `,
+        uniforms: {
+          uTime: { value: 0 }
+        },
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
+      this.stars = new THREE.Points(geometry, material);
+      this.scene.add(this.stars);
+    }
+
+    private createShootingStars(count: number) {
+      const positions = new Float32Array(count * 3);
+      const velocities = new Float32Array(count * 3);
+      const lifetimes = new Float32Array(count);
+
+      for (let i = 0; i < count; i++) {
+        this.resetShootingStar(positions, velocities, lifetimes, i);
+        lifetimes[i] = Math.random(); // Stagger initial positions
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+      geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
+
+      const material = new THREE.ShaderMaterial({
+        vertexShader: `
+          attribute float lifetime;
+          varying float vAlpha;
+          
+          void main() {
+            vAlpha = lifetime < 0.5 ? lifetime * 2.0 : (1.0 - lifetime) * 2.0;
+            vAlpha = pow(vAlpha, 0.5);
+            
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = 3.0 * vAlpha * (100.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+        fragmentShader: `
+          varying float vAlpha;
+          
+          void main() {
+            float dist = length(gl_PointCoord - vec2(0.5));
+            if (dist > 0.5) discard;
+            
+            float alpha = (1.0 - dist * 2.0) * vAlpha;
+            vec3 color = vec3(1.0, 0.95, 0.8);
+            
+            gl_FragColor = vec4(color, alpha);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
+      this.shootingStars = new THREE.Points(geometry, material);
+      this.scene.add(this.shootingStars);
+    }
+
+    private resetShootingStar(
+      positions: Float32Array, 
+      velocities: Float32Array, 
+      lifetimes: Float32Array, 
+      index: number
+    ) {
+      const i3 = index * 3;
+      
+      // Random start position at edge of view
+      positions[i3] = (Math.random() - 0.5) * 100;
+      positions[i3 + 1] = 30 + Math.random() * 20;
+      positions[i3 + 2] = -20 - Math.random() * 30;
+      
+      // Velocity (moving down and to the side)
+      velocities[i3] = (Math.random() - 0.5) * 2;
+      velocities[i3 + 1] = -1 - Math.random() * 2;
+      velocities[i3 + 2] = Math.random() * 0.5;
+      
+      lifetimes[index] = 0;
+    }
+
+    private setupEvents() {
+      // Resize handler
+      const handleResize = () => {
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height);
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      // Mouse movement for interactive effect
+      if (this.isInteractive) {
+        const handleMouseMove = (e: MouseEvent) => {
+          this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+          this.mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+      }
+    }
+
+    private updateShootingStars(delta: number) {
+      if (!this.shootingStars) return;
+
+      const positions = this.shootingStars.geometry.attributes.position.array as Float32Array;
+      const velocities = this.shootingStars.geometry.attributes.velocity.array as Float32Array;
+      const lifetimes = this.shootingStars.geometry.attributes.lifetime.array as Float32Array;
+      const count = lifetimes.length;
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        
+        // Update position
+        positions[i3] += velocities[i3] * delta * 30;
+        positions[i3 + 1] += velocities[i3 + 1] * delta * 30;
+        positions[i3 + 2] += velocities[i3 + 2] * delta * 30;
+        
+        // Update lifetime
+        lifetimes[i] += delta * 0.3;
+        
+        // Reset if lifetime exceeded
+        if (lifetimes[i] > 1) {
+          this.resetShootingStar(positions, velocities, lifetimes, i);
+        }
+      }
+
+      this.shootingStars.geometry.attributes.position.needsUpdate = true;
+      this.shootingStars.geometry.attributes.lifetime.needsUpdate = true;
+    }
+
+    private animate = () => {
+      if (!this.isAnimating) return;
+      
+      const delta = 0.016; // ~60fps
+      this.time += delta;
+
+      // Update star twinkle
+      if (this.stars) {
+        (this.stars.material as THREE.ShaderMaterial).uniforms.uTime.value = this.time;
+        
+        // Subtle rotation based on scroll
+        this.stars.rotation.y += 0.0002;
+      }
+
+      // Interactive camera movement
+      if (this.isInteractive) {
+        this.targetRotation.x = this.mouse.y * 0.1;
+        this.targetRotation.y = this.mouse.x * 0.1;
+        
+        this.camera.rotation.x += (this.targetRotation.x - this.camera.rotation.x) * 0.02;
+        this.camera.rotation.y += (this.targetRotation.y - this.camera.rotation.y) * 0.02;
+      }
+
+      // Update shooting stars
+      this.updateShootingStars(delta);
+
+      this.renderer.render(this.scene, this.camera);
+      requestAnimationFrame(this.animate);
+    };
+
+    dispose() {
+      this.isAnimating = false;
+      disposeResources(this.scene, this.renderer);
+    }
+  }
+
+  // Initialize
+  function init() {
+    if (prefersReducedMotion()) return;
+
+    const containers = document.querySelectorAll('[data-starfield]');
+    
+    containers.forEach(container => {
+      const starCount = parseInt(container.getAttribute('data-star-count') || '1500');
+      const interactive = container.getAttribute('data-interactive') !== 'false';
+      
+      new StarfieldScene(container as HTMLElement, starCount, interactive);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>

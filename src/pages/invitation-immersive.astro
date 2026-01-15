@@ -1,0 +1,1266 @@
+---
+/**
+ * invitation-immersive.astro - Immersive wedding invitation page
+ * Design refs: smooothy.federic.ooo, siena.film, gabrielcontassot.com, vvisual.biz
+ * Style: Light & Airy + Organic Flow + Multiple Layout Variations
+ */
+import Layout from '../layouts/Layout.astro';
+import OrganicBlob from '../components/effects/OrganicBlob.astro';
+import { Picture } from 'astro:assets';
+import { slides, carouselImages } from '../data/slides';
+
+// Event details
+const eventDetails = {
+  groomName: '新郎',
+  brideName: '新娘',
+  date: '2025年X月X日',
+  time: '下午6:00',
+  venue: '婚礼场地名称',
+  address: '详细地址信息'
+};
+---
+
+<Layout title="婚礼邀请函">
+  <div class="invitation" data-lenis-prevent>
+    
+    <!-- Hero Section - Full viewport -->
+    <section class="hero">
+      <OrganicBlob variant="hero" />
+      <div class="hero-content">
+        <p class="hero-label">Wedding Invitation</p>
+        <h1 class="hero-names">
+          <span class="name">{eventDetails.groomName}</span>
+          <span class="amp">&</span>
+          <span class="name">{eventDetails.brideName}</span>
+        </h1>
+        <p class="hero-date">{eventDetails.date}</p>
+        <div class="scroll-cue">
+          <span>往下滑</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story Section - Multiple Layout Variations -->
+    <section class="story" id="story">
+      {slides.map((slide, index) => (
+        <>
+          {/* Layout: Dialogue Bubble - WeChat style chat */}
+          {slide.layout === 'dialogue' && (
+            <article class="story-block story-block--dialogue" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="dialogue-bg">
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[640, 1024, 1600]}
+                  sizes="100vw"
+                  formats={['avif', 'webp']}
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+              <div class="dialogue-container">
+                <div class="dialogue-header">
+                  <span class="dialogue-title">{slide.title}</span>
+                </div>
+                <div class="dialogue-bubbles">
+                  {slide.dialogueLines?.map((line, i) => (
+                    <div class={`bubble ${i % 2 === 0 ? 'bubble--left' : 'bubble--right'}`} style={`--delay: ${i * 0.15}s`}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
+                <p class="dialogue-caption">{slide.copy}</p>
+              </div>
+            </article>
+          )}
+
+          {/* Layout: Split Left - Image left, text right */}
+          {slide.layout === 'split-left' && (
+            <article class="story-block story-block--split story-block--split-left" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="split-media">
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[640, 1024, 1600]}
+                  sizes="50vw"
+                  formats={['avif', 'webp']}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="split-content">
+                <span class="caption-index">0{index + 1}</span>
+                <h2 class="split-title">{slide.title}</h2>
+                <p class="split-text">{slide.copy}</p>
+              </div>
+            </article>
+          )}
+
+          {/* Layout: Decorative Number - Large number background */}
+          {slide.layout === 'deco-number' && (
+            <article class="story-block story-block--deco" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="deco-number" aria-hidden="true">0{index + 1}</div>
+              <div class="deco-media" data-parallax-img>
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[640, 1024, 1600]}
+                  sizes="60vw"
+                  formats={['avif', 'webp']}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="deco-content">
+                <h2 class="deco-title">{slide.title}</h2>
+                <p class="deco-text">{slide.copy}</p>
+              </div>
+            </article>
+          )}
+
+          {/* Insert horizontal carousel after slide 3 */}
+          {index === 2 && (
+            <div class="carousel-section">
+              <div class="carousel-track">
+                {carouselImages.map((img, ci) => (
+                  <div class="carousel-item" style={`--ci: ${ci}`}>
+                    <Picture
+                      src={img}
+                      alt={`婚纱照 ${ci + 1}`}
+                      widths={[320, 480]}
+                      sizes="280px"
+                      formats={['avif', 'webp']}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                ))}
+                {/* Duplicate for seamless loop */}
+                {carouselImages.map((img, ci) => (
+                  <div class="carousel-item" style={`--ci: ${ci + 4}`}>
+                    <Picture
+                      src={img}
+                      alt={`婚纱照 ${ci + 1}`}
+                      widths={[320, 480]}
+                      sizes="280px"
+                      formats={['avif', 'webp']}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Layout: Split Right - Image right, text left */}
+          {slide.layout === 'split-right' && (
+            <article class="story-block story-block--split story-block--split-right" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="split-content">
+                <span class="caption-index">0{index + 1}</span>
+                <h2 class="split-title">{slide.title}</h2>
+                <p class="split-text">{slide.copy}</p>
+              </div>
+              <div class="split-media">
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[640, 1024, 1600]}
+                  sizes="50vw"
+                  formats={['avif', 'webp']}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </article>
+          )}
+
+          {/* Layout: Sticky Note - Handwriting style */}
+          {slide.layout === 'sticky-note' && (
+            <article class="story-block story-block--sticky" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="sticky-bg">
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[640, 1024, 1600]}
+                  sizes="100vw"
+                  formats={['avif', 'webp']}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="sticky-note">
+                <div class="sticky-tape"></div>
+                <span class="sticky-number">0{index + 1}</span>
+                <h2 class="sticky-title">{slide.title}</h2>
+                <p class="sticky-text">{slide.copy}</p>
+                <span class="sticky-doodle">♥</span>
+              </div>
+            </article>
+          )}
+
+          {/* Layout: Minimal Large - Big text, small image */}
+          {slide.layout === 'minimal-large' && (
+            <article class="story-block story-block--minimal" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="minimal-text">
+                <h2 class="minimal-title">{slide.title}</h2>
+              </div>
+              <div class="minimal-media">
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[320, 480, 640]}
+                  sizes="280px"
+                  formats={['avif', 'webp']}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <p class="minimal-copy">{slide.copy}</p>
+            </article>
+          )}
+
+          {/* Fallback: Default full-bleed layout */}
+          {!slide.layout && (
+            <article class="story-block story-block--default" data-scroll-reveal style={`--i: ${index}`}>
+              <div class="story-media" data-parallax-img>
+                <Picture
+                  src={slide.src}
+                  alt={slide.title}
+                  widths={[640, 1024, 1600]}
+                  sizes="100vw"
+                  formats={['avif', 'webp']}
+                  loading={index < 2 ? 'eager' : 'lazy'}
+                  decoding="async"
+                />
+              </div>
+              <div class="story-caption">
+                <span class="caption-index">0{index + 1}</span>
+                <h2 class="caption-title">{slide.title}</h2>
+                <p class="caption-text">{slide.copy}</p>
+              </div>
+            </article>
+          )}
+        </>
+      ))}
+    </section>
+
+    <!-- Details Section - Minimal editorial layout -->
+    <section class="details" id="details">
+      <OrganicBlob variant="accent" />
+      <div class="details-inner">
+        <header class="details-header">
+          <span class="section-label">When & Where</span>
+          <h2 class="section-title">时间地点</h2>
+        </header>
+        
+        <div class="details-grid">
+          <div class="detail-block">
+            <span class="detail-label">Date</span>
+            <span class="detail-value">{eventDetails.date}</span>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">Time</span>
+            <span class="detail-value">{eventDetails.time}</span>
+          </div>
+          <div class="detail-block">
+            <span class="detail-label">Venue</span>
+            <span class="detail-value">{eventDetails.venue}</span>
+          </div>
+          <div class="detail-block detail-block--wide">
+            <span class="detail-label">Address</span>
+            <span class="detail-value">{eventDetails.address}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RSVP Section -->
+    <section class="rsvp" id="rsvp">
+      <div class="rsvp-inner">
+        <span class="section-label">RSVP</span>
+        <h2 class="rsvp-title">来吗？</h2>
+        <p class="rsvp-subtitle">点一下，我们就知道了</p>
+        <a href="/api/reservations" class="rsvp-btn">
+          <span>我来</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer-names">{eventDetails.groomName} & {eventDetails.brideName}</p>
+      <p class="footer-tagline">Love & Peace</p>
+    </footer>
+
+  </div>
+</Layout>
+
+<style>
+  /* ===== Design Tokens - Light & Airy ===== */
+  :root {
+    --color-cream: #FDFBF7;
+    --color-sand: #E8DED1;
+    --color-sage: #B8C4A8;
+    --color-sage-light: #D4E0C8;
+    --color-gold: #C9A96E;
+    --color-charcoal: #2D2D2D;
+    --color-text: #3D3D3D;
+    --color-text-muted: #7A7A7A;
+    
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  /* ===== Base ===== */
+  .invitation {
+    background: var(--color-cream);
+    color: var(--color-text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== Hero Section ===== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .hero-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 24px;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out-expo) 0.5s forwards;
+  }
+
+  .hero-names {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 12vw, 120px);
+    font-weight: 300;
+    line-height: 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out-expo) 0.7s forwards;
+  }
+
+  .hero-names .name {
+    display: block;
+  }
+
+  .hero-names .amp {
+    font-size: 0.4em;
+    color: var(--color-gold);
+    margin: 8px 0;
+  }
+
+  .hero-date {
+    font-family: var(--font-body);
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    color: var(--color-text-muted);
+    margin: 32px 0 0;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out-expo) 0.9s forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out-expo) 1.2s forwards;
+  }
+
+  .scroll-cue svg {
+    animation: float 2s ease-in-out infinite;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* ===== Story Section - Full Bleed Photos ===== */
+  .story {
+    position: relative;
+  }
+
+  .story-block {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .story-block:nth-child(odd) {
+    background: var(--color-cream);
+  }
+
+  .story-block:nth-child(even) {
+    background: var(--color-sand);
+  }
+
+  /* ===== Layout: Dialogue Bubble (WeChat Style) ===== */
+  .story-block--dialogue {
+    flex-direction: column;
+    padding: 60px 20px;
+  }
+
+  .dialogue-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+  }
+
+  .dialogue-bg :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(20px);
+  }
+
+  .dialogue-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px 0;
+  }
+
+  .dialogue-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .dialogue-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--color-charcoal);
+  }
+
+  .dialogue-bubbles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .bubble {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: bubbleIn 0.5s var(--ease-out-expo) forwards;
+    animation-delay: var(--delay, 0s);
+  }
+
+  .story-block--dialogue.in-view .bubble {
+    animation-play-state: running;
+  }
+
+  .bubble--left {
+    align-self: flex-start;
+    background: white;
+    color: var(--color-charcoal);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .bubble--right {
+    align-self: flex-end;
+    background: var(--color-sage);
+    color: var(--color-charcoal);
+    border-bottom-right-radius: 4px;
+  }
+
+  @keyframes bubbleIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .dialogue-caption {
+    text-align: center;
+    font-size: 14px;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin: 0;
+  }
+
+  /* ===== Layout: Split Screen ===== */
+  .story-block--split {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 0;
+  }
+
+  @media (min-width: 768px) {
+    .story-block--split {
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+  }
+
+  .split-media {
+    position: relative;
+    min-height: 50vh;
+    overflow: hidden;
+  }
+
+  @media (min-width: 768px) {
+    .split-media {
+      min-height: 100vh;
+    }
+  }
+
+  .split-media :global(picture),
+  .split-media :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .split-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 32px;
+    background: var(--color-cream);
+  }
+
+  @media (min-width: 768px) {
+    .split-content {
+      padding: 80px 60px;
+    }
+  }
+
+  .story-block--split-right .split-content {
+    order: -1;
+  }
+
+  @media (min-width: 768px) {
+    .story-block--split-right .split-content {
+      order: 0;
+    }
+  }
+
+  .split-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 300;
+    margin: 16px 0 24px;
+    color: var(--color-charcoal);
+    line-height: 1.1;
+  }
+
+  .split-text {
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--color-text-muted);
+    margin: 0;
+    max-width: 400px;
+  }
+
+  /* ===== Layout: Decorative Number ===== */
+  .story-block--deco {
+    flex-direction: column;
+    padding: 80px 24px;
+    min-height: 100vh;
+    background: var(--color-sand);
+  }
+
+  .deco-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-size: clamp(200px, 40vw, 400px);
+    font-weight: 300;
+    color: var(--color-sage-light);
+    opacity: 0.4;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deco-media {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 4/5;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    margin-bottom: 40px;
+  }
+
+  .deco-media :global(picture),
+  .deco-media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .deco-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 480px;
+  }
+
+  .deco-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 400;
+    margin: 0 0 16px;
+    color: var(--color-charcoal);
+  }
+
+  .deco-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  /* ===== Horizontal Carousel ===== */
+  .carousel-section {
+    padding: 60px 0;
+    background: var(--color-cream);
+    overflow: hidden;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 20px;
+    animation: carouselScroll 30s linear infinite;
+    width: max-content;
+  }
+
+  @keyframes carouselScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .carousel-item {
+    flex-shrink: 0;
+    width: 260px;
+    height: 340px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  .carousel-item :global(picture),
+  .carousel-item :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+
+  .carousel-item:hover :global(img) {
+    transform: scale(1.05);
+  }
+
+  /* ===== Layout: Sticky Note ===== */
+  .story-block--sticky {
+    min-height: 100vh;
+    padding: 80px 24px;
+  }
+
+  .sticky-bg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .sticky-bg :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+  }
+
+  .sticky-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(253,251,247,0.7) 0%, rgba(253,251,247,0.5) 100%);
+  }
+
+  .sticky-note {
+    position: relative;
+    z-index: 1;
+    background: #FFFEF5;
+    padding: 32px 28px 40px;
+    max-width: 320px;
+    box-shadow: 
+      0 4px 6px rgba(0,0,0,0.05),
+      0 20px 40px rgba(0,0,0,0.1);
+    transform: rotate(-2deg);
+    font-family: 'Caveat', cursive, var(--font-body);
+  }
+
+  .sticky-tape {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%) rotate(2deg);
+    width: 80px;
+    height: 24px;
+    background: rgba(200, 180, 140, 0.5);
+    border-radius: 2px;
+  }
+
+  .sticky-number {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--color-gold);
+  }
+
+  .sticky-title {
+    font-family: 'Caveat', cursive, var(--font-display);
+    font-size: 32px;
+    font-weight: 400;
+    margin: 0 0 16px;
+    color: var(--color-charcoal);
+  }
+
+  .sticky-text {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  .sticky-doodle {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    font-size: 24px;
+    color: var(--color-sage);
+    opacity: 0.6;
+  }
+
+  /* ===== Layout: Minimal Large ===== */
+  .story-block--minimal {
+    flex-direction: column;
+    padding: 80px 24px;
+    text-align: center;
+    background: var(--color-cream);
+    gap: 40px;
+  }
+
+  .minimal-text {
+    position: relative;
+  }
+
+  .minimal-title {
+    font-family: var(--font-display);
+    font-size: clamp(80px, 20vw, 180px);
+    font-weight: 300;
+    margin: 0;
+    color: var(--color-charcoal);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .minimal-media {
+    width: 200px;
+    height: 260px;
+    border-radius: 100px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+  }
+
+  @media (min-width: 768px) {
+    .minimal-media {
+      width: 260px;
+      height: 340px;
+    }
+  }
+
+  .minimal-media :global(picture),
+  .minimal-media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .minimal-copy {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 4vw, 28px);
+    font-weight: 400;
+    color: var(--color-text-muted);
+    margin: 0;
+    max-width: 400px;
+  }
+
+  /* ===== Default Layout (Fallback) ===== */
+  .story-block--default {
+    /* Keep original full-bleed behavior */
+  }
+
+  .story-media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .story-media :global(picture),
+  .story-media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1);
+    transition: transform 8s var(--ease-out-expo);
+  }
+
+  .story-block.in-view .story-media :global(img) {
+    transform: scale(1);
+  }
+
+  /* Photo overlay gradient */
+  .story-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(253, 251, 247, 0) 0%,
+      rgba(253, 251, 247, 0.3) 50%,
+      rgba(253, 251, 247, 0.9) 100%
+    );
+    pointer-events: none;
+  }
+
+  .story-caption {
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    padding: 40px 24px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    transition-delay: 0.3s;
+  }
+
+  .story-block.in-view .story-caption {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .caption-index {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--color-gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+  }
+
+  .caption-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 0 0 20px;
+    color: var(--color-charcoal);
+  }
+
+  .caption-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--color-text-muted);
+    margin: 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ===== Details Section ===== */
+  .details {
+    position: relative;
+    padding: 120px 24px;
+    background: var(--color-cream);
+    overflow: hidden;
+  }
+
+  .details-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .details-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .section-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 7vw, 56px);
+    font-weight: 300;
+    margin: 0;
+    color: var(--color-charcoal);
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px 60px;
+  }
+
+  .detail-block {
+    text-align: center;
+  }
+
+  .detail-block--wide {
+    grid-column: 1 / -1;
+  }
+
+  .detail-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+  }
+
+  .detail-value {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 4vw, 28px);
+    font-weight: 400;
+    color: var(--color-charcoal);
+  }
+
+  /* ===== RSVP Section ===== */
+  .rsvp {
+    padding: 120px 24px;
+    background: var(--color-sand);
+    text-align: center;
+  }
+
+  .rsvp-inner {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .rsvp-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 8vw, 64px);
+    font-weight: 300;
+    margin: 0 0 16px;
+    color: var(--color-charcoal);
+  }
+
+  .rsvp-subtitle {
+    font-size: 15px;
+    color: var(--color-text-muted);
+    margin: 0 0 40px;
+  }
+
+  .rsvp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 40px;
+    background: var(--color-charcoal);
+    color: var(--color-cream);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: all 0.4s var(--ease-out-expo);
+  }
+
+  .rsvp-btn:hover {
+    background: var(--color-gold);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(201, 169, 110, 0.3);
+  }
+
+  .rsvp-btn svg {
+    transition: transform 0.3s var(--ease-out-expo);
+  }
+
+  .rsvp-btn:hover svg {
+    transform: translateX(4px);
+  }
+
+  /* ===== Footer ===== */
+  .footer {
+    padding: 60px 24px 80px;
+    background: var(--color-cream);
+    text-align: center;
+  }
+
+  .footer-names {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--color-charcoal);
+    margin: 0 0 8px;
+  }
+
+  .footer-tagline {
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 640px) {
+    .hero-names {
+      font-size: clamp(40px, 15vw, 80px);
+    }
+
+    .details-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .detail-block--wide {
+      grid-column: auto;
+    }
+
+    .story-caption {
+      padding: 24px 20px 60px;
+    }
+
+    /* Dialogue mobile */
+    .dialogue-container {
+      max-width: 100%;
+      padding: 0 8px;
+    }
+
+    /* Deco number mobile */
+    .deco-number {
+      font-size: 150px;
+    }
+
+    .deco-media {
+      max-width: 280px;
+    }
+
+    /* Sticky note mobile */
+    .sticky-note {
+      max-width: 280px;
+      padding: 24px 20px 32px;
+    }
+
+    .sticky-text {
+      font-size: 16px;
+    }
+
+    /* Minimal mobile */
+    .minimal-title {
+      font-size: 60px;
+    }
+  }
+
+  /* ===== Reduced Motion ===== */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-label,
+    .hero-names,
+    .hero-date,
+    .scroll-cue {
+      animation: none;
+      opacity: 1;
+    }
+
+    .scroll-cue svg {
+      animation: none;
+    }
+
+    .story-media :global(img) {
+      transform: none;
+      transition: none;
+    }
+
+    .story-caption {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .rsvp-btn {
+      transition: none;
+    }
+
+    .bubble {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .carousel-track {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { prefersReducedMotion } from '../utils/performance';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Initialize scroll-based reveals
+  function initScrollAnimations() {
+    if (prefersReducedMotion()) return;
+
+    // Story blocks reveal on scroll
+    const storyBlocks = document.querySelectorAll('.story-block');
+    
+    storyBlocks.forEach((block) => {
+      ScrollTrigger.create({
+        trigger: block,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => block.classList.add('in-view'),
+        onLeave: () => block.classList.remove('in-view'),
+        onEnterBack: () => block.classList.add('in-view'),
+        onLeaveBack: () => block.classList.remove('in-view'),
+      });
+    });
+
+    // Parallax effect on images
+    const parallaxImages = document.querySelectorAll('[data-parallax-img]');
+    
+    parallaxImages.forEach((container) => {
+      const img = container.querySelector('img');
+      if (!img) return;
+
+      gsap.to(img, {
+        yPercent: 20,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: container,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1,
+        }
+      });
+    });
+
+    // Details section fade in
+    const detailBlocks = document.querySelectorAll('.detail-block');
+    gsap.fromTo(detailBlocks, 
+      { y: 30, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.details',
+          start: 'top 70%',
+        }
+      }
+    );
+
+    // RSVP section
+    gsap.fromTo('.rsvp-inner', 
+      { y: 40, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 1,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.rsvp',
+          start: 'top 70%',
+        }
+      }
+    );
+  }
+
+  // Initialize
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initScrollAnimations);
+  } else {
+    initScrollAnimations();
+  }
+
+  // Cleanup on page transition
+  document.addEventListener('astro:before-swap', () => {
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  });
+</script>

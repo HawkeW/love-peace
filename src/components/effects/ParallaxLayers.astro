@@ -1,0 +1,111 @@
+---
+/**
+ * ParallaxLayers.astro - Multi-layer parallax scroll effect
+ * Uses GSAP ScrollTrigger for smooth parallax movement
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<div class:list={['parallax-container', className]} data-parallax-container>
+  <slot />
+</div>
+
+<style>
+  .parallax-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Layer depth classes */
+  :global(.parallax-layer) {
+    position: relative;
+    will-change: transform;
+  }
+
+  :global(.parallax-layer[data-depth="far"]) {
+    --parallax-speed: 0.2;
+  }
+
+  :global(.parallax-layer[data-depth="mid"]) {
+    --parallax-speed: 0.5;
+  }
+
+  :global(.parallax-layer[data-depth="near"]) {
+    --parallax-speed: 0.8;
+  }
+
+  :global(.parallax-layer[data-depth="front"]) {
+    --parallax-speed: 1.0;
+  }
+
+  /* Reduced motion fallback */
+  @media (prefers-reduced-motion: reduce) {
+    :global(.parallax-layer) {
+      transform: none !important;
+    }
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { prefersReducedMotion } from '../../utils/performance';
+
+  // Register GSAP plugin
+  gsap.registerPlugin(ScrollTrigger);
+
+  function initParallax() {
+    if (prefersReducedMotion()) return;
+
+    const containers = document.querySelectorAll('[data-parallax-container]');
+    
+    containers.forEach(container => {
+      const layers = container.querySelectorAll('[data-parallax]');
+      
+      layers.forEach(layer => {
+        const depth = layer.getAttribute('data-depth') || 'mid';
+        const speed = getSpeedFromDepth(depth);
+        const direction = layer.getAttribute('data-direction') || 'vertical';
+        
+        gsap.to(layer, {
+          y: direction === 'vertical' ? `${speed * 100}%` : 0,
+          x: direction === 'horizontal' ? `${speed * 50}%` : 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: container,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      });
+    });
+  }
+
+  function getSpeedFromDepth(depth: string): number {
+    switch (depth) {
+      case 'far': return -0.3;
+      case 'mid': return -0.15;
+      case 'near': return -0.05;
+      case 'front': return 0;
+      default: return -0.15;
+    }
+  }
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initParallax);
+  } else {
+    initParallax();
+  }
+
+  // Cleanup on page unload (for View Transitions)
+  document.addEventListener('astro:before-swap', () => {
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  });
+</script>

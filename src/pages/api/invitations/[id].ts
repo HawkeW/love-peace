@@ -1,3 +1,11 @@
+export function getStaticPaths() {
+  return [
+    { params: { id: 'inv1' } },
+    { params: { id: 'inv2' } },
+    { params: { id: 'inv3' } }
+  ];
+}
+
 export async function GET({ params }: { params: { id: string } }) {
   const id = params.id || "inv1";
   const data = { id, title: "电子请柬", status: "draft" };

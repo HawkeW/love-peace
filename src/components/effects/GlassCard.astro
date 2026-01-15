@@ -1,0 +1,151 @@
+---
+/**
+ * GlassCard.astro - Frosted glass card component
+ * Creates a modern glassmorphism UI element
+ */
+interface Props {
+  class?: string;
+  variant?: 'light' | 'dark' | 'golden';
+  hover?: boolean;
+  glow?: boolean;
+}
+
+const { 
+  class: className = '', 
+  variant = 'dark',
+  hover = true,
+  glow = false
+} = Astro.props;
+---
+
+<div 
+  class:list={[
+    'glass-card', 
+    `glass-card--${variant}`,
+    { 'glass-card--hover': hover },
+    { 'glass-card--glow': glow },
+    className
+  ]}
+>
+  <div class="glass-card__content">
+    <slot />
+  </div>
+  {glow && <div class="glass-card__glow" />}
+</div>
+
+<style>
+  .glass-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .glass-card__content {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+  }
+
+  /* Dark variant (default) */
+  .glass-card--dark {
+    background: var(--glass-dark, rgba(0, 0, 0, 0.3));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Light variant */
+  .glass-card--light {
+    background: var(--glass-white, rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Golden variant */
+  .glass-card--golden {
+    background: linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0.15),
+      rgba(183, 110, 121, 0.15)
+    );
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Hover effects */
+  .glass-card--hover {
+    transition: 
+      transform 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+
+  .glass-card--hover:hover {
+    transform: translateY(-4px);
+  }
+
+  .glass-card--dark.glass-card--hover:hover {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-card--light.glass-card--hover:hover {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .glass-card--golden.glass-card--hover:hover {
+    box-shadow: 
+      0 16px 40px rgba(212, 175, 55, 0.2),
+      0 0 30px rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.5);
+  }
+
+  /* Glow effect */
+  .glass-card__glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle at center,
+      rgba(212, 175, 55, 0.15),
+      transparent 50%
+    );
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glass-card--glow:hover .glass-card__glow {
+    opacity: 1;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card--hover {
+      transition: none;
+    }
+    .glass-card--hover:hover {
+      transform: none;
+    }
+  }
+
+  /* Fallback for no backdrop-filter support */
+  @supports not (backdrop-filter: blur(20px)) {
+    .glass-card--dark {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    .glass-card--light {
+      background: rgba(255, 255, 255, 0.9);
+    }
+    .glass-card--golden {
+      background: rgba(30, 20, 10, 0.9);
+    }
+  }
+</style>
