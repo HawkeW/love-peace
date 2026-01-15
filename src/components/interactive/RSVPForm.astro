@@ -1,0 +1,154 @@
+---
+---
+<form id="rsvp-form" class="rsvp-form">
+  <h3>你会来陪我们喝一杯吗？</h3>
+  <div class="field">
+    <label for="clientName">你是谁？</label>
+    <input type="text" id="clientName" name="clientName" required placeholder="留个名字" />
+  </div>
+  <div class="field">
+    <label for="phone">怎么联系你？</label>
+    <input type="tel" id="phone" name="phone" required placeholder="电话号码" />
+  </div>
+  <div class="field">
+    <label for="attendees">带家属吗？(人数)</label>
+    <input type="number" id="attendees" name="packageId" min="1" value="1" />
+  </div>
+  <div class="field">
+    <label for="note">想对我们说点什么？</label>
+    <textarea id="note" name="note" rows="3" placeholder="悄悄话或饮食禁忌..."></textarea>
+  </div>
+  <button type="submit">准时赴约</button>
+  <div id="form-message" class="message"></div>
+</form>
+
+<script>
+  const form = document.getElementById('rsvp-form') as HTMLFormElement;
+  const msg = document.getElementById('form-message') as HTMLDivElement;
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Disable button
+        const btn = form.querySelector('button');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '提交中...';
+        }
+        
+        try {
+            const res = await fetch('/api/reservations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (res.ok) {
+                msg.textContent = '提交成功！期待您的到来。';
+                msg.className = 'message success';
+                form.reset();
+            } else {
+                throw new Error('Submission failed');
+            }
+        } catch (err) {
+            msg.textContent = '提交失败，请稍后重试。';
+            msg.className = 'message error';
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '发送回复';
+            }
+        }
+    });
+  }
+</script>
+
+<style>
+  .rsvp-form {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    padding: var(--space-4);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    color: inherit;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  h3 {
+      margin-top: 0;
+      text-align: center;
+      margin-bottom: var(--space-4);
+      font-size: 1.5rem;
+      letter-spacing: 0.1em;
+  }
+
+  .field {
+    margin-bottom: var(--space-3);
+  }
+  
+  label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 500;
+  }
+  
+  input, textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    background: rgba(255,255,255,0.05);
+    color: inherit;
+    font-family: inherit;
+    font-size: 16px; /* Prevent zoom on mobile */
+    transition: border-color 0.2s;
+  }
+  
+  input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: rgba(255,255,255,0.1);
+  }
+  
+  button {
+    width: 100%;
+    padding: 14px;
+    margin-top: var(--space-2);
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    box-shadow: 0 4px 15px rgba(233, 78, 119, 0.3);
+  }
+  
+  button:active {
+    transform: scale(0.98);
+  }
+  
+  button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+  }
+  
+  .message {
+    margin-top: var(--space-3);
+    font-size: 14px;
+    text-align: center;
+    min-height: 20px;
+    font-weight: 500;
+  }
+  .message.success { color: #4CAF50; }
+  .message.error { color: #FF5252; }
+</style>

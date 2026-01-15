@@ -1,0 +1,375 @@
+---
+interface Props {
+  src: string;
+  title: string;
+  copy: string;
+  index: number;
+}
+const { src, title, copy, index } = Astro.props;
+
+const isEven = index % 2 === 0;
+const layoutClass = isEven ? 'layout-normal' : 'layout-reverse';
+
+const lines = copy
+  .split(/(?<=[。！？!?])/)
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const artifacts = [
+  { kind: 'ticket', label: 'TICKET', meta: 'ROW A · SEAT 02', stamp: 'ENTRY' },
+  { kind: 'receipt', label: 'RECEIPT', meta: 'DINNER FOR TWO', stamp: 'PAID' },
+  { kind: 'note', label: 'NOTE', meta: 'DON’T FORGET', stamp: 'TODAY' },
+  { kind: 'postcard', label: 'POSTCARD', meta: 'WISH YOU WERE HERE', stamp: 'AIRMAIL' }
+] as const;
+
+const artifact = artifacts[index % artifacts.length];
+---
+
+<section class={`story-item ${layoutClass}`} data-index={index}>
+  <div class="parallax-container">
+    <div class={`artifact artifact-${artifact.kind}`} aria-hidden="true">
+      <div class="artifact-head">
+        <span class="artifact-label">{artifact.label}</span>
+        <span class="artifact-stamp">{artifact.stamp}</span>
+      </div>
+      <div class="artifact-meta">{artifact.meta}</div>
+    </div>
+
+    <div class="visual-layer" data-speed="0.8">
+        <div class="image-reveal">
+            <img src={src} alt={title} loading="lazy" decoding="async" />
+        </div>
+    </div>
+
+    <div class="content-layer" data-speed="1.2">
+        <div class="text-inner">
+            <span class="chapter-no">No. 0{index + 1}</span>
+            <h2>{title}</h2>
+            <p class="copy">
+              {lines.map((line, i) => (
+                <span class="line" style={`--i:${i}`}>{line}</span>
+              ))}
+            </p>
+        </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  const w = window as any;
+  if (!w.__lpStoryFx) {
+    w.__lpStoryFx = true;
+
+    const items = Array.from(document.querySelectorAll('.story-item')) as HTMLElement[];
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const el = e.target as HTMLElement;
+          if (e.isIntersecting) {
+            el.classList.add('is-active');
+            const idx = Number(el.dataset.index ?? '0');
+            document.documentElement.dataset.chapter = String(idx);
+            window.dispatchEvent(new CustomEvent('lp:chapter', { detail: { index: idx } }));
+          } else {
+            el.classList.remove('is-active');
+          }
+        }
+      },
+      { threshold: 0.55 }
+    );
+
+    for (const item of items) io.observe(item);
+
+    const updateParallax = () => {
+      const viewHeight = window.innerHeight;
+      for (const item of items) {
+        const rect = item.getBoundingClientRect();
+        if (rect.top < viewHeight && rect.bottom > 0) {
+          const progress = (rect.top + rect.height / 2 - viewHeight / 2) / (viewHeight / 2);
+          const visual = item.querySelector('.visual-layer') as HTMLElement | null;
+          const content = item.querySelector('.content-layer') as HTMLElement | null;
+          const artifact = item.querySelector('.artifact') as HTMLElement | null;
+
+          if (visual) visual.style.transform = `translateY(${progress * 26}px)`;
+          if (content) content.style.transform = `translateY(${progress * -56}px)`;
+          if (artifact) artifact.style.transform = `translateY(${progress * 18}px) rotate(${progress * 1.8}deg)`;
+        }
+      }
+      requestAnimationFrame(updateParallax);
+    };
+
+    requestAnimationFrame(updateParallax);
+  }
+</script>
+
+<style>
+  .story-item {
+    position: relative;
+    min-height: 86vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: var(--space-8) 0;
+  }
+
+  .parallax-container {
+    width: 100%;
+    max-width: 1200px;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0 var(--space-4);
+  }
+
+  .visual-layer {
+    flex: 1 1 50%;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.1s linear;
+    will-change: transform;
+  }
+
+  .content-layer {
+    flex: 1 1 40%;
+    position: relative;
+    z-index: 2;
+    padding: var(--space-6);
+    transition: transform 0.1s linear;
+    will-change: transform;
+  }
+
+  .image-reveal {
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    transform: rotate(-0.35deg);
+  }
+
+  .visual-layer img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transform: scale(1.12);
+    filter: sepia(10%) contrast(1.05);
+  }
+
+  .text-inner {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    padding: var(--space-8);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    transform: rotate(0.25deg);
+  }
+
+  :global(.dark) .text-inner {
+      background: rgba(10, 9, 8, 0.7);
+      border-color: rgba(255,255,255,0.05);
+  }
+
+  .chapter-no {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--color-primary);
+    margin-bottom: var(--space-2);
+    text-transform: uppercase;
+  }
+
+  h2 {
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 1.1;
+    margin: 0 0 var(--space-4);
+    color: var(--color-text-main);
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--color-text-main);
+    opacity: 0.8;
+    max-width: 40ch;
+  }
+
+  .copy {
+    display: grid;
+    gap: 10px;
+  }
+
+  .line {
+    display: block;
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 700ms var(--ease-out-expo),
+      transform 900ms var(--ease-out-expo);
+    transition-delay: calc(var(--i) * 90ms);
+  }
+
+  .story-item.is-active .line {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .artifact {
+    position: absolute;
+    top: -18px;
+    left: 22px;
+    width: min(280px, 60vw);
+    padding: 14px 14px 12px;
+    border-radius: 6px;
+    z-index: 3;
+    background: rgba(253, 251, 247, 0.86);
+    border: 1px solid rgba(26, 26, 26, 0.12);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
+    transform: rotate(-3.5deg);
+    transition: transform 0.1s linear;
+    will-change: transform;
+  }
+
+  :global(.dark) .artifact {
+    background: rgba(10, 9, 8, 0.55);
+    border-color: rgba(242, 240, 233, 0.12);
+  }
+
+  .artifact::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(110deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 40%),
+      radial-gradient(800px 240px at 20% 10%, rgba(212,175,55,0.15), rgba(212,175,55,0) 60%);
+    pointer-events: none;
+    mix-blend-mode: multiply;
+  }
+
+  .artifact-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: var(--font-sans);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 12px;
+    opacity: 0.85;
+  }
+
+  .artifact-meta {
+    margin-top: 10px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+  }
+
+  .artifact-stamp {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,175,55,0.55);
+    color: rgba(212,175,55,0.95);
+  }
+
+  .artifact-receipt {
+    clip-path: polygon(0 0, 100% 0, 100% 92%, 96% 100%, 92% 92%, 88% 100%, 84% 92%, 80% 100%, 76% 92%, 72% 100%, 68% 92%, 64% 100%, 60% 92%, 56% 100%, 52% 92%, 48% 100%, 44% 92%, 40% 100%, 36% 92%, 32% 100%, 28% 92%, 24% 100%, 20% 92%, 16% 100%, 12% 92%, 8% 100%, 4% 92%, 0 92%);
+  }
+
+  .artifact-ticket {
+    border-radius: 16px;
+  }
+
+  .artifact-ticket::after {
+    content: '';
+    position: absolute;
+    inset: 10px 14px;
+    border: 1px dashed rgba(26, 26, 26, 0.14);
+    border-radius: 12px;
+    pointer-events: none;
+  }
+
+  .artifact-postcard {
+    transform: rotate(2.2deg);
+  }
+
+  .artifact-note {
+    transform: rotate(-6deg);
+  }
+
+  .layout-normal .visual-layer {
+      order: 1;
+      margin-right: -50px;
+  }
+  .layout-normal .content-layer {
+      order: 2;
+      margin-top: 110px;
+  }
+
+  .layout-reverse .visual-layer {
+      order: 2;
+      margin-left: -50px;
+  }
+  .layout-reverse .content-layer {
+      order: 1;
+      text-align: right;
+      margin-bottom: 100px;
+  }
+  .layout-reverse .text-inner {
+      margin-left: auto;
+  }
+  .layout-reverse .artifact {
+    left: auto;
+    right: 22px;
+  }
+
+  @media (max-width: 768px) {
+    .story-item {
+        min-height: auto;
+        padding: var(--space-6) 0;
+    }
+    
+    .visual-layer, .content-layer {
+        flex: 1 1 100%;
+        margin: 0 !important;
+        transform: none !important;
+    }
+
+    .visual-layer {
+        margin-bottom: -40px !important;
+        padding: 0 var(--space-2);
+    }
+
+    .content-layer {
+        padding: var(--space-4);
+    }
+
+    .text-inner {
+        padding: var(--space-6);
+    }
+    
+    .layout-reverse .content-layer {
+        order: 2;
+        text-align: left;
+    }
+    .artifact {
+      position: relative;
+      top: 0;
+      left: 0;
+      right: auto;
+      margin: 0 var(--space-2) var(--space-3);
+      width: auto;
+      transform: rotate(-2deg);
+    }
+  }
+</style>

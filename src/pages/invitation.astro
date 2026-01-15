@@ -1,239 +1,266 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Carousel from '../components/Carousel.astro';
+import ParallaxLayout from '../layouts/ParallaxLayout.astro';
+import Scene3D from '../components/hero/Scene3D.astro';
+import StoryItem from '../components/story/StoryItem.astro';
+import RSVPForm from '../components/interactive/RSVPForm.astro';
+import Lightbox from '../components/Lightbox.astro';
+import { slides } from '../data/slides';
 import fs from 'fs';
 import path from 'path';
 
+// Existing FS logic for Gallery
 interface Item {
   src: string;
   alt: string;
   title: string;
-  excerpt: string;
-}
-
-function cleanLine(s: string) {
-  return s.replace(/^#+\s*/, '').replace(/\s+$/, '');
-}
-
-function getTitleExcerpt(md: string) {
-  const lines = md.split(/\r?\n/).filter(Boolean);
-  const titleLine = lines.find(l => l.trim().startsWith('#')) ?? lines[0] ?? '';
-  const title = cleanLine(titleLine).slice(0, 60);
-  const body = lines.slice(1).join(' ').replace(/[*_`>]/g, '').replace(/\s+/g, ' ').trim();
-  const excerpt = body.slice(0, 120);
-  return { title, excerpt };
 }
 
 const weddingDir = path.resolve(process.cwd(), 'public/gallery/wedding');
-const descDir = path.resolve(process.cwd(), 'public/descs');
-const images = fs.readdirSync(weddingDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
-
-const items: Item[] = images.map((f) => {
-  const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
-  const mdPath = path.join(descDir, `${base}.md`);
-  let title = base;
-  let excerpt = '';
-  if (fs.existsSync(mdPath)) {
-    const md = fs.readFileSync(mdPath, 'utf8');
-    const parsed = getTitleExcerpt(md);
-    title = parsed.title || base;
-    excerpt = parsed.excerpt;
+// Use try-catch or ensure directory exists to avoid build error if empty
+let images: string[] = [];
+try {
+  if (fs.existsSync(weddingDir)) {
+    images = fs.readdirSync(weddingDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
   }
+} catch (e) {
+  console.error("Failed to read gallery directory", e);
+}
+
+const galleryItems: Item[] = images.map((f) => {
+  const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
   return {
     src: `/gallery/wedding/${f}`,
-    alt: title,
-    title,
-    excerpt
+    alt: base,
+    title: base
   };
 });
 
-const slides = items.map(i => ({ src: i.src, alt: i.alt }));
-const eventTitle = '婚礼电子请帖';
-const eventSub = '诚挚邀请您莅临见证我们的幸福时刻';
-const ctaText = '确认出席';
+const eventTitle = 'Love & Peace';
+const eventSub = '有些事，只有我们两个人在一起，才会有意义。';
+const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
 ---
 
-<Layout>
-  <main class="invite">
-    <section class="cover">
+<ParallaxLayout title={eventTitle} description={eventSub} image={coverImage}>
+  <!-- Hero Section -->
+  <section class="hero">
+    <Scene3D />
+    <div class="hero-content">
       <h1 class="title">{eventTitle}</h1>
       <p class="subtitle">{eventSub}</p>
-      <a class="cta" href="/api/reservations">{ctaText}</a>
-    </section>
-
-    <section class="slider">
-      <Carousel slides={slides} interval={4000} />
-    </section>
-
-    <section class="details">
-      <h2>照片故事精选</h2>
-      <ul class="cards">
-        {items.slice(0, 6).map((i) => (
-          <li class="card">
-            <img src={i.src} alt={i.alt} loading="lazy" decoding="async" />
-            <div class="info">
-              <h3>{i.title}</h3>
-              <p>{i.excerpt}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <section class="gallery">
-      <h2>更多美好瞬间</h2>
-      <div class="grid">
-        {items.map((i) => (
-          <figure class="item">
-            <img src={i.src} alt={i.alt} loading="lazy" decoding="async" />
-            <figcaption>{i.title}</figcaption>
-          </figure>
-        ))}
+      <div class="scroll-hint">
+        <span>我们的故事</span>
+        <div class="arrow">↓</div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="footer">
-      <p>期待您的到来 · Love & Peace</p>
-      <a class="cta secondary" href="/api/reservations">立即回复</a>
-    </section>
-  </main>
-</Layout>
+  <!-- Story Section -->
+  <section id="story" class="story-section">
+    {slides.map((slide, index) => (
+      <StoryItem 
+        src={slide.src}
+        title={slide.title}
+        copy={slide.copy}
+        index={index}
+      />
+    ))}
+  </section>
+
+  <!-- Gallery Section -->
+  <section id="gallery" class="gallery-section">
+    <h2>更多美好瞬间</h2>
+    <div class="grid">
+      {galleryItems.map((item, index) => (
+        <figure class="item" data-index={index}>
+          <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- RSVP Section -->
+  <section id="rsvp" class="rsvp-section">
+    <RSVPForm />
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Love & Peace · 2026</p>
+    <div class="map-link">
+        <a href="https://maps.example.com" target="_blank" rel="noopener">查看地图</a>
+    </div>
+  </footer>
+
+  <Lightbox selector=".grid .item img" />
+</ParallaxLayout>
 
 <style>
-  :root { color-scheme: light dark; }
-  .invite {
-    max-width: 640px;
-    margin: 0 auto;
-    padding-bottom: 64px;
-    background: #fff;
-    color: #222;
-  }
-  @media (prefers-color-scheme: dark) {
-    .invite { background: #000; color: #eee; }
-  }
-  .cover {
-    padding: 28px 16px 12px;
+  /* Hero */
+  .hero {
+    height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+    color: var(--color-primary);
   }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    padding: var(--space-4);
+    background: rgba(255,255,255,0.1); /* Fallback */
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    /* Animation for entry */
+    animation: fadeUp 1s var(--ease-out-expo) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+  }
+
   .title {
-    font-size: clamp(24px, 7vw, 32px);
-    margin: 0 0 6px;
-    letter-spacing: 0.08em;
+    font-size: clamp(2rem, 8vw, 4rem);
+    margin: 0 0 var(--space-2);
+    letter-spacing: 0.1em;
+    font-weight: 200;
   }
+
   .subtitle {
-    font-size: 14px;
-    margin: 0 0 12px;
-    color: #666;
-  }
-  @media (prefers-color-scheme: dark) {
-    .subtitle { color: #aaa; }
-  }
-  .cta {
-    display: inline-block;
-    padding: 10px 16px;
-    border-radius: 999px;
-    background: #e94e77;
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-  }
-  .cta.secondary { background: #1f8b4c; }
-
-  .slider {
-    padding: 10px 12px 0;
+    font-size: clamp(1rem, 4vw, 1.2rem);
+    margin: 0 0 var(--space-4);
+    opacity: 0.8;
+    color: inherit;
   }
 
-  .details {
-    padding: 16px;
-  }
-  .details h2, .gallery h2 {
-    font-size: 18px;
-    margin: 12px 0;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-  }
-  .cards {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .card {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(0,0,0,.08);
-    background: rgba(255,255,255,.7);
-  }
-  @media (prefers-color-scheme: dark) {
-    .card { border-color: rgba(255,255,255,.08); background: rgba(20,20,20,.7); }
-  }
-  .card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    display: block;
-  }
-  .card .info {
-    padding: 10px 12px 12px;
-  }
-  .card h3 {
-    margin: 0 0 6px;
-    font-size: 16px;
-  }
-  .card p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #555;
-  }
-  @media (prefers-color-scheme: dark) {
-    .card p { color: #bbb; }
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    opacity: 0.6;
+    animation: bounce 2s infinite;
+    color: var(--color-primary);
   }
 
-  .gallery {
-    padding: 4px 12px 16px;
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+    40% { transform: translateX(-50%) translateY(-10px); }
+    60% { transform: translateX(-50%) translateY(-5px); }
   }
+
+  /* Sections */
+  .story-section {
+    background: var(--color-bg-light);
+  }
+  
+  :global(.dark) .story-section {
+      background: var(--color-bg-dark);
+  }
+
+  .gallery-section {
+    padding: var(--space-8) var(--space-4);
+    background: var(--color-bg-light);
+  }
+  
+  :global(.dark) .gallery-section {
+      background: var(--color-bg-dark);
+  }
+
+  .gallery-section h2 {
+    text-align: center;
+    margin-bottom: var(--space-6);
+    font-size: 1.8rem;
+    color: var(--color-primary);
+  }
+
+  .schedule-section {
+    padding: var(--space-8) var(--space-4);
+    background: var(--color-bg-light);
+  }
+  
+  :global(.dark) .schedule-section {
+      background: var(--color-bg-dark);
+  }
+
   .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    column-count: 2;
+    column-gap: var(--space-2);
   }
-  @media (min-width: 480px) {
-    .grid { grid-template-columns: 1fr 1fr 1fr; }
+  
+  @media (min-width: 640px) {
+    .grid { column-count: 3; }
   }
+  
+  @media (min-width: 1024px) {
+    .grid { column-count: 4; }
+  }
+
   .item {
-    margin: 0;
-    border-radius: 10px;
+    margin: 0 0 var(--space-2) 0;
+    border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(0,0,0,.08);
+    break-inside: avoid; /* Prevent split across columns */
+    cursor: zoom-in;
+    transition: transform 0.3s var(--ease-out-expo), opacity 0.3s;
+    /* Initial state for scroll reveal if we add it */
   }
-  @media (prefers-color-scheme: dark) {
-    .item { border-color: rgba(255,255,255,.08); }
+  
+  .item:hover {
+      transform: scale(1.02);
+      z-index: 2;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   }
+
   .item img {
     width: 100%;
-    height: 120px;
+    height: 100%;
     object-fit: cover;
     display: block;
   }
-  .item figcaption {
-    font-size: 12px;
-    padding: 6px 8px;
-    color: #666;
-    background: rgba(0,0,0,.02);
+
+  .rsvp-section {
+    padding: var(--space-8) var(--space-4);
+    display: flex;
+    justify-content: center;
+    background: var(--color-bg-light);
   }
-  @media (prefers-color-scheme: dark) {
-    .item figcaption { color: #bbb; background: rgba(255,255,255,.03); }
+  
+  :global(.dark) .rsvp-section {
+      background: var(--color-bg-dark);
   }
 
   .footer {
     text-align: center;
-    padding: 16px;
-    color: #777;
+    padding: var(--space-6);
+    opacity: 0.6;
+    font-size: 0.9rem;
+    background: var(--color-bg-light);
   }
-  @media (prefers-color-scheme: dark) {
-    .footer { color: #aaa; }
+  
+  :global(.dark) .footer {
+      background: var(--color-bg-dark);
+  }
+  
+  .map-link {
+      margin-top: var(--space-2);
+  }
+  
+  .map-link a {
+      color: var(--color-primary);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+  }
+  
+  .map-link a:hover {
+      border-color: currentColor;
   }
 </style>

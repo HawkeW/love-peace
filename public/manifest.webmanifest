@@ -1,0 +1,16 @@
+{
+  "name": "Love & Peace Wedding Invitation",
+  "short_name": "Wedding",
+  "start_url": "/invitation",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#E94E77",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

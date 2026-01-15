@@ -1,0 +1,106 @@
+---
+const events = [
+  { time: '14:30', title: '欢迎来到我们的“小型派对”', icon: '📝' },
+  { time: '15:00', title: '交换誓言（请备好纸巾）', icon: '💍' },
+  { time: '16:00', title: '定格瞬间', icon: '📸' },
+  { time: '17:00', title: '酒精、美食与老朋友', icon: '🥂' },
+  { time: '19:00', title: '一起虚度夜晚', icon: '💃' }
+];
+---
+<div class="schedule">
+  <h3>时间表</h3>
+  <div class="timeline">
+    {events.map((e, i) => (
+      <div class="event" style={`--delay: ${i * 0.1}s`}>
+        <div class="time">{e.time}</div>
+        <div class="marker">
+            <span class="icon">{e.icon}</span>
+        </div>
+        <div class="info">{e.title}</div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .schedule {
+      padding: var(--space-4);
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--glass-bg);
+      border-radius: 16px;
+      backdrop-filter: var(--glass-blur);
+  }
+  
+  h3 {
+      text-align: center;
+      margin-bottom: var(--space-6);
+      color: var(--color-primary);
+      font-size: 1.5rem;
+      letter-spacing: 0.1em;
+  }
+  
+  .timeline {
+      position: relative;
+      padding-left: 20px;
+  }
+  
+  /* Vertical Line */
+  .timeline::before {
+      content: '';
+      position: absolute;
+      left: 90px; /* Adjust based on time width + gap */
+      top: 10px;
+      bottom: 10px;
+      width: 1px;
+      background: var(--color-primary);
+      opacity: 0.3;
+  }
+  
+  .event {
+      display: flex;
+      align-items: center;
+      margin-bottom: var(--space-6);
+      position: relative;
+  }
+  
+  .event:last-child {
+      margin-bottom: 0;
+  }
+  
+  .time {
+      width: 60px;
+      text-align: right;
+      margin-right: var(--space-4);
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-primary);
+  }
+  
+  .marker {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-bg-light);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      margin-right: var(--space-4);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+  
+  :global(.dark) .marker {
+      background: var(--color-bg-dark);
+  }
+  
+  .icon {
+      font-size: 14px;
+  }
+  
+  .info {
+      font-size: 1.1rem;
+      font-weight: 500;
+  }
+</style>

@@ -10,8 +10,8 @@
 *   **语言**: TypeScript (Strict Mode)
 *   **样式**: CSS Variables (Design Tokens) + Scoped CSS
 *   **动画**: 
-    *   **3D**: Three.js (通过 CDN 引入 ESM 模块，不打包进 Bundle)
-    *   **滚动**: Lenis (平滑滚动) + IntersectionObserver
+    *   **3D**: Three.js (通过 CDN 引入 ESM 模块，不打包进 Bundle，版本: 0.160.0)
+    *   **滚动**: Lenis (平滑滚动) + IntersectionObserver + CSS Custom Properties
     *   **过渡**: Web Animations API (原生高性能动画)
 *   **构建**: Vite (Astro 内置)
 *   **包管理**: pnpm
@@ -22,12 +22,15 @@
 ├── public/
 │   ├── gallery/wedding/   # 婚礼照片 (WebP/JPG)
 │   ├── people/           # 人物抠图 (WebP/PNG Transparent)
-│   └── models/           # (可选) 3D 模型资源 (GLB/GLTF)
+│   ├── manifest.webmanifest # PWA Manifest
+│   └── sw.js             # Service Worker
 ├── src/
 │   ├── components/
-│   │   ├── hero/         # 3D 场景组件
-│   │   ├── story/        # 故事线组件
-│   │   └── interactive/  # 地图、留言等互动组件
+│   │   ├── hero/         # 3D 场景组件 (Scene3D.astro)
+│   │   ├── story/        # 故事线组件 (StoryItem.astro)
+│   │   └── interactive/  # 互动组件 (RSVPForm.astro, Schedule.astro)
+│   ├── layouts/
+│   │   └── ParallaxLayout.astro # 视差滚动布局
 │   ├── scripts/
 │   │   └── three-loader.ts # Three.js 异步加载器
 ```

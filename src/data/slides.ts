@@ -1,44 +1,26 @@
-export interface SlideItem {
-  src: string
-  title: string
-  copy: string
-}
-
-export const slides: SlideItem[] = [
+export const slides = [
   {
+    id: 1,
     src: '/gallery/wedding/DXMJ2611.jpeg',
-    title: '开场·心动瞬间',
-    copy:
-      '在轻柔的氛围里相遇，一次回眸，故事便悄悄开始。我们在彼此的目光里，看见了未来的方向。'
+    title: '第一章：偶然',
+    copy: '“世界上有那么多的城镇，城镇中有那么多的酒馆，她却走进了我的。” ——《卡萨布兰卡》。那个下午阳光很好，我们并没有预谋相遇，但命运却在那一刻，悄悄打了个结。'
   },
   {
-    src: '/gallery/wedding/DXMJ2654.jpeg',
-    title: '承诺·并肩而行',
-    copy:
-      '彼此靠近的每一步，都是奔赴与守护的方向。从今天起，一起走往相同的远方。'
+    id: 2,
+    src: '/gallery/wedding/DXMJ3120.jpeg',
+    title: '第二章：日常',
+    copy: '所谓爱情，大概就是能一起吃很多顿饭，说很多废话。在柴米油盐里，把日子过成我们喜欢的样子。不用去很远的地方，只要和你在一起，连逛超市都像是在漫游宇宙。'
   },
   {
-    src: '/gallery/wedding/DXMJ3092.jpeg',
-    title: '筹备·细节的温度',
-    copy:
-      '一朵花、一抹色、一道光，都是为了那一刻的相视。所有微小的心意，终将汇成温暖的场景。'
+    id: 3,
+    src: '/gallery/wedding/DXMJ3423.jpeg',
+    title: '第三章：旅途',
+    copy: '“我给你贫穷的街道、绝望的日落、破败的郊区的月亮。” ——博尔赫斯。看过了许多风景，才发现最美的不是山川湖海，而是你看向我时，眼里的光。'
   },
   {
-    src: '/gallery/wedding/DXMJ3433.jpeg',
-    title: '定格·爱的镜头',
-    copy:
-      '在镜头前轻轻停下，让时间为这份心意作证。我们相信，爱会在被注视的瞬间变得清晰。'
-  },
-  {
-    src: '/gallery/wedding/DXMJ3399.jpeg',
-    title: '邀请·见证幸福',
-    copy:
-      '诚挚邀请您，在某日某地，与我们一同见证这份美好。愿喜悦，从此刻延伸到更远的日子。'
-  },
-  {
-    src: '/gallery/wedding/DXMJ3459.jpeg',
-    title: 'RSVP·期待你的到来',
-    copy:
-      '你的回复，是我们最期待的惊喜。愿这封请帖化作一条温柔的路，通向与你的相聚。'
+    id: 4,
+    src: '/gallery/wedding/DXMJ3448.jpeg',
+    title: '第四章：决定',
+    copy: '“斯人若彩虹，遇上方知有。” 以前觉得结婚很远，后来觉得，如果是你，那么余生请多指教。这不是一个结束，而是我们冒险的开始。'
   }
-]
+];

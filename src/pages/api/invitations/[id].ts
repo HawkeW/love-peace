@@ -1,3 +1,10 @@
+export function getStaticPaths() {
+  return [
+    { params: { id: 'inv1' } },
+    { params: { id: 'demo' } }
+  ];
+}
+
 export async function GET({ params }: { params: { id: string } }) {
   const id = params.id || "inv1";
   const data = { id, title: "电子请柬", status: "draft" };
@@ -5,4 +12,3 @@ export async function GET({ params }: { params: { id: string } }) {
     headers: { "Content-Type": "application/json", "X-API-Version": "v1" }
   });
 }
-

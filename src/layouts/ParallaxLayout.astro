@@ -1,0 +1,70 @@
+---
+import Layout from './Layout.astro';
+import 'lenis/dist/lenis.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+const { title, description, image } = Astro.props;
+---
+
+<Layout title={title} description={description} image={image}>
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+      <slot />
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import Lenis from 'lenis';
+
+  // Initialize Lenis
+  const lenis = new Lenis({
+    lerp: 0.1,
+    duration: 1.2,
+    smoothWheel: true,
+    touchMultiplier: 2,
+  });
+
+  function raf(time: number) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+
+  requestAnimationFrame(raf);
+
+  // Expose scroll progress to CSS variables
+  const root = document.documentElement;
+  
+  lenis.on('scroll', ({ scroll, limit, velocity, progress }: any) => {
+    // progress is 0 to 1
+    root.style.setProperty('--scroll-progress', progress.toString());
+    root.style.setProperty('--scroll-top', scroll.toString());
+    root.style.setProperty('--scroll-velocity', velocity.toString());
+  });
+
+  // Make lenis available globally if needed for other components
+  (window as any).lenis = lenis;
+</script>
+
+<style is:global>
+  html.lenis, html.lenis body {
+    height: auto;
+  }
+  
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+</style>
