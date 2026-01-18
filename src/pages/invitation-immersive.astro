@@ -4,36 +4,57 @@
  * Design refs: smooothy.federic.ooo, siena.film, gabrielcontassot.com, vvisual.biz
  * Style: Light & Airy + Organic Flow + Multiple Layout Variations
  */
-import Layout from '../layouts/Layout.astro';
-import OrganicBlob from '../components/effects/OrganicBlob.astro';
-import { Picture } from 'astro:assets';
-import { slides, carouselImages } from '../data/slides';
+import Layout from "../layouts/Layout.astro";
+import OrganicBlob from "../components/effects/OrganicBlob.astro";
+import { Picture } from "astro:assets";
+import { slides, carouselImages } from "../data/slides";
 
 // Event details
 const eventDetails = {
-  groomName: '新郎',
-  brideName: '新娘',
-  date: '2025年X月X日',
-  time: '下午6:00',
-  venue: '婚礼场地名称',
-  address: '详细地址信息'
+  groomName: "王浩",
+  brideName: "何晓雅",
+  date: "2025年2月11日",
+  time: "中午 12:00",
+  venue: "艳阳天饭店",
+  address: "河南省信阳市平桥区新六大街艳阳天酒店",
 };
 ---
 
 <Layout title="婚礼邀请函">
   <div class="invitation" data-lenis-prevent data-theme="light">
-    
     <!-- Theme Toggle - Debug Control -->
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-      <svg class="icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
-        <path d="M12 1v6m0 6v6m11-11h-6m-6 0H1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <svg
+        class="icon-light"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"
+        ></circle>
+        <path
+          d="M12 1v6m0 6v6m11-11h-6m-6 0H1"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"></path>
       </svg>
-      <svg class="icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg
+        class="icon-dark"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <path
+          d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
       </svg>
     </button>
-    
+
     <!-- Hero Section - Full viewport -->
     <section class="hero">
       <OrganicBlob variant="hero" />
@@ -48,7 +69,12 @@ const eventDetails = {
         <div class="scroll-cue">
           <span>往下滑</span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M12 5v14M5 12l7 7 7-7"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
           </svg>
         </div>
       </div>
@@ -56,207 +82,242 @@ const eventDetails = {
 
     <!-- Story Section - Multiple Layout Variations -->
     <section class="story" id="story">
-      {slides.map((slide, index) => (
-        <>
-          {/* Layout: Dialogue Bubble - WeChat style chat */}
-          {slide.layout === 'dialogue' && (
-            <article class="story-block story-block--dialogue" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="dialogue-bg">
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[640, 1024, 1600]}
-                  sizes="100vw"
-                  formats={['avif', 'webp']}
-                  loading="eager"
-                  decoding="async"
-                />
-              </div>
-              <div class="dialogue-container">
-                <div class="dialogue-header">
-                  <span class="dialogue-title">{slide.title}</span>
+      {
+        slides.map((slide, index) => (
+          <>
+            {/* Layout: Dialogue Bubble - WeChat style chat */}
+            {slide.layout === "dialogue" && (
+              <article
+                class="story-block story-block--dialogue"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="dialogue-bg">
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="100vw"
+                    formats={["avif", "webp"]}
+                    loading="eager"
+                    decoding="async"
+                  />
                 </div>
-                <div class="dialogue-bubbles">
-                  {slide.dialogueLines?.map((line, i) => (
-                    <div class={`bubble ${i % 2 === 0 ? 'bubble--left' : 'bubble--right'}`} style={`--delay: ${i * 0.15}s`}>
-                      {line}
+                <div class="dialogue-container">
+                  <div class="dialogue-header">
+                    <span class="dialogue-title">{slide.title}</span>
+                  </div>
+                  <div class="dialogue-bubbles">
+                    {slide.dialogueLines?.map((line, i) => (
+                      <div
+                        class={`bubble ${i % 2 === 0 ? "bubble--left" : "bubble--right"}`}
+                        style={`--delay: ${i * 0.15}s`}
+                      >
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                  <p class="dialogue-caption">{slide.copy}</p>
+                </div>
+              </article>
+            )}
+
+            {/* Layout: Split Left - Image left, text right */}
+            {slide.layout === "split-left" && (
+              <article
+                class="story-block story-block--split story-block--split-left"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="split-media">
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="50vw"
+                    formats={["avif", "webp"]}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="split-content">
+                  <span class="caption-index">0{index + 1}</span>
+                  <h2 class="split-title">{slide.title}</h2>
+                  <p class="split-text">{slide.copy}</p>
+                </div>
+              </article>
+            )}
+
+            {/* Layout: Decorative Number - Large number background */}
+            {slide.layout === "deco-number" && (
+              <article
+                class="story-block story-block--deco"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="deco-number" aria-hidden="true">
+                  0{index + 1}
+                </div>
+                <div class="deco-media" data-parallax-img>
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="60vw"
+                    formats={["avif", "webp"]}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="deco-content">
+                  <h2 class="deco-title">{slide.title}</h2>
+                  <p class="deco-text">{slide.copy}</p>
+                </div>
+              </article>
+            )}
+
+            {/* Insert horizontal carousel after slide 3 */}
+            {index === 2 && (
+              <div class="carousel-section" data-scroll-carousel>
+                <div class="carousel-track">
+                  {carouselImages.map((img, ci) => (
+                    <div class="carousel-item" style={`--ci: ${ci}`}>
+                      <Picture
+                        src={img}
+                        alt={`婚纱照 ${ci + 1}`}
+                        widths={[320, 480]}
+                        sizes="280px"
+                        formats={["avif", "webp"]}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  ))}
+                  {/* Duplicate for seamless loop */}
+                  {carouselImages.map((img, ci) => (
+                    <div class="carousel-item" style={`--ci: ${ci + 4}`}>
+                      <Picture
+                        src={img}
+                        alt={`婚纱照 ${ci + 1}`}
+                        widths={[320, 480]}
+                        sizes="280px"
+                        formats={["avif", "webp"]}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                   ))}
                 </div>
-                <p class="dialogue-caption">{slide.copy}</p>
               </div>
-            </article>
-          )}
+            )}
 
-          {/* Layout: Split Left - Image left, text right */}
-          {slide.layout === 'split-left' && (
-            <article class="story-block story-block--split story-block--split-left" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="split-media">
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[640, 1024, 1600]}
-                  sizes="50vw"
-                  formats={['avif', 'webp']}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="split-content">
-                <span class="caption-index">0{index + 1}</span>
-                <h2 class="split-title">{slide.title}</h2>
-                <p class="split-text">{slide.copy}</p>
-              </div>
-            </article>
-          )}
+            {/* Layout: Split Right - Image right, text left */}
+            {slide.layout === "split-right" && (
+              <article
+                class="story-block story-block--split story-block--split-right"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="split-content">
+                  <span class="caption-index">0{index + 1}</span>
+                  <h2 class="split-title">{slide.title}</h2>
+                  <p class="split-text">{slide.copy}</p>
+                </div>
+                <div class="split-media">
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="50vw"
+                    formats={["avif", "webp"]}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              </article>
+            )}
 
-          {/* Layout: Decorative Number - Large number background */}
-          {slide.layout === 'deco-number' && (
-            <article class="story-block story-block--deco" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="deco-number" aria-hidden="true">0{index + 1}</div>
-              <div class="deco-media" data-parallax-img>
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[640, 1024, 1600]}
-                  sizes="60vw"
-                  formats={['avif', 'webp']}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="deco-content">
-                <h2 class="deco-title">{slide.title}</h2>
-                <p class="deco-text">{slide.copy}</p>
-              </div>
-            </article>
-          )}
+            {/* Layout: Sticky Note - Handwriting style */}
+            {slide.layout === "sticky-note" && (
+              <article
+                class="story-block story-block--sticky"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="sticky-bg">
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="100vw"
+                    formats={["avif", "webp"]}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="sticky-note">
+                  <div class="sticky-tape" />
+                  <span class="sticky-number">0{index + 1}</span>
+                  <h2 class="sticky-title">{slide.title}</h2>
+                  <p class="sticky-text">{slide.copy}</p>
+                  <span class="sticky-doodle">♥</span>
+                </div>
+              </article>
+            )}
 
-          {/* Insert horizontal carousel after slide 3 */}
-          {index === 2 && (
-            <div class="carousel-section" data-scroll-carousel>
-              <div class="carousel-track">
-                {carouselImages.map((img, ci) => (
-                  <div class="carousel-item" style={`--ci: ${ci}`}>
-                    <Picture
-                      src={img}
-                      alt={`婚纱照 ${ci + 1}`}
-                      widths={[320, 480]}
-                      sizes="280px"
-                      formats={['avif', 'webp']}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                ))}
-                {/* Duplicate for seamless loop */}
-                {carouselImages.map((img, ci) => (
-                  <div class="carousel-item" style={`--ci: ${ci + 4}`}>
-                    <Picture
-                      src={img}
-                      alt={`婚纱照 ${ci + 1}`}
-                      widths={[320, 480]}
-                      sizes="280px"
-                      formats={['avif', 'webp']}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            {/* Layout: Minimal Large - Big text, small image */}
+            {slide.layout === "minimal-large" && (
+              <article
+                class="story-block story-block--minimal"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="minimal-text">
+                  <h2 class="minimal-title">{slide.title}</h2>
+                </div>
+                <div class="minimal-media">
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[320, 480, 640]}
+                    sizes="280px"
+                    formats={["avif", "webp"]}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <p class="minimal-copy">{slide.copy}</p>
+              </article>
+            )}
 
-          {/* Layout: Split Right - Image right, text left */}
-          {slide.layout === 'split-right' && (
-            <article class="story-block story-block--split story-block--split-right" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="split-content">
-                <span class="caption-index">0{index + 1}</span>
-                <h2 class="split-title">{slide.title}</h2>
-                <p class="split-text">{slide.copy}</p>
-              </div>
-              <div class="split-media">
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[640, 1024, 1600]}
-                  sizes="50vw"
-                  formats={['avif', 'webp']}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-            </article>
-          )}
-
-          {/* Layout: Sticky Note - Handwriting style */}
-          {slide.layout === 'sticky-note' && (
-            <article class="story-block story-block--sticky" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="sticky-bg">
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[640, 1024, 1600]}
-                  sizes="100vw"
-                  formats={['avif', 'webp']}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="sticky-note">
-                <div class="sticky-tape"></div>
-                <span class="sticky-number">0{index + 1}</span>
-                <h2 class="sticky-title">{slide.title}</h2>
-                <p class="sticky-text">{slide.copy}</p>
-                <span class="sticky-doodle">♥</span>
-              </div>
-            </article>
-          )}
-
-          {/* Layout: Minimal Large - Big text, small image */}
-          {slide.layout === 'minimal-large' && (
-            <article class="story-block story-block--minimal" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="minimal-text">
-                <h2 class="minimal-title">{slide.title}</h2>
-              </div>
-              <div class="minimal-media">
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[320, 480, 640]}
-                  sizes="280px"
-                  formats={['avif', 'webp']}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <p class="minimal-copy">{slide.copy}</p>
-            </article>
-          )}
-
-          {/* Fallback: Default full-bleed layout */}
-          {!slide.layout && (
-            <article class="story-block story-block--default" data-scroll-reveal style={`--i: ${index}`}>
-              <div class="story-media" data-parallax-img>
-                <Picture
-                  src={slide.src}
-                  alt={slide.title}
-                  widths={[640, 1024, 1600]}
-                  sizes="100vw"
-                  formats={['avif', 'webp']}
-                  loading={index < 2 ? 'eager' : 'lazy'}
-                  decoding="async"
-                />
-              </div>
-              <div class="story-caption">
-                <span class="caption-index">0{index + 1}</span>
-                <h2 class="caption-title">{slide.title}</h2>
-                <p class="caption-text">{slide.copy}</p>
-              </div>
-            </article>
-          )}
-        </>
-      ))}
+            {/* Fallback: Default full-bleed layout */}
+            {!slide.layout && (
+              <article
+                class="story-block story-block--default"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="story-media" data-parallax-img>
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="100vw"
+                    formats={["avif", "webp"]}
+                    loading={index < 2 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                </div>
+                <div class="story-caption">
+                  <span class="caption-index">0{index + 1}</span>
+                  <h2 class="caption-title">{slide.title}</h2>
+                  <p class="caption-text">{slide.copy}</p>
+                </div>
+              </article>
+            )}
+          </>
+        ))
+      }
     </section>
 
     <!-- Details Section - Minimal editorial layout -->
@@ -267,7 +328,7 @@ const eventDetails = {
           <span class="section-label">When & Where</span>
           <h2 class="section-title">时间地点</h2>
         </header>
-        
+
         <div class="details-grid">
           <div class="detail-block">
             <span class="detail-label">Date</span>
@@ -298,7 +359,12 @@ const eventDetails = {
         <a href="/api/reservations" class="rsvp-btn">
           <span>我来</span>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M5 12h14M12 5l7 7-7 7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
           </svg>
         </a>
       </div>
@@ -306,10 +372,11 @@ const eventDetails = {
 
     <!-- Footer -->
     <footer class="footer">
-      <p class="footer-names">{eventDetails.groomName} & {eventDetails.brideName}</p>
+      <p class="footer-names">
+        {eventDetails.groomName} & {eventDetails.brideName}
+      </p>
       <p class="footer-tagline">Love & Peace</p>
     </footer>
-
   </div>
 </Layout>
 
@@ -317,32 +384,32 @@ const eventDetails = {
   /* ===== Design Tokens ===== */
   :root {
     /* Light & Airy Theme (Default) */
-    --color-cream: #FDFBF7;
-    --color-sand: #E8DED1;
-    --color-sage: #B8C4A8;
-    --color-sage-light: #D4E0C8;
-    --color-gold: #C9A96E;
-    --color-charcoal: #2D2D2D;
-    --color-text: #3D3D3D;
-    --color-text-muted: #7A7A7A;
-    
-    --font-display: 'Cormorant Garamond', Georgia, serif;
-    --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
-    
+    --color-cream: #fdfbf7;
+    --color-sand: #e8ded1;
+    --color-sage: #b8c4a8;
+    --color-sage-light: #d4e0c8;
+    --color-gold: #c9a96e;
+    --color-charcoal: #2d2d2d;
+    --color-text: #3d3d3d;
+    --color-text-muted: #7a7a7a;
+
+    --font-display: "Cormorant Garamond", Georgia, serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   }
 
   /* Dark Elegant Theme - Toggle with [data-theme="dark"] */
   [data-theme="dark"] {
-    --color-cream: #0A0A0A;
-    --color-sand: #1A1A1A;
-    --color-sage: #2D3D2D;
-    --color-sage-light: #3D4D3D;
-    --color-gold: #D4AF37;
-    --color-charcoal: #F5F5F5;
-    --color-text: #E8E8E8;
-    --color-text-muted: #A0A0A0;
+    --color-cream: #0a0a0a;
+    --color-sand: #1a1a1a;
+    --color-sage: #2d3d2d;
+    --color-sage-light: #3d4d3d;
+    --color-gold: #d4af37;
+    --color-charcoal: #f5f5f5;
+    --color-text: #e8e8e8;
+    --color-text-muted: #a0a0a0;
   }
 
   /* ===== Base ===== */
@@ -351,7 +418,9 @@ const eventDetails = {
     color: var(--color-text);
     min-height: 100vh;
     overflow-x: hidden;
-    transition: background 0.6s var(--ease-out-expo), color 0.6s var(--ease-out-expo);
+    transition:
+      background 0.6s var(--ease-out-expo),
+      color 0.6s var(--ease-out-expo);
   }
 
   /* ===== Theme Toggle Button ===== */
@@ -474,12 +543,19 @@ const eventDetails = {
   }
 
   @keyframes fadeIn {
-    to { opacity: 1; }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(8px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(8px);
+    }
   }
 
   /* ===== Story Section - Full Bleed Photos ===== */
@@ -568,16 +644,21 @@ const eventDetails = {
   .bubble--left {
     align-self: flex-start;
     background: white;
-    color: var(--color-charcoal);
+    color: #2d2d2d; /* Keep dark text on white background in both themes */
     border-bottom-left-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
   .bubble--right {
     align-self: flex-end;
     background: var(--color-sage);
-    color: var(--color-charcoal);
+    color: #2d2d2d; /* Dark text on light sage background */
     border-bottom-right-radius: 4px;
+  }
+
+  /* Dark mode: sage background becomes dark, need light text */
+  [data-theme="dark"] .bubble--right {
+    color: #f5f5f5;
   }
 
   @keyframes bubbleIn {
@@ -676,7 +757,9 @@ const eventDetails = {
   .split-content {
     opacity: 0;
     transform: translateX(30px);
-    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    transition:
+      opacity 0.8s var(--ease-out-expo),
+      transform 0.8s var(--ease-out-expo);
     transition-delay: 0.2s;
   }
 
@@ -725,7 +808,7 @@ const eventDetails = {
     aspect-ratio: 4/5;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
     margin-bottom: 40px;
   }
 
@@ -763,7 +846,9 @@ const eventDetails = {
   .deco-content {
     opacity: 0;
     transform: translateY(40px);
-    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    transition:
+      opacity 0.8s var(--ease-out-expo),
+      transform 0.8s var(--ease-out-expo);
   }
 
   .deco-media {
@@ -800,7 +885,7 @@ const eventDetails = {
     height: 340px;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 
   .carousel-item :global(picture),
@@ -834,32 +919,40 @@ const eventDetails = {
   }
 
   .sticky-bg::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(253,251,247,0.7) 0%, rgba(253,251,247,0.5) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(253, 251, 247, 0.7) 0%,
+      rgba(253, 251, 247, 0.5) 100%
+    );
   }
 
   [data-theme="dark"] .sticky-bg::after {
-    background: linear-gradient(135deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.5) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(10, 10, 10, 0.7) 0%,
+      rgba(10, 10, 10, 0.5) 100%
+    );
   }
 
   .sticky-note {
     position: relative;
     z-index: 1;
-    background: linear-gradient(145deg, #FFFEF8 0%, #FBF9F0 100%);
+    background: linear-gradient(145deg, #fffef8 0%, #fbf9f0 100%);
     padding: 36px 28px 44px;
     max-width: 320px;
-    box-shadow: 
-      0 2px 4px rgba(0,0,0,0.03),
-      0 8px 16px rgba(0,0,0,0.06),
-      0 24px 48px rgba(0,0,0,0.08);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.03),
+      0 8px 16px rgba(0, 0, 0, 0.06),
+      0 24px 48px rgba(0, 0, 0, 0.08);
     transform: rotate(-2deg);
     border-radius: 2px;
   }
 
   [data-theme="dark"] .sticky-note {
-    background: linear-gradient(145deg, #F8F6F0 0%, #F0EDE5 100%);
+    background: linear-gradient(145deg, #f8f6f0 0%, #f0ede5 100%);
   }
 
   .sticky-tape {
@@ -869,9 +962,13 @@ const eventDetails = {
     transform: translateX(-50%) rotate(1deg);
     width: 90px;
     height: 28px;
-    background: linear-gradient(180deg, rgba(220, 200, 160, 0.6) 0%, rgba(200, 180, 140, 0.5) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(220, 200, 160, 0.6) 0%,
+      rgba(200, 180, 140, 0.5) 100%
+    );
     border-radius: 2px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .sticky-number {
@@ -885,19 +982,19 @@ const eventDetails = {
   }
 
   .sticky-title {
-    font-family: 'Caveat', cursive, var(--font-display);
+    font-family: "Caveat", cursive, var(--font-display);
     font-size: 36px;
     font-weight: 500;
     margin: 0 0 16px;
-    color: var(--color-charcoal);
+    color: #2d2d2d; /* Keep dark text on paper-like background */
     letter-spacing: 0.02em;
   }
 
   .sticky-text {
-    font-family: 'Caveat', cursive, var(--font-body);
+    font-family: "Caveat", cursive, var(--font-body);
     font-size: 20px;
     line-height: 1.6;
-    color: var(--color-charcoal);
+    color: #2d2d2d; /* Keep dark text on paper-like background */
     margin: 0;
   }
 
@@ -914,7 +1011,9 @@ const eventDetails = {
   .sticky-note {
     opacity: 0;
     transform: rotate(-2deg) translateY(30px) scale(0.95);
-    transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+    transition:
+      opacity 0.7s var(--ease-out-expo),
+      transform 0.7s var(--ease-out-expo);
     transition-delay: 0.2s;
   }
 
@@ -951,7 +1050,7 @@ const eventDetails = {
     height: 260px;
     border-radius: 100px;
     overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
   }
 
   @media (min-width: 768px) {
@@ -983,7 +1082,9 @@ const eventDetails = {
   .minimal-copy {
     opacity: 0;
     transform: translateY(30px);
-    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    transition:
+      opacity 0.8s var(--ease-out-expo),
+      transform 0.8s var(--ease-out-expo);
   }
 
   .minimal-title {
@@ -1031,7 +1132,7 @@ const eventDetails = {
 
   /* Photo overlay gradient */
   .story-media::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(
@@ -1051,7 +1152,9 @@ const eventDetails = {
     text-align: center;
     opacity: 0;
     transform: translateY(40px);
-    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    transition:
+      opacity 0.8s var(--ease-out-expo),
+      transform 0.8s var(--ease-out-expo);
     transition-delay: 0.3s;
   }
 
@@ -1327,9 +1430,9 @@ const eventDetails = {
 </style>
 
 <script>
-  import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { prefersReducedMotion } from '../utils/performance';
+  import gsap from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  import { prefersReducedMotion } from "../utils/performance";
 
   gsap.registerPlugin(ScrollTrigger);
 
@@ -1338,76 +1441,78 @@ const eventDetails = {
     if (prefersReducedMotion()) return;
 
     // Story blocks reveal on scroll
-    const storyBlocks = document.querySelectorAll('.story-block');
-    
+    const storyBlocks = document.querySelectorAll(".story-block");
+
     storyBlocks.forEach((block) => {
       ScrollTrigger.create({
         trigger: block,
-        start: 'top 60%',
-        end: 'bottom 40%',
-        onEnter: () => block.classList.add('in-view'),
-        onLeave: () => block.classList.remove('in-view'),
-        onEnterBack: () => block.classList.add('in-view'),
-        onLeaveBack: () => block.classList.remove('in-view'),
+        start: "top 60%",
+        end: "bottom 40%",
+        onEnter: () => block.classList.add("in-view"),
+        onLeave: () => block.classList.remove("in-view"),
+        onEnterBack: () => block.classList.add("in-view"),
+        onLeaveBack: () => block.classList.remove("in-view"),
       });
     });
 
     // Parallax effect on images
-    const parallaxImages = document.querySelectorAll('[data-parallax-img]');
-    
+    const parallaxImages = document.querySelectorAll("[data-parallax-img]");
+
     parallaxImages.forEach((container) => {
-      const img = container.querySelector('img');
+      const img = container.querySelector("img");
       if (!img) return;
 
       gsap.to(img, {
         yPercent: 20,
-        ease: 'none',
+        ease: "none",
         scrollTrigger: {
           trigger: container,
-          start: 'top bottom',
-          end: 'bottom top',
+          start: "top bottom",
+          end: "bottom top",
           scrub: 1,
-        }
+        },
       });
     });
 
     // Details section fade in
-    const detailBlocks = document.querySelectorAll('.detail-block');
-    gsap.fromTo(detailBlocks, 
+    const detailBlocks = document.querySelectorAll(".detail-block");
+    gsap.fromTo(
+      detailBlocks,
       { y: 30, opacity: 0 },
       {
         y: 0,
         opacity: 1,
         duration: 0.8,
         stagger: 0.1,
-        ease: 'power2.out',
+        ease: "power2.out",
         scrollTrigger: {
-          trigger: '.details',
-          start: 'top 70%',
-        }
+          trigger: ".details",
+          start: "top 70%",
+        },
       }
     );
 
     // RSVP section
-    gsap.fromTo('.rsvp-inner', 
+    gsap.fromTo(
+      ".rsvp-inner",
       { y: 40, opacity: 0 },
       {
         y: 0,
         opacity: 1,
         duration: 1,
-        ease: 'power2.out',
+        ease: "power2.out",
         scrollTrigger: {
-          trigger: '.rsvp',
-          start: 'top 70%',
-        }
+          trigger: ".rsvp",
+          start: "top 70%",
+        },
       }
     );
 
     // Horizontal carousel - scroll-controlled horizontal movement
-    const carousels = document.querySelectorAll('[data-scroll-carousel]');
-    
+    const carousels = document.querySelectorAll("[data-scroll-carousel]");
+
     carousels.forEach((carousel) => {
-      const track = carousel.querySelector('.carousel-track');
+      const track = carousel.querySelector(".carousel-track");
       if (!track) return;
 
       gsap.to(track, {
@@ -1416,49 +1521,49 @@ const eventDetails = {
           const viewportWidth = window.innerWidth;
           return -(trackWidth - viewportWidth) / 2;
         },
-        ease: 'none',
+        ease: "none",
         scrollTrigger: {
           trigger: carousel,
-          start: 'top bottom',
-          end: 'bottom top',
+          start: "top bottom",
+          end: "bottom top",
           scrub: 1,
-        }
+        },
       });
     });
   }
 
   // Initialize
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initScrollAnimations);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initScrollAnimations);
   } else {
     initScrollAnimations();
   }
 
   // Theme toggle functionality
   function initThemeToggle() {
-    const toggleBtn = document.getElementById('theme-toggle');
-    const invitationEl = document.querySelector('.invitation');
-    
+    const toggleBtn = document.getElementById("theme-toggle");
+    const invitationEl = document.querySelector(".invitation");
+
     if (!toggleBtn || !invitationEl) return;
-    
-    toggleBtn.addEventListener('click', () => {
-      const currentTheme = invitationEl.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      invitationEl.setAttribute('data-theme', newTheme);
-      
+
+    toggleBtn.addEventListener("click", () => {
+      const currentTheme = invitationEl.getAttribute("data-theme");
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+      invitationEl.setAttribute("data-theme", newTheme);
+
       // Optional: Store preference
       try {
-        localStorage.setItem('wedding-theme', newTheme);
+        localStorage.setItem("wedding-theme", newTheme);
       } catch (e) {
         // Ignore localStorage errors
       }
     });
-    
+
     // Optional: Load saved preference
     try {
-      const savedTheme = localStorage.getItem('wedding-theme');
+      const savedTheme = localStorage.getItem("wedding-theme");
       if (savedTheme) {
-        invitationEl.setAttribute('data-theme', savedTheme);
+        invitationEl.setAttribute("data-theme", savedTheme);
       }
     } catch (e) {
       // Ignore localStorage errors
@@ -1466,14 +1571,14 @@ const eventDetails = {
   }
 
   // Initialize theme toggle
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initThemeToggle);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initThemeToggle);
   } else {
     initThemeToggle();
   }
 
   // Cleanup on page transition
-  document.addEventListener('astro:before-swap', () => {
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  document.addEventListener("astro:before-swap", () => {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
   });
 </script>
