@@ -21,7 +21,18 @@ const eventDetails = {
 ---
 
 <Layout title="婚礼邀请函">
-  <div class="invitation" data-lenis-prevent>
+  <div class="invitation" data-lenis-prevent data-theme="light">
+    
+    <!-- Theme Toggle - Debug Control -->
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+      <svg class="icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 1v6m0 6v6m11-11h-6m-6 0H1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <svg class="icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
     
     <!-- Hero Section - Full viewport -->
     <section class="hero">
@@ -123,7 +134,7 @@ const eventDetails = {
 
           {/* Insert horizontal carousel after slide 3 */}
           {index === 2 && (
-            <div class="carousel-section">
+            <div class="carousel-section" data-scroll-carousel>
               <div class="carousel-track">
                 {carouselImages.map((img, ci) => (
                   <div class="carousel-item" style={`--ci: ${ci}`}>
@@ -303,8 +314,9 @@ const eventDetails = {
 </Layout>
 
 <style>
-  /* ===== Design Tokens - Light & Airy ===== */
+  /* ===== Design Tokens ===== */
   :root {
+    /* Light & Airy Theme (Default) */
     --color-cream: #FDFBF7;
     --color-sand: #E8DED1;
     --color-sage: #B8C4A8;
@@ -321,12 +333,59 @@ const eventDetails = {
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   }
 
+  /* Dark Elegant Theme - Toggle with [data-theme="dark"] */
+  [data-theme="dark"] {
+    --color-cream: #0A0A0A;
+    --color-sand: #1A1A1A;
+    --color-sage: #2D3D2D;
+    --color-sage-light: #3D4D3D;
+    --color-gold: #D4AF37;
+    --color-charcoal: #F5F5F5;
+    --color-text: #E8E8E8;
+    --color-text-muted: #A0A0A0;
+  }
+
   /* ===== Base ===== */
   .invitation {
     background: var(--color-cream);
     color: var(--color-text);
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background 0.6s var(--ease-out-expo), color 0.6s var(--ease-out-expo);
+  }
+
+  /* ===== Theme Toggle Button ===== */
+  .theme-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--color-text-muted);
+    background: var(--color-cream);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out-expo);
+    backdrop-filter: blur(10px);
+  }
+
+  .theme-toggle:hover {
+    transform: scale(1.1);
+    border-color: var(--color-gold);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  [data-theme="light"] .icon-dark {
+    display: none;
+  }
+
+  [data-theme="dark"] .icon-light {
+    display: none;
   }
 
   /* ===== Hero Section ===== */
@@ -613,6 +672,27 @@ const eventDetails = {
     max-width: 400px;
   }
 
+  /* Split layout reveal animations */
+  .split-content {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    transition-delay: 0.2s;
+  }
+
+  .story-block--split-left .split-content {
+    transform: translateX(30px);
+  }
+
+  .story-block--split-right .split-content {
+    transform: translateX(-30px);
+  }
+
+  .story-block--split.in-view .split-content {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
   /* ===== Layout: Decorative Number ===== */
   .story-block--deco {
     flex-direction: column;
@@ -627,13 +707,14 @@ const eventDetails = {
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: var(--font-display);
-    font-size: clamp(200px, 40vw, 400px);
+    font-size: clamp(180px, 50vw, 500px);
     font-weight: 300;
-    color: var(--color-sage-light);
-    opacity: 0.4;
+    color: var(--color-sage);
+    opacity: 0.25;
     line-height: 1;
     pointer-events: none;
     z-index: 0;
+    letter-spacing: -0.05em;
   }
 
   .deco-media {
@@ -677,6 +758,28 @@ const eventDetails = {
     margin: 0;
   }
 
+  /* Deco layout reveal animations */
+  .deco-media,
+  .deco-content {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+  }
+
+  .deco-media {
+    transition-delay: 0.1s;
+  }
+
+  .deco-content {
+    transition-delay: 0.3s;
+  }
+
+  .story-block--deco.in-view .deco-media,
+  .story-block--deco.in-view .deco-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   /* ===== Horizontal Carousel ===== */
   .carousel-section {
     padding: 60px 0;
@@ -687,13 +790,8 @@ const eventDetails = {
   .carousel-track {
     display: flex;
     gap: 20px;
-    animation: carouselScroll 30s linear infinite;
     width: max-content;
-  }
-
-  @keyframes carouselScroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    will-change: transform;
   }
 
   .carousel-item {
@@ -742,61 +840,87 @@ const eventDetails = {
     background: linear-gradient(135deg, rgba(253,251,247,0.7) 0%, rgba(253,251,247,0.5) 100%);
   }
 
+  [data-theme="dark"] .sticky-bg::after {
+    background: linear-gradient(135deg, rgba(10,10,10,0.7) 0%, rgba(10,10,10,0.5) 100%);
+  }
+
   .sticky-note {
     position: relative;
     z-index: 1;
-    background: #FFFEF5;
-    padding: 32px 28px 40px;
+    background: linear-gradient(145deg, #FFFEF8 0%, #FBF9F0 100%);
+    padding: 36px 28px 44px;
     max-width: 320px;
     box-shadow: 
-      0 4px 6px rgba(0,0,0,0.05),
-      0 20px 40px rgba(0,0,0,0.1);
+      0 2px 4px rgba(0,0,0,0.03),
+      0 8px 16px rgba(0,0,0,0.06),
+      0 24px 48px rgba(0,0,0,0.08);
     transform: rotate(-2deg);
-    font-family: 'Caveat', cursive, var(--font-body);
+    border-radius: 2px;
+  }
+
+  [data-theme="dark"] .sticky-note {
+    background: linear-gradient(145deg, #F8F6F0 0%, #F0EDE5 100%);
   }
 
   .sticky-tape {
     position: absolute;
-    top: -12px;
+    top: -14px;
     left: 50%;
-    transform: translateX(-50%) rotate(2deg);
-    width: 80px;
-    height: 24px;
-    background: rgba(200, 180, 140, 0.5);
+    transform: translateX(-50%) rotate(1deg);
+    width: 90px;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(220, 200, 160, 0.6) 0%, rgba(200, 180, 140, 0.5) 100%);
     border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
 
   .sticky-number {
     position: absolute;
-    top: 12px;
-    right: 16px;
+    top: 16px;
+    right: 18px;
     font-family: var(--font-display);
-    font-size: 14px;
+    font-size: 13px;
     color: var(--color-gold);
+    opacity: 0.7;
   }
 
   .sticky-title {
     font-family: 'Caveat', cursive, var(--font-display);
-    font-size: 32px;
-    font-weight: 400;
+    font-size: 36px;
+    font-weight: 500;
     margin: 0 0 16px;
     color: var(--color-charcoal);
+    letter-spacing: 0.02em;
   }
 
   .sticky-text {
-    font-size: 18px;
-    line-height: 1.7;
-    color: var(--color-text);
+    font-family: 'Caveat', cursive, var(--font-body);
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--color-charcoal);
     margin: 0;
   }
 
   .sticky-doodle {
     position: absolute;
-    bottom: 16px;
-    right: 20px;
-    font-size: 24px;
+    bottom: 14px;
+    right: 18px;
+    font-size: 28px;
     color: var(--color-sage);
-    opacity: 0.6;
+    opacity: 0.5;
+  }
+
+  /* Sticky note reveal animation */
+  .sticky-note {
+    opacity: 0;
+    transform: rotate(-2deg) translateY(30px) scale(0.95);
+    transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+    transition-delay: 0.2s;
+  }
+
+  .story-block--sticky.in-view .sticky-note {
+    opacity: 1;
+    transform: rotate(-2deg) translateY(0) scale(1);
   }
 
   /* ===== Layout: Minimal Large ===== */
@@ -851,6 +975,34 @@ const eventDetails = {
     color: var(--color-text-muted);
     margin: 0;
     max-width: 400px;
+  }
+
+  /* Minimal layout reveal animations */
+  .minimal-title,
+  .minimal-media,
+  .minimal-copy {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+  }
+
+  .minimal-title {
+    transition-delay: 0.1s;
+  }
+
+  .minimal-media {
+    transition-delay: 0.25s;
+  }
+
+  .minimal-copy {
+    transition-delay: 0.4s;
+  }
+
+  .story-block--minimal.in-view .minimal-title,
+  .story-block--minimal.in-view .minimal-media,
+  .story-block--minimal.in-view .minimal-copy {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   /* ===== Default Layout (Fallback) ===== */
@@ -1250,6 +1402,29 @@ const eventDetails = {
         }
       }
     );
+
+    // Horizontal carousel - scroll-controlled horizontal movement
+    const carousels = document.querySelectorAll('[data-scroll-carousel]');
+    
+    carousels.forEach((carousel) => {
+      const track = carousel.querySelector('.carousel-track');
+      if (!track) return;
+
+      gsap.to(track, {
+        x: () => {
+          const trackWidth = track.scrollWidth;
+          const viewportWidth = window.innerWidth;
+          return -(trackWidth - viewportWidth) / 2;
+        },
+        ease: 'none',
+        scrollTrigger: {
+          trigger: carousel,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1,
+        }
+      });
+    });
   }
 
   // Initialize
@@ -1257,6 +1432,44 @@ const eventDetails = {
     document.addEventListener('DOMContentLoaded', initScrollAnimations);
   } else {
     initScrollAnimations();
+  }
+
+  // Theme toggle functionality
+  function initThemeToggle() {
+    const toggleBtn = document.getElementById('theme-toggle');
+    const invitationEl = document.querySelector('.invitation');
+    
+    if (!toggleBtn || !invitationEl) return;
+    
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = invitationEl.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      invitationEl.setAttribute('data-theme', newTheme);
+      
+      // Optional: Store preference
+      try {
+        localStorage.setItem('wedding-theme', newTheme);
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    });
+    
+    // Optional: Load saved preference
+    try {
+      const savedTheme = localStorage.getItem('wedding-theme');
+      if (savedTheme) {
+        invitationEl.setAttribute('data-theme', savedTheme);
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+  }
+
+  // Initialize theme toggle
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initThemeToggle);
+  } else {
+    initThemeToggle();
   }
 
   // Cleanup on page transition
