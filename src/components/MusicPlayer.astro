@@ -1,0 +1,170 @@
+---
+interface Props {
+  src?: string;
+  autoplay?: boolean;
+}
+
+const { 
+  src = "/小さな恋のうた .mp3",
+  autoplay = true 
+} = Astro.props;
+---
+
+<div class="music-player" id="musicPlayer">
+  <button class="music-btn" id="musicBtn" aria-label="Toggle music">
+    <!-- Playing icon (vinyl disc) -->
+    <svg class="icon-playing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r="6" stroke-dasharray="2 2" />
+    </svg>
+    <!-- Paused icon -->
+    <svg class="icon-paused" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="10" y1="8" x2="10" y2="16" />
+      <line x1="14" y1="8" x2="14" y2="16" />
+    </svg>
+  </button>
+  <audio id="bgmAudio" loop preload="auto">
+    <source src={src} type="audio/mpeg" />
+  </audio>
+</div>
+
+<style>
+  .music-player {
+    position: fixed;
+    top: 24px;
+    right: 80px;
+    z-index: 1000;
+  }
+
+  .music-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    background: transparent;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+  }
+
+  .music-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .music-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Default: show paused icon */
+  .icon-playing {
+    display: none;
+  }
+
+  .icon-paused {
+    display: block;
+  }
+
+  /* When playing: show playing icon with rotation */
+  .music-player.playing .icon-playing {
+    display: block;
+    animation: spin 4s linear infinite;
+  }
+
+  .music-player.playing .icon-paused {
+    display: none;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Adapt to dark hero section */
+  .hero--siena ~ .music-player,
+  [data-theme="dark"] .music-player {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  [data-theme="light"] .music-player {
+    color: rgba(45, 45, 45, 0.8);
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const player = document.getElementById("musicPlayer");
+    const btn = document.getElementById("musicBtn");
+    const audio = document.getElementById("bgmAudio") as HTMLAudioElement;
+
+    if (!player || !btn || !audio) return;
+
+    let isPlaying = false;
+
+    // Try to autoplay on first user interaction
+    const tryAutoplay = async () => {
+      try {
+        await audio.play();
+        isPlaying = true;
+        player.classList.add("playing");
+      } catch (e) {
+        // Autoplay blocked, wait for user interaction
+        console.log("Autoplay blocked, waiting for user interaction");
+      }
+    };
+
+    // Try autoplay immediately
+    tryAutoplay();
+
+    // Also try on first interaction if autoplay was blocked
+    const startOnInteraction = () => {
+      if (!isPlaying) {
+        tryAutoplay();
+      }
+      document.removeEventListener("click", startOnInteraction);
+      document.removeEventListener("touchstart", startOnInteraction);
+      document.removeEventListener("scroll", startOnInteraction);
+    };
+
+    document.addEventListener("click", startOnInteraction, { once: true });
+    document.addEventListener("touchstart", startOnInteraction, { once: true });
+    document.addEventListener("scroll", startOnInteraction, { once: true });
+
+    // Toggle play/pause on button click
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+        player.classList.remove("playing");
+      } else {
+        audio.play();
+        isPlaying = true;
+        player.classList.add("playing");
+      }
+    });
+
+    // Update state when audio ends or errors
+    audio.addEventListener("play", () => {
+      isPlaying = true;
+      player.classList.add("playing");
+    });
+
+    audio.addEventListener("pause", () => {
+      isPlaying = false;
+      player.classList.remove("playing");
+    });
+  });
+</script>

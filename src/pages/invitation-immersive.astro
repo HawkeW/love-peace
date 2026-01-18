@@ -6,6 +6,7 @@
  */
 import Layout from "../layouts/Layout.astro";
 import OrganicBlob from "../components/effects/OrganicBlob.astro";
+import MusicPlayer from "../components/MusicPlayer.astro";
 import { Picture } from "astro:assets";
 import { slides, carouselImages } from "../data/slides";
 
@@ -54,6 +55,9 @@ const eventDetails = {
           stroke-linejoin="round"></path>
       </svg>
     </button>
+
+    <!-- Background Music Player -->
+    <MusicPlayer />
 
     <!-- Hero Section - Siena Style -->
     <section class="hero hero--siena">
@@ -397,8 +401,8 @@ const eventDetails = {
     --color-text: #3d3d3d;
     --color-text-muted: #7a7a7a;
 
-    --font-display: "Cormorant Garamond", Georgia, serif;
-    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Noto Sans SC", "Cormorant Garamond", Georgia, serif;
+    --font-body: "Noto Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
 
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
