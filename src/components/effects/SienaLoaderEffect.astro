@@ -2,38 +2,37 @@
 interface Props {
   title?: string;
   subtitle?: string;
-  enterText?: string;
-  onEnter?: string;
+  autoHide?: boolean;
+  autoHideDelay?: number;
 }
 
 const {
   title = "SIENA",
   subtitle = "FILM FOUNDATION",
-  enterText = "ENTER",
-  onEnter = "#",
+  autoHide = false,
+  autoHideDelay = 4500,
 } = Astro.props;
 
 const STRIPE_COUNT = 12;
 ---
 
-<div class="siena-loader" id="sienaLoader">
+<div class="siena-loader" id="sienaLoader" data-auto-hide={autoHide} data-auto-hide-delay={autoHideDelay}>
   <!-- Black background base (will be revealed) -->
   <div class="base-black"></div>
-  
+
   <!-- White overlay stripes - each wipes from left to right simultaneously -->
   <div class="stripe-container" id="stripeContainer">
-    {Array.from({ length: STRIPE_COUNT }).map((_, i) => (
-      <div class="stripe" style={`--index: ${i}`}></div>
-    ))}
+    {
+      Array.from({ length: STRIPE_COUNT }).map((_, i) => (
+        <div class="stripe" style={`--index: ${i}`} />
+      ))
+    }
   </div>
 
   <!-- Title - always white, becomes visible as background turns black -->
   <div class="title-container">
     <h1 class="main-title">{title}</h1>
     <p class="subtitle">{subtitle}</p>
-    <a href={onEnter} class="enter-button" id="enterButton">
-      {enterText}
-    </a>
   </div>
 </div>
 
@@ -45,6 +44,7 @@ const STRIPE_COUNT = 12;
     height: 100vh;
     overflow: hidden;
     font-family: "Cormorant Garamond", "Times New Roman", serif;
+    z-index: 9999;
   }
 
   /* Black background - revealed when white stripes wipe away */
@@ -94,85 +94,60 @@ const STRIPE_COUNT = 12;
   }
 
   .main-title {
-    font-size: clamp(3rem, 15vw, 10rem);
+    font-size: clamp(3rem, 12vw, 8rem);
     font-weight: 300;
-    letter-spacing: 0.4em;
+    letter-spacing: 0.15em;
     margin: 0;
-    text-transform: uppercase;
-    padding-right: 0.4em; /* Compensate for letter-spacing */
+    padding-right: 0.15em;
   }
 
   .subtitle {
-    font-size: clamp(0.8rem, 2vw, 1.2rem);
+    font-size: clamp(0.9rem, 2.5vw, 1.4rem);
     font-weight: 300;
-    letter-spacing: 0.5em;
-    margin: 1rem 0 0 0;
+    letter-spacing: 0.3em;
+    margin: 1.5rem 0 0 0;
     opacity: 0;
-    text-transform: uppercase;
     animation: fadeIn 1s ease-out forwards;
     animation-delay: 3s;
-    padding-right: 0.5em;
-  }
-
-  .enter-button {
-    display: inline-block;
-    margin-top: 3rem;
-    padding: 1rem 3rem;
-    border: 1px solid white;
-    color: white;
-    text-decoration: none;
-    font-size: clamp(0.7rem, 1.5vw, 0.9rem);
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
-    animation: fadeIn 1s ease-out forwards;
-    animation-delay: 3.3s;
+    padding-right: 0.3em;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .enter-button:hover {
-    background: white;
-    color: black;
-    transform: scale(1.05);
-  }
-
-  .enter-button:active {
-    transform: scale(0.98);
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .siena-loader.hidden {
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.5s ease-out;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
 </style>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const enterButton = document.getElementById("enterButton");
     const loader = document.getElementById("sienaLoader");
-
-    if (enterButton && loader) {
-      enterButton.addEventListener("click", (e) => {
-        const href = enterButton.getAttribute("href");
-
-        if (href === "#") {
-          e.preventDefault();
+    
+    if (loader) {
+      const autoHide = loader.dataset.autoHide === "true";
+      const autoHideDelay = parseInt(loader.dataset.autoHideDelay || "4500", 10);
+      
+      if (autoHide) {
+        setTimeout(() => {
           loader.classList.add("hidden");
           window.dispatchEvent(
-            new CustomEvent("siena-enter", {
+            new CustomEvent("siena-loader-complete", {
               detail: { loader },
             })
           );
-        }
-      });
+        }, autoHideDelay);
+      }
     }
   });
 </script>
