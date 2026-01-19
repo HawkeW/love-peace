@@ -46,7 +46,7 @@ export const slides: SlideItem[] = [
   {
     src: img2828,
     title: '约定',
-    copy: '在图书馆的书架下，我局促着回忆着准备好的台词。那时的暖气这么热，烫红了我们的脸都。',
+    copy: '在图书馆的书架下，我局促着回忆着准备好的台词。那时的暖气这么热，烫红了我们的脸。',
     layout: 'deco-number'
   },
   {

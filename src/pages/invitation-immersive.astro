@@ -8,8 +8,20 @@ import Layout from "../layouts/Layout.astro";
 import OrganicBlob from "../components/effects/OrganicBlob.astro";
 import MusicPlayer from "../components/MusicPlayer.astro";
 import CoinSlot from "../components/CoinSlot.astro";
-import { Picture } from "astro:assets";
+import CircularGallery from "../components/CircularGallery.vue";
+import { Picture, getImage } from "astro:assets";
 import { slides, carouselImages } from "../data/slides";
+
+// Generate optimized image URLs for CircularGallery
+const galleryItems = await Promise.all(
+  carouselImages.map(async (img, index) => {
+    const optimized = await getImage({ src: img, width: 800, format: 'webp' });
+    return {
+      image: optimized.src,
+      text: ``
+    };
+  })
+);
 
 // Event details
 const eventDetails = {
@@ -221,39 +233,18 @@ const eventDetails = {
               </article>
             )}
 
-            {/* Insert horizontal carousel after slide 3 */}
+            {/* Insert circular gallery after slide 3 */}
             {index === 2 && (
-              <div class="carousel-section" data-scroll-carousel>
-                <div class="carousel-track">
-                  {carouselImages.map((img, ci) => (
-                    <div class="carousel-item" style={`--ci: ${ci}`}>
-                      <Picture
-                        src={img}
-                        alt={`婚纱照 ${ci + 1}`}
-                        widths={[320, 480]}
-                        sizes="280px"
-                        formats={["avif", "webp"]}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  ))}
-                  {/* Duplicate for seamless loop */}
-                  {carouselImages.map((img, ci) => (
-                    <div class="carousel-item" style={`--ci: ${ci + 4}`}>
-                      <Picture
-                        src={img}
-                        alt={`婚纱照 ${ci + 1}`}
-                        widths={[320, 480]}
-                        sizes="280px"
-                        formats={["avif", "webp"]}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <section class="gallery-section">
+                <CircularGallery 
+                  client:visible
+                  items={galleryItems}
+                  bend={3}
+                  textColor="#ffffff"
+                  borderRadius={0.05}
+                  scrollHeight={2.5}
+                />
+              </section>
             )}
 
             {/* Layout: Split Right - Image right, text left */}
@@ -1219,39 +1210,36 @@ const eventDetails = {
     transform: translateY(0);
   }
 
-  /* ===== Horizontal Carousel ===== */
-  .carousel-section {
-    padding: 60px 0;
-    background: var(--color-cream);
-    overflow: hidden;
-  }
-
-  .carousel-track {
-    display: flex;
-    gap: 20px;
-    width: max-content;
-    will-change: transform;
-  }
-
-  .carousel-item {
-    flex-shrink: 0;
-    width: 260px;
-    height: 340px;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-
-  .carousel-item :global(picture),
-  .carousel-item :global(img) {
+  /* ===== Circular Gallery Section ===== */
+  .gallery-section {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s var(--ease-out-expo);
+    position: relative;
+    overflow: visible;
+    background: linear-gradient(
+      180deg,
+      var(--color-sand) 0%,
+      var(--color-cream) 50%,
+      var(--color-sand) 100%
+    );
   }
 
-  .carousel-item:hover :global(img) {
-    transform: scale(1.05);
+  .gallery-section::before {
+    content: '继续滑动浏览';
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: var(--color-text-muted);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .gallery-section.is-pinned::before {
+    opacity: 1;
   }
 
   /* ===== Layout: Sticky Note ===== */
