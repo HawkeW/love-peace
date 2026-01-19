@@ -10,6 +10,7 @@ export interface Props {
 	total: number;
 }
 const { src, title, copy, index, total } = Astro.props;
+const hasSlot = Astro.slots.has('default');
 ---
 
 <section class="slide" data-index={index}>
@@ -29,6 +30,7 @@ const { src, title, copy, index, total } = Astro.props;
 			<p>{copy}</p>
 		</figcaption>
 	</figure>
+	{hasSlot && <slot />}
 	<div class="progress">{index + 1}/{total}</div>
 </section>
 <script>

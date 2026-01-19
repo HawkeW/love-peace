@@ -7,6 +7,7 @@
 import Layout from "../layouts/Layout.astro";
 import OrganicBlob from "../components/effects/OrganicBlob.astro";
 import MusicPlayer from "../components/MusicPlayer.astro";
+import CoinSlot from "../components/CoinSlot.astro";
 import { Picture } from "astro:assets";
 import { slides, carouselImages } from "../data/slides";
 
@@ -76,15 +77,21 @@ const eventDetails = {
       </div>
       
       <div class="scroll-cue scroll-cue--siena">
-        <span>往下滑</span>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 5v14M5 12l7 7 7-7"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"></path>
-        </svg>
+        <div class="hero-buttons">
+          <a href="#story" class="hero-btn hero-btn--primary">
+            <span>我们的故事</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#details" class="hero-btn hero-btn--secondary">
+            <span>查看位置</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -126,6 +133,36 @@ const eventDetails = {
                     ))}
                   </div>
                   <p class="dialogue-caption">{slide.copy}</p>
+                </div>
+              </article>
+            )}
+
+            {/* Layout: Chalkboard - Classroom memory with text on blackboard */}
+            {slide.layout === "chalkboard" && (
+              <article
+                class="story-block story-block--chalkboard"
+                data-scroll-reveal
+                style={`--i: ${index}`}
+              >
+                <div class="chalkboard-scene">
+                  <Picture
+                    src={slide.src}
+                    alt={slide.title}
+                    widths={[640, 1024, 1600]}
+                    sizes="100vw"
+                    formats={["avif", "webp", "png"]}
+                    loading="eager"
+                    decoding="async"
+                  />
+                </div>
+                <div class="chalkboard-overlay">
+                  <div class="chalkboard-text">
+                    <h2 class="chalk-title">{slide.title}</h2>
+                    <p class="chalk-copy">{slide.copy}</p>
+                    {slide.chalkboardLine && (
+                      <p class="chalk-highlight">{slide.chalkboardLine}</p>
+                    )}
+                  </div>
                 </div>
               </article>
             )}
@@ -378,6 +415,11 @@ const eventDetails = {
       </div>
     </section>
 
+    <!-- Coin Slot Section - Gamification -->
+    <section class="coin-section" id="coin-section">
+      <CoinSlot />
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
       <p class="footer-names">
@@ -549,18 +591,89 @@ const eventDetails = {
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.7);
     z-index: 3;
     opacity: 0;
     animation: fadeIn 1s var(--ease-out-expo) 3.5s forwards;
   }
 
+  /* CoinSlot wrapper adjustments */
+  .scroll-cue--siena :global(.coin-slot) {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+  }
+
   .scroll-cue--siena svg {
     animation: float 2s ease-in-out infinite;
     animation-delay: 3.5s;
+  }
+
+  /* Hero Buttons */
+  .hero-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  @media (min-width: 480px) {
+    .hero-buttons {
+      flex-direction: row;
+      gap: 16px;
+    }
+  }
+
+  .hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    border-radius: 999px;
+    transition: all 0.4s var(--ease-out-expo);
+    cursor: pointer;
+  }
+
+  .hero-btn--primary {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .hero-btn--primary:hover {
+    background: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .hero-btn--secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-3px);
+  }
+
+  .hero-btn svg {
+    flex-shrink: 0;
+    transition: transform 0.3s var(--ease-out-expo);
+  }
+
+  .hero-btn--primary:hover svg {
+    transform: translateY(3px);
+  }
+
+  .hero-btn--secondary:hover svg {
+    transform: scale(1.1);
   }
 
   @keyframes fadeInUp {
@@ -793,6 +906,128 @@ const eventDetails = {
     color: var(--color-text-muted);
     font-style: italic;
     margin: 0;
+  }
+
+  /* ===== Layout: Chalkboard (Classroom Memory) ===== */
+  .story-block--chalkboard {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+    overflow: hidden;
+  }
+
+  .chalkboard-scene {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .chalkboard-scene :global(picture),
+  .chalkboard-scene :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  .chalkboard-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10% 5% 20%;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0) 30%,
+      rgba(0, 0, 0, 0.4) 70%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+
+  .chalkboard-text {
+    text-align: center;
+    max-width: 600px;
+    padding: 24px;
+  }
+
+  .chalk-title {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 12vw, 80px);
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0 0 20px;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.1em;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: chalkWrite 0.8s var(--ease-out-expo) 0.3s forwards;
+  }
+
+  .chalk-copy {
+    font-family: var(--font-body);
+    font-size: clamp(14px, 3.5vw, 18px);
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 24px;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    animation: chalkWrite 0.8s var(--ease-out-expo) 0.6s forwards;
+  }
+
+  .chalk-highlight {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 6vw, 36px);
+    font-weight: 300;
+    color: var(--color-gold);
+    margin: 0;
+    text-shadow: 0 0 30px rgba(201, 169, 110, 0.5);
+    opacity: 0;
+    animation: chalkHighlight 1s var(--ease-out-expo) 1s forwards;
+  }
+
+  @keyframes chalkWrite {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes chalkHighlight {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Chalkboard reveal on scroll */
+  .story-block--chalkboard .chalk-title,
+  .story-block--chalkboard .chalk-copy,
+  .story-block--chalkboard .chalk-highlight {
+    animation-play-state: paused;
+  }
+
+  .story-block--chalkboard.in-view .chalk-title,
+  .story-block--chalkboard.in-view .chalk-copy,
+  .story-block--chalkboard.in-view .chalk-highlight {
+    animation-play-state: running;
   }
 
   /* ===== Layout: Split Screen ===== */
@@ -1432,6 +1667,46 @@ const eventDetails = {
 
   .rsvp-btn:hover svg {
     transform: translateX(4px);
+  }
+
+  /* ===== Coin Section ===== */
+  .coin-section {
+    position: relative;
+    padding: 80px 24px;
+    background: linear-gradient(
+      180deg,
+      var(--color-sand) 0%,
+      var(--color-cream) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    overflow: hidden;
+  }
+
+  .coin-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 80px;
+    background: linear-gradient(
+      180deg,
+      var(--color-gold) 0%,
+      transparent 100%
+    );
+  }
+
+  /* Adjust CoinSlot positioning within section */
+  .coin-section :global(.coin-slot) {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
   }
 
   /* ===== Footer ===== */

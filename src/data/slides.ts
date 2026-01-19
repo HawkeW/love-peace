@@ -11,10 +11,11 @@ import img3459 from '../assets/gallery/wedding/DXMJ3459.jpeg';
 // Additional carousel images
 import img2728 from '../assets/gallery/wedding/DXMJ2728.jpeg';
 import img2827 from '../assets/gallery/wedding/DXMJ2827.jpeg';
+import img2828 from '../assets/gallery/wedding/DXMJ2828.jpeg';
 import img2911 from '../assets/gallery/wedding/DXMJ2911.jpeg';
 import img3207 from '../assets/gallery/wedding/DXMJ3207.jpeg';
 
-export type LayoutType = 'dialogue' | 'split-left' | 'deco-number' | 'split-right' | 'sticky-note' | 'minimal-large';
+export type LayoutType = 'dialogue' | 'split-left' | 'deco-number' | 'split-right' | 'sticky-note' | 'minimal-large' | 'chalkboard';
 
 export interface SlideItem {
   src: ImageMetadata
@@ -22,6 +23,7 @@ export interface SlideItem {
   copy: string
   layout?: LayoutType
   dialogueLines?: string[] // For dialogue layout
+  chalkboardLine?: string // For chalkboard layout - text on blackboard
 }
 
 // Carousel images for horizontal scroll section
@@ -30,28 +32,34 @@ export const carouselImages: ImageMetadata[] = [img2728, img2827, img2911, img32
 export const slides: SlideItem[] = [
   {
     src: img2611,
-    title: '那天',
-    copy: '后来我们都觉得，第一句话说得挺傻的。但就是从那句傻话开始的。',
-    layout: 'dialogue',
-    dialogueLines: ['你好。', '你也好。', '……', '你叫什么名字？', '我叫……']
+    title: '初见',
+    copy: '那天她感冒着被面试，说了什么早已忘记。只记得结束时她说再见，我说好好休息。',
+    layout: 'chalkboard',
+    chalkboardLine: '第一印象，是可爱。'
   },
   {
     src: img2654,
     title: '后来',
-    copy: '张爱玲说，于千万人之中遇见你所要遇见的人，于千万年之中，时间的无涯的荒野里，没有早一步，也没有晚一步。我们刚好赶上了。',
+    copy: '在摄影群，我们喜欢周末到处拍照。再后来，我们经常一起轧马路、聊到深夜，不知不觉成了无话不谈的好朋友。',
     layout: 'split-left'
+  },
+  {
+    src: img2828,
+    title: '约定',
+    copy: '在图书馆的书架下，我局促着回忆着准备好的台词。那时的暖气这么热，烫红了我们的脸都。',
+    layout: 'deco-number'
   },
   {
     src: img3092,
     title: '准备',
-    copy: '「这个颜色好看吗？」「好看。」「那这个呢？」「也好看。」「你到底有没有认真看！」「……我觉得你选的都好看。」',
-    layout: 'deco-number'
+    copy: '「我们看《罪恶王冠》吧」「不看。」「看呗。」「...真香。」我二刷三刷了很多遍的动画、剧和电影，都是和你一起。',
+    layout: 'split-right'
   },
   {
     src: img3433,
     title: '这一秒',
-    copy: '摄影师说笑一个。我们没忍住笑了两个。',
-    layout: 'split-right'
+    copy: '人生有很多次初见，但我们最后见到的是彼此。',
+    layout: 'split-left'
   },
   {
     src: img3399,
