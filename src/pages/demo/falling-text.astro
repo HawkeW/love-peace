@@ -1,0 +1,199 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FallingTextEffect from '../../components/effects/FallingTextEffect.astro';
+---
+
+<Layout title="Falling Text 效果演示">
+  <main class="demo-page">
+    <section class="hero">
+      <h1 class="section-title">Falling Text Effect</h1>
+      <p class="section-desc">文字物理下落效果 - 使用 Matter.js 物理引擎</p>
+    </section>
+
+    <!-- Demo 1: 默认效果 -->
+    <section class="demo-section">
+      <div class="demo-label">自动触发 (进入视口)</div>
+      <div class="demo-box">
+        <FallingTextEffect 
+          text="Love Peace Wedding"
+          highlightWords={["Love", "Peace"]}
+          trigger="auto"
+          fontSize="3rem"
+        />
+      </div>
+    </section>
+
+    <!-- Demo 2: 点击触发 -->
+    <section class="demo-section">
+      <div class="demo-label">点击触发 (Click to trigger)</div>
+      <div class="demo-box demo-box-dark">
+        <FallingTextEffect 
+          text="点击这里开始下落!"
+          highlightWords={["下落"]}
+          trigger="click"
+          fontSize="2.5rem"
+          gravity={1.5}
+        />
+      </div>
+    </section>
+
+    <!-- Demo 3: 悬停触发 -->
+    <section class="demo-section">
+      <div class="demo-label">悬停触发 (Hover to trigger)</div>
+      <div class="demo-box demo-box-gradient">
+        <FallingTextEffect 
+          text="Hover Me Now!"
+          highlightWords={["Hover"]}
+          trigger="hover"
+          fontSize="3.5rem"
+          fontWeight="900"
+          gravity={0.8}
+        />
+      </div>
+    </section>
+
+    <!-- Demo 4: 中文婚礼场景 -->
+    <section class="demo-section">
+      <div class="demo-label">婚礼场景 - 中文</div>
+      <div class="demo-box demo-box-romantic">
+        <FallingTextEffect 
+          text="永结同心 百年好合"
+          highlightWords={["永结同心", "百年好合"]}
+          trigger="scroll"
+          fontSize="2.8rem"
+          gravity={0.6}
+          mouseConstraintStiffness={0.3}
+        />
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h2>使用方式</h2>
+      <pre><code>{`<FallingTextEffect 
+  text="Your Text Here"
+  highlightWords={["highlight", "these"]}
+  trigger="auto" | "hover" | "click" | "scroll"
+  fontSize="2rem"
+  fontWeight="bold"
+  gravity={1}
+  mouseConstraintStiffness={0.2}
+/>`}</code></pre>
+      <p class="tip">提示：可以用鼠标拖拽文字！</p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .demo-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem;
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 0.5rem;
+  }
+
+  .section-desc {
+    font-size: 1.1rem;
+    color: #4a4a6a;
+    margin: 0;
+  }
+
+  .demo-section {
+    max-width: 900px;
+    margin: 3rem auto;
+  }
+
+  .demo-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .demo-box {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    min-height: 350px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .demo-box-dark {
+    background: #1a1a2e;
+    color: #fff;
+  }
+
+  .demo-box-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+  }
+
+  .demo-box-romantic {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+  }
+
+  .info-section {
+    max-width: 700px;
+    margin: 4rem auto;
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .info-section h2 {
+    margin: 0 0 1rem;
+    color: #1a1a2e;
+  }
+
+  .info-section pre {
+    background: #f5f7fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.875rem;
+  }
+
+  .info-section code {
+    font-family: 'Fira Code', monospace;
+    color: #4a4a6a;
+  }
+
+  .tip {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #e8f4fd;
+    border-radius: 8px;
+    color: #1e6bb8;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .demo-page {
+      padding: 1rem;
+    }
+
+    .demo-box {
+      min-height: 280px;
+    }
+
+    .info-section {
+      padding: 1.5rem;
+    }
+  }
+</style>

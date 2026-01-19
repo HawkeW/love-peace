@@ -1,0 +1,276 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FallingImageEffect from '../../components/effects/FallingImageEffect.astro';
+
+// 婚礼照片列表
+const weddingImages = [
+  '/gallery/wedding/DXMJ2611.jpeg',
+  '/gallery/wedding/DXMJ2622.jpeg',
+  '/gallery/wedding/DXMJ2654.jpeg',
+  '/gallery/wedding/DXMJ2728.jpeg',
+  '/gallery/wedding/DXMJ2827.jpeg',
+  '/gallery/wedding/DXMJ2828.jpeg',
+  '/gallery/wedding/DXMJ2911.jpeg',
+  '/gallery/wedding/DXMJ2965.jpeg',
+  '/gallery/wedding/DXMJ2973.jpeg',
+];
+
+const moreImages = [
+  '/gallery/wedding/DXMJ3014.jpeg',
+  '/gallery/wedding/DXMJ3034.jpeg',
+  '/gallery/wedding/DXMJ3041.jpeg',
+  '/gallery/wedding/DXMJ3048.jpeg',
+  '/gallery/wedding/DXMJ3092.jpeg',
+  '/gallery/wedding/DXMJ3098.jpeg',
+];
+---
+
+<Layout title="Falling Image 效果演示">
+  <main class="demo-page">
+    <section class="hero">
+      <h1 class="section-title">Falling Image Effect</h1>
+      <p class="section-desc">图片物理下落效果 - 使用 Matter.js 物理引擎</p>
+    </section>
+
+    <!-- Demo 1: 自动触发 -->
+    <section class="demo-section demo-section-fullscreen">
+      <div class="demo-label">自动触发 (进入视口) - 可拖拽图片</div>
+      <div class="demo-box demo-box-fullscreen">
+        <FallingImageEffect 
+          images={weddingImages}
+          imageSize={110}
+          trigger="auto"
+          gravity={1}
+          restitution={0.5}
+        />
+      </div>
+    </section>
+
+    <!-- Demo 2: 点击触发 -->
+    <section class="demo-section">
+      <div class="demo-label">点击触发 - 高弹性</div>
+      <div class="demo-box demo-box-dark">
+        <FallingImageEffect 
+          images={moreImages}
+          imageSize={100}
+          trigger="click"
+          gravity={1.2}
+          restitution={0.8}
+          friction={0.2}
+          borderRadius={12}
+        />
+      </div>
+    </section>
+
+    <!-- Demo 3: 悬停触发 - 圆形图片 -->
+    <section class="demo-section">
+      <div class="demo-label">悬停触发 - 圆形图片</div>
+      <div class="demo-box demo-box-gradient">
+        <FallingImageEffect 
+          images={weddingImages.slice(0, 6)}
+          imageSize={80}
+          trigger="hover"
+          gravity={0.6}
+          restitution={0.7}
+          borderRadius={50}
+        />
+      </div>
+    </section>
+
+    <!-- Demo 4: 滚动触发 - 小尺寸高密度 -->
+    <section class="demo-section">
+      <div class="demo-label">滚动触发 - 小尺寸高密度</div>
+      <div class="demo-box demo-box-romantic">
+        <FallingImageEffect 
+          images={[...weddingImages, ...moreImages].slice(0, 12)}
+          imageSize={60}
+          trigger="scroll"
+          gravity={0.8}
+          restitution={0.6}
+          friction={0.4}
+          borderRadius={6}
+        />
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h2>使用方式</h2>
+      <pre><code>{`<FallingImageEffect 
+  images={['/path/to/image1.jpg', '/path/to/image2.jpg', ...]}
+  imageSize={80}           // 图片尺寸 (px)
+  trigger="auto"           // auto | hover | click | scroll
+  gravity={1}              // 重力系数
+  restitution={0.6}        // 弹性系数 (0-1)
+  friction={0.3}           // 摩擦系数
+  borderRadius={8}         // 圆角 (px)
+  mouseConstraintStiffness={0.2}  // 鼠标拖拽灵敏度
+/>`}</code></pre>
+      <p class="tip">提示：可以用鼠标拖拽图片！图片之间会产生真实的物理碰撞效果。</p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .demo-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem;
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 0.5rem;
+  }
+
+  .section-desc {
+    font-size: 1.1rem;
+    color: #4a4a6a;
+    margin: 0;
+  }
+
+  .demo-section {
+    max-width: 900px;
+    margin: 3rem auto;
+  }
+
+  .demo-section-fullscreen {
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1rem;
+  }
+
+  .demo-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .demo-box {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    min-height: 450px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .demo-box-fullscreen {
+    min-height: calc(100vh - 180px);
+    height: calc(100svh - 180px);
+    border-radius: 20px;
+  }
+
+  .demo-box-dark {
+    background: #1a1a2e;
+    color: #fff;
+  }
+
+  .demo-box-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+  }
+
+  .demo-box-romantic {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+  }
+
+  .info-section {
+    max-width: 700px;
+    margin: 4rem auto;
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .info-section h2 {
+    margin: 0 0 1rem;
+    color: #1a1a2e;
+  }
+
+  .info-section pre {
+    background: #f5f7fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.875rem;
+  }
+
+  .info-section code {
+    font-family: 'Fira Code', monospace;
+    color: #4a4a6a;
+  }
+
+  .tip {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #e8f4fd;
+    border-radius: 8px;
+    color: #1e6bb8;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .demo-page {
+      padding: 1rem;
+    }
+
+    .hero {
+      padding: 1.5rem 0.5rem;
+    }
+
+    .demo-section-fullscreen {
+      padding: 0 0.5rem;
+    }
+
+    .demo-box {
+      min-height: 380px;
+    }
+
+    .demo-box-fullscreen {
+      min-height: calc(100vh - 140px);
+      height: calc(100svh - 140px);
+      border-radius: 16px;
+    }
+
+    .info-section {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero {
+      padding: 1rem 0.5rem;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+    }
+
+    .section-desc {
+      font-size: 0.95rem;
+    }
+
+    .demo-box-fullscreen {
+      min-height: calc(100vh - 120px);
+      height: calc(100svh - 120px);
+      border-radius: 12px;
+    }
+
+    .demo-label {
+      font-size: 0.75rem;
+    }
+  }
+</style>
