@@ -1,0 +1,397 @@
+---
+// FallingText Effect Component - 文字下落物理效果
+// 使用 Matter.js 物理引擎实现真实的文字下落、碰撞、弹跳效果
+
+interface Props {
+  text?: string;
+  highlightWords?: string[];
+  highlightClass?: string;
+  trigger?: 'auto' | 'hover' | 'click' | 'scroll';
+  gravity?: number;
+  mouseConstraintStiffness?: number;
+  fontSize?: string;
+  fontWeight?: string;
+  class?: string;
+}
+
+const {
+  text = "Falling Text Effect!",
+  highlightWords = [],
+  highlightClass = "highlight",
+  trigger = "auto",
+  gravity = 1,
+  mouseConstraintStiffness = 0.2,
+  fontSize = "2rem",
+  fontWeight = "bold",
+  class: className = "",
+} = Astro.props;
+---
+
+<div 
+  class:list={["falling-text-container", className]}
+  data-text={text}
+  data-highlight-words={JSON.stringify(highlightWords)}
+  data-highlight-class={highlightClass}
+  data-trigger={trigger}
+  data-gravity={gravity}
+  data-mouse-stiffness={mouseConstraintStiffness}
+  style={`--ft-font-size: ${fontSize}; --ft-font-weight: ${fontWeight};`}
+>
+  <div class="falling-text-content"></div>
+</div>
+
+<style>
+  .falling-text-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .falling-text-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .falling-text-container :global(.falling-char) {
+    position: absolute;
+    font-size: var(--ft-font-size, 2rem);
+    font-weight: var(--ft-font-weight, bold);
+    color: inherit;
+    user-select: none;
+    pointer-events: auto;
+    will-change: transform;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    transition: color 0.2s ease;
+  }
+
+  .falling-text-container :global(.falling-char:active) {
+    cursor: grabbing;
+  }
+
+  .falling-text-container :global(.falling-char.highlight) {
+    color: hsl(var(--primary, 222.2 47.4% 11.2%));
+  }
+
+  .falling-text-container :global(.falling-char.space) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    .falling-text-container {
+      min-height: 250px;
+    }
+    .falling-text-container :global(.falling-char) {
+      font-size: calc(var(--ft-font-size, 2rem) * 0.7);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .falling-text-container {
+      min-height: 200px;
+    }
+    .falling-text-container :global(.falling-char) {
+      font-size: calc(var(--ft-font-size, 2rem) * 0.5);
+    }
+  }
+</style>
+
+<script>
+  import Matter from 'matter-js';
+
+  interface FallingTextConfig {
+    text: string;
+    highlightWords: string[];
+    highlightClass: string;
+    trigger: 'auto' | 'hover' | 'click' | 'scroll';
+    gravity: number;
+    mouseStiffness: number;
+  }
+
+  class FallingTextEffect {
+    private container: HTMLElement;
+    private contentEl: HTMLElement;
+    private config: FallingTextConfig;
+    private engine: Matter.Engine | null = null;
+    private render: Matter.Render | null = null;
+    private runner: Matter.Runner | null = null;
+    private bodies: Matter.Body[] = [];
+    private charElements: HTMLElement[] = [];
+    private mouseConstraint: Matter.MouseConstraint | null = null;
+    private animationId: number | null = null;
+    private isInitialized: boolean = false;
+    private hasTriggered: boolean = false;
+
+    constructor(container: HTMLElement) {
+      this.container = container;
+      this.contentEl = container.querySelector('.falling-text-content') as HTMLElement;
+      
+      this.config = {
+        text: container.dataset.text || 'Falling Text!',
+        highlightWords: JSON.parse(container.dataset.highlightWords || '[]'),
+        highlightClass: container.dataset.highlightClass || 'highlight',
+        trigger: (container.dataset.trigger as FallingTextConfig['trigger']) || 'auto',
+        gravity: parseFloat(container.dataset.gravity || '1'),
+        mouseStiffness: parseFloat(container.dataset.mouseStiffness || '0.2'),
+      };
+
+      this.init();
+    }
+
+    private init() {
+      this.setupTrigger();
+    }
+
+    private setupTrigger() {
+      switch (this.config.trigger) {
+        case 'auto':
+          // 自动触发 - 当元素进入视口时
+          this.setupIntersectionObserver();
+          break;
+        case 'hover':
+          this.container.addEventListener('mouseenter', () => this.trigger());
+          break;
+        case 'click':
+          this.container.addEventListener('click', () => this.trigger());
+          break;
+        case 'scroll':
+          this.setupScrollTrigger();
+          break;
+      }
+    }
+
+    private setupIntersectionObserver() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !this.hasTriggered) {
+              this.trigger();
+            }
+          });
+        },
+        { threshold: 0.3 }
+      );
+      observer.observe(this.container);
+    }
+
+    private setupScrollTrigger() {
+      const checkScroll = () => {
+        const rect = this.container.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
+        if (isVisible && !this.hasTriggered) {
+          this.trigger();
+        }
+      };
+      window.addEventListener('scroll', checkScroll, { passive: true });
+      checkScroll();
+    }
+
+    private trigger() {
+      if (this.hasTriggered) return;
+      this.hasTriggered = true;
+      this.initPhysics();
+    }
+
+    private initPhysics() {
+      if (this.isInitialized) return;
+      this.isInitialized = true;
+
+      const { Engine, Runner, Bodies, Composite, Mouse, MouseConstraint } = Matter;
+
+      const containerRect = this.container.getBoundingClientRect();
+      const width = containerRect.width;
+      const height = containerRect.height;
+
+      // 创建引擎
+      this.engine = Engine.create();
+      this.engine.gravity.y = this.config.gravity;
+
+      // 创建边界
+      const wallThickness = 50;
+      const walls = [
+        // 地面
+        Bodies.rectangle(width / 2, height + wallThickness / 2, width + 100, wallThickness, { 
+          isStatic: true,
+          friction: 0.5,
+          restitution: 0.3
+        }),
+        // 左墙
+        Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height * 2, { 
+          isStatic: true,
+          friction: 0.1
+        }),
+        // 右墙
+        Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height * 2, { 
+          isStatic: true,
+          friction: 0.1
+        }),
+      ];
+
+      Composite.add(this.engine.world, walls);
+
+      // 创建字符
+      this.createCharacters(width, height);
+
+      // 设置鼠标约束
+      const mouse = Mouse.create(this.container);
+      this.mouseConstraint = MouseConstraint.create(this.engine, {
+        mouse: mouse,
+        constraint: {
+          stiffness: this.config.mouseStiffness,
+          render: { visible: false }
+        }
+      });
+      Composite.add(this.engine.world, this.mouseConstraint);
+
+      // 启动物理引擎
+      this.runner = Runner.create();
+      Runner.run(this.runner, this.engine);
+
+      // 开始渲染循环
+      this.startRenderLoop();
+    }
+
+    private createCharacters(containerWidth: number, containerHeight: number) {
+      const { Bodies, Composite, Body } = Matter;
+      const text = this.config.text;
+      const chars = text.split('');
+      
+      // 计算字符尺寸
+      const tempSpan = document.createElement('span');
+      tempSpan.style.cssText = `
+        position: absolute;
+        visibility: hidden;
+        font-size: var(--ft-font-size, 2rem);
+        font-weight: var(--ft-font-weight, bold);
+        white-space: nowrap;
+      `;
+      tempSpan.textContent = 'M';
+      this.container.appendChild(tempSpan);
+      const charRect = tempSpan.getBoundingClientRect();
+      const charWidth = charRect.width;
+      const charHeight = charRect.height;
+      this.container.removeChild(tempSpan);
+
+      // 计算初始位置（居中排列在顶部）
+      const totalWidth = chars.length * charWidth;
+      const startX = (containerWidth - totalWidth) / 2 + charWidth / 2;
+      const startY = -charHeight;
+
+      chars.forEach((char, index) => {
+        // 创建 DOM 元素
+        const charEl = document.createElement('span');
+        charEl.className = 'falling-char';
+        charEl.textContent = char;
+
+        // 检查是否为高亮词的一部分
+        const textUpToChar = text.substring(0, index + 1);
+        const isHighlight = this.config.highlightWords.some(word => {
+          const wordIndex = text.indexOf(word);
+          return wordIndex !== -1 && index >= wordIndex && index < wordIndex + word.length;
+        });
+
+        if (isHighlight) {
+          charEl.classList.add(this.config.highlightClass);
+        }
+
+        if (char === ' ') {
+          charEl.classList.add('space');
+        }
+
+        this.contentEl.appendChild(charEl);
+        this.charElements.push(charEl);
+
+        // 创建物理刚体
+        const x = startX + index * charWidth;
+        const y = startY - Math.random() * 100; // 随机高度错开
+        
+        const body = Bodies.rectangle(x, y, charWidth * 0.8, charHeight * 0.8, {
+          restitution: 0.6, // 弹性
+          friction: 0.3,
+          frictionAir: 0.01,
+          angle: (Math.random() - 0.5) * 0.3, // 轻微随机旋转
+          render: { visible: false }
+        });
+
+        // 添加初始随机速度
+        Body.setVelocity(body, {
+          x: (Math.random() - 0.5) * 2,
+          y: Math.random() * 2
+        });
+
+        // 存储字符元素引用
+        (body as any).charElement = charEl;
+        (body as any).charWidth = charWidth;
+        (body as any).charHeight = charHeight;
+
+        this.bodies.push(body);
+        Composite.add(this.engine!.world, body);
+      });
+    }
+
+    private startRenderLoop() {
+      const render = () => {
+        this.bodies.forEach((body) => {
+          const charEl = (body as any).charElement as HTMLElement;
+          const charWidth = (body as any).charWidth as number;
+          const charHeight = (body as any).charHeight as number;
+
+          if (charEl) {
+            const x = body.position.x - charWidth / 2;
+            const y = body.position.y - charHeight / 2;
+            const angle = body.angle * (180 / Math.PI);
+
+            charEl.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+          }
+        });
+
+        this.animationId = requestAnimationFrame(render);
+      };
+
+      render();
+    }
+
+    public destroy() {
+      if (this.animationId) {
+        cancelAnimationFrame(this.animationId);
+      }
+      if (this.runner) {
+        Matter.Runner.stop(this.runner);
+      }
+      if (this.engine) {
+        Matter.Engine.clear(this.engine);
+      }
+      this.charElements.forEach(el => el.remove());
+      this.charElements = [];
+      this.bodies = [];
+    }
+  }
+
+  // 初始化所有 falling-text 容器
+  function initFallingText() {
+    const containers = document.querySelectorAll('.falling-text-container');
+    containers.forEach((container) => {
+      if (!(container as any).__fallingText) {
+        (container as any).__fallingText = new FallingTextEffect(container as HTMLElement);
+      }
+    });
+  }
+
+  // 多次初始化以确保在各种加载情况下都能工作
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFallingText);
+  } else {
+    initFallingText();
+  }
+
+  // 支持 View Transitions
+  document.addEventListener('astro:page-load', initFallingText);
+</script>
