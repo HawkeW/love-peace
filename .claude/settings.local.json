@@ -1,0 +1,6 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://aihubmix.com",
+    "ANTHROPIC_API_KEY": "sk-g3Qw6v9NrVke2CGE3348A4F9184a43808995Af560f5e3fD9"
+  }
+}
