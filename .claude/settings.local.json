@@ -2,5 +2,14 @@
   "env": {
     "ANTHROPIC_BASE_URL": "https://aihubmix.com",
     "ANTHROPIC_API_KEY": "sk-g3Qw6v9NrVke2CGE3348A4F9184a43808995Af560f5e3fD9"
+  },
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.siena.film)",
+      "WebFetch(domain:smooothy.federic.ooo)",
+      "Bash(dir /b \"G:\\\\work\\\\projects\\\\astro\\\\love-peace-claude\\\\public\\\\gallery\\\\wedding\")",
+      "Bash(timeout 10 pnpm dev:*)",
+      "mcp__ide__getDiagnostics"
+    ]
   }
 }

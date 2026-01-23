@@ -1,0 +1,118 @@
+---
+export interface Props {
+  text?: string;
+}
+
+const { text = '向下滑动' } = Astro.props;
+---
+
+<div class="scroll-indicator" data-scroll-indicator>
+  <span class="scroll-text">{text}</span>
+  <div class="scroll-arrow">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+  const indicator = document.querySelector('[data-scroll-indicator]') as HTMLElement;
+
+  if (indicator) {
+    // Hide on scroll
+    let hidden = false;
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100 && !hidden) {
+        indicator.classList.add('hidden');
+        hidden = true;
+      } else if (window.scrollY <= 100 && hidden) {
+        indicator.classList.remove('hidden');
+        hidden = false;
+      }
+    }, { passive: true });
+
+    // Click to scroll
+    indicator.addEventListener('click', () => {
+      window.scrollTo({
+        top: window.innerHeight,
+        behavior: 'smooth'
+      });
+    });
+  }
+</script>
+
+<style>
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+
+  .scroll-indicator.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scroll-text {
+    font-family: 'LXGW WenKai', 'Noto Sans SC', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary, #a0a0a0);
+    text-transform: uppercase;
+  }
+
+  .scroll-arrow {
+    color: var(--gold, #c9a962);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  .scroll-arrow svg {
+    display: block;
+  }
+
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(10px);
+    }
+    60% {
+      transform: translateY(5px);
+    }
+  }
+
+  .scroll-indicator:hover .scroll-text {
+    color: var(--gold-light, #e8d5a3);
+  }
+
+  .scroll-indicator:hover .scroll-arrow {
+    animation-duration: 1s;
+  }
+
+  @media (max-width: 768px) {
+    .scroll-indicator {
+      bottom: 24px;
+    }
+
+    .scroll-text {
+      font-size: 11px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-arrow {
+      animation: none;
+    }
+  }
+</style>

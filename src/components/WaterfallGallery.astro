@@ -1,0 +1,357 @@
+---
+export interface GalleryItem {
+  src: string;
+  alt: string;
+}
+
+export interface Props {
+  items: GalleryItem[];
+  columns?: number;
+}
+
+const { items, columns = 3 } = Astro.props;
+---
+
+<section class="waterfall-gallery" data-waterfall-gallery>
+  <div class="waterfall-container" style={`--columns: ${columns}`}>
+    {items.map((item, index) => (
+      <figure
+        class="waterfall-item"
+        data-waterfall-item
+        style={`--item-index: ${index}; --column: ${index % columns}`}
+      >
+        <img
+          src={item.src}
+          alt={item.alt}
+          loading="lazy"
+          decoding="async"
+          class="waterfall-img"
+          data-gallery-img
+        />
+        <div class="waterfall-overlay">
+          <span class="waterfall-caption">{item.alt}</span>
+        </div>
+      </figure>
+    ))}
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div id="gallery-lightbox" class="lightbox" aria-hidden="true">
+  <button class="lightbox-close" aria-label="关闭">×</button>
+  <button class="lightbox-prev" aria-label="上一张">‹</button>
+  <button class="lightbox-next" aria-label="下一张">›</button>
+  <img id="lightbox-image" alt="查看大图" />
+</div>
+
+<script>
+  // Waterfall reveal animation
+  const items = document.querySelectorAll('[data-waterfall-item]');
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const el = entry.target as HTMLElement;
+        const column = parseInt(el.style.getPropertyValue('--column') || '0');
+        const delay = column * 100;
+
+        setTimeout(() => {
+          el.classList.add('revealed');
+        }, delay);
+
+        revealObserver.unobserve(el);
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -30px 0px'
+  });
+
+  items.forEach((item) => revealObserver.observe(item));
+
+  // Parallax effect on scroll
+  const gallery = document.querySelector('[data-waterfall-gallery]') as HTMLElement;
+
+  if (gallery) {
+    let ticking = false;
+
+    const updateParallax = () => {
+      const galleryRect = gallery.getBoundingClientRect();
+      const galleryCenter = galleryRect.top + galleryRect.height / 2;
+      const viewportCenter = window.innerHeight / 2;
+      const offset = (galleryCenter - viewportCenter) / 10;
+
+      items.forEach((item, index) => {
+        const el = item as HTMLElement;
+        const speed = 0.8 + (index % 3) * 0.2;
+        const parallaxOffset = offset * speed;
+        el.style.setProperty('--parallax-y', `${parallaxOffset}px`);
+      });
+
+      ticking = false;
+    };
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(updateParallax);
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
+  // Lightbox functionality
+  const lightbox = document.getElementById('gallery-lightbox')!;
+  const lightboxImg = document.getElementById('lightbox-image') as HTMLImageElement;
+  const closeBtn = lightbox.querySelector('.lightbox-close') as HTMLButtonElement;
+  const prevBtn = lightbox.querySelector('.lightbox-prev') as HTMLButtonElement;
+  const nextBtn = lightbox.querySelector('.lightbox-next') as HTMLButtonElement;
+  const galleryImages = Array.from(document.querySelectorAll('[data-gallery-img]')) as HTMLImageElement[];
+
+  let currentIndex = 0;
+
+  const showImage = (index: number) => {
+    currentIndex = index;
+    const img = galleryImages[currentIndex];
+    if (!img) return;
+    lightboxImg.src = img.currentSrc || img.src;
+    lightbox.setAttribute('aria-hidden', 'false');
+    lightbox.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const hideImage = () => {
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox.classList.remove('visible');
+    document.body.style.overflow = '';
+  };
+
+  const navigate = (direction: number) => {
+    const newIndex = currentIndex + direction;
+    if (newIndex >= 0 && newIndex < galleryImages.length) {
+      showImage(newIndex);
+    }
+  };
+
+  galleryImages.forEach((img, index) => {
+    img.addEventListener('click', () => showImage(index));
+  });
+
+  closeBtn.addEventListener('click', hideImage);
+  prevBtn.addEventListener('click', () => navigate(-1));
+  nextBtn.addEventListener('click', () => navigate(1));
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) hideImage();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('visible')) return;
+    if (e.key === 'Escape') hideImage();
+    if (e.key === 'ArrowLeft') navigate(-1);
+    if (e.key === 'ArrowRight') navigate(1);
+  });
+</script>
+
+<style>
+  .waterfall-gallery {
+    padding: 60px 24px;
+    background: var(--bg-secondary, #141414);
+  }
+
+  .waterfall-container {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), 1fr);
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .waterfall-item {
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    opacity: 0;
+    transform: translateY(60px) translateY(var(--parallax-y, 0));
+    transition:
+      opacity 0.6s ease-out,
+      transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.3s ease;
+    cursor: pointer;
+  }
+
+  .waterfall-item.revealed {
+    opacity: 1;
+    transform: translateY(var(--parallax-y, 0));
+  }
+
+  .waterfall-item:hover {
+    transform: translateY(calc(var(--parallax-y, 0) - 8px)) scale(1.03);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .waterfall-img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+  }
+
+  .waterfall-item:hover .waterfall-img {
+    transform: scale(1.05);
+  }
+
+  .waterfall-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(10, 10, 10, 0.8) 0%,
+      rgba(10, 10, 10, 0) 50%
+    );
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .waterfall-item:hover .waterfall-overlay {
+    opacity: 1;
+  }
+
+  .waterfall-caption {
+    font-family: 'LXGW WenKai', 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary, #fafafa);
+    line-height: 1.5;
+  }
+
+  /* Lightbox styles */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.95);
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+  }
+
+  .lightbox.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .lightbox img {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .lightbox-close,
+  .lightbox-prev,
+  .lightbox-next {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #fafafa);
+    border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    cursor: pointer;
+    transition:
+      background 0.3s ease,
+      transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .lightbox-close:hover,
+  .lightbox-prev:hover,
+  .lightbox-next:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  .lightbox-close {
+    top: 24px;
+    right: 24px;
+  }
+
+  .lightbox-prev {
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .lightbox-prev:hover {
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .lightbox-next {
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .lightbox-next:hover {
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .waterfall-container {
+      --columns: 3 !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .waterfall-gallery {
+      padding: 40px 16px;
+    }
+
+    .waterfall-container {
+      --columns: 2 !important;
+      gap: 12px;
+    }
+
+    .waterfall-item {
+      border-radius: 8px;
+    }
+
+    .waterfall-overlay {
+      opacity: 1;
+      padding: 12px;
+    }
+
+    .waterfall-caption {
+      font-size: 12px;
+    }
+
+    .lightbox-close,
+    .lightbox-prev,
+    .lightbox-next {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .waterfall-item {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .waterfall-item.revealed {
+      transform: none;
+    }
+  }
+</style>
