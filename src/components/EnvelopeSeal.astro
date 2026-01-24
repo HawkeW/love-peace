@@ -1,0 +1,344 @@
+---
+export interface Props {
+  text?: string;
+}
+
+const sealImage = '/seal.png';
+---
+
+<div class="envelope-seal-wrapper" data-envelope-seal>
+  <figure class="seal-image">
+    <img src={sealImage} alt="开启邀请函" decoding="async" />
+    <!-- Ripple effect on click -->
+    <div class="seal-ripple"></div>
+  </figure>
+
+  <span class="seal-hint">轻触开启</span>
+</div>
+
+<!-- Elegant transition overlay -->
+<div class="transition-overlay" data-transition-overlay>
+  <div class="transition-circle"></div>
+  <div class="transition-content">
+    <span class="transition-text">邀请函</span>
+  </div>
+</div>
+
+<script>
+  const sealWrapper = document.querySelector('[data-envelope-seal]') as HTMLElement;
+  const seal = sealWrapper?.querySelector('.seal-image') as HTMLElement;
+  const overlay = document.querySelector('[data-transition-overlay]') as HTMLElement;
+
+  if (seal && overlay) {
+    let isAnimating = false;
+
+    // Hide on scroll
+    let hidden = false;
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100 && !hidden) {
+        sealWrapper.classList.add('hidden');
+        hidden = true;
+      } else if (window.scrollY <= 100 && hidden) {
+        sealWrapper.classList.remove('hidden');
+        hidden = false;
+      }
+    }, { passive: true });
+
+    // Click handler
+    seal.addEventListener('click', () => {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      // Add pressed state
+      seal.classList.add('pressed');
+
+      // Start transition
+      setTimeout(() => {
+        overlay.classList.add('active');
+      }, 200);
+
+      // Show text
+      setTimeout(() => {
+        overlay.classList.add('show-text');
+      }, 600);
+
+      // Start fade out and scroll
+      setTimeout(() => {
+        overlay.classList.add('fade-out');
+
+        window.scrollTo({
+          top: window.innerHeight,
+          behavior: 'smooth'
+        });
+      }, 1400);
+
+      // Cleanup
+      setTimeout(() => {
+        overlay.classList.remove('active', 'show-text', 'fade-out');
+        seal.classList.remove('pressed');
+        isAnimating = false;
+      }, 2200);
+    });
+  }
+</script>
+
+<style>
+  .envelope-seal-wrapper {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    animation: sealFadeIn 0.8s ease-out 1.5s forwards;
+  }
+
+  @keyframes sealFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .envelope-seal-wrapper.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  /* Seal Image */
+  .seal-image {
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .seal-image img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: block;
+    object-fit: cover;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+    transition: filter 0.3s ease, transform 0.3s ease;
+  }
+
+  .seal-image:hover {
+    transform: scale(1.06);
+  }
+
+  .seal-image:hover img {
+    filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.35));
+  }
+
+  .seal-image.pressed {
+    transform: scale(0.92);
+  }
+
+  .seal-image.pressed img {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+  }
+
+  /* Ripple effect */
+  .seal-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 1px solid rgba(201, 169, 98, 0.4);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .seal-image.pressed .seal-ripple {
+    animation: rippleOut 0.8s ease-out;
+  }
+
+  @keyframes rippleOut {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.6;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(2.5);
+      opacity: 0;
+    }
+  }
+
+  /* Hint text */
+  .seal-hint {
+    font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary, #a0a0a0);
+    opacity: 0;
+    animation: hintFadeIn 0.6s ease-out 2s forwards;
+    transition: opacity 0.3s ease, color 0.3s ease;
+  }
+
+  @keyframes hintFadeIn {
+    to {
+      opacity: 0.6;
+    }
+  }
+
+  .envelope-seal-wrapper:hover .seal-hint {
+    opacity: 1;
+    color: var(--gold, #c9a962);
+  }
+
+  /* ===== Transition Overlay ===== */
+  .transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .transition-overlay.active {
+    pointer-events: auto;
+  }
+
+  /* Expanding circle */
+  .transition-circle {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f5ebe0 0%, #efe6da 100%);
+    transform: scale(0);
+    opacity: 0;
+    transition: none;
+  }
+
+  .transition-overlay.active .transition-circle {
+    animation: circleExpand 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes circleExpand {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(30);
+      opacity: 1;
+    }
+  }
+
+  .transition-overlay.fade-out .transition-circle {
+    animation: circleFade 0.6s ease-out forwards;
+  }
+
+  @keyframes circleFade {
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* Center text */
+  .transition-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+
+  .transition-text {
+    font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    color: var(--gold, #c9a962);
+    opacity: 0;
+    transform: translateY(10px);
+    display: block;
+    text-shadow: 0 2px 8px rgba(201, 169, 98, 0.2);
+  }
+
+  .transition-overlay.show-text .transition-text {
+    animation: textReveal 0.5s ease-out forwards;
+  }
+
+  @keyframes textReveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .transition-overlay.fade-out .transition-text {
+    animation: textFadeUp 0.5s ease-out forwards;
+  }
+
+  @keyframes textFadeUp {
+    to {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .envelope-seal-wrapper {
+      bottom: 40px;
+      gap: 14px;
+    }
+
+    .seal-image img {
+      width: 64px;
+      height: 64px;
+    }
+
+    .seal-ripple {
+      width: 64px;
+      height: 64px;
+    }
+
+    .seal-hint {
+      font-size: 11px;
+    }
+
+    .transition-text {
+      font-size: 20px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .envelope-seal-wrapper {
+      opacity: 1;
+      animation: none;
+    }
+
+    .seal-hint {
+      opacity: 0.6;
+      animation: none;
+    }
+
+    .seal-image,
+    .seal-image img {
+      transition: none;
+    }
+
+    .transition-circle,
+    .transition-text {
+      animation: none !important;
+    }
+  }
+</style>

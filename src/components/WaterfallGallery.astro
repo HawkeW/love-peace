@@ -28,9 +28,6 @@ const { items, columns = 3 } = Astro.props;
           class="waterfall-img"
           data-gallery-img
         />
-        <div class="waterfall-overlay">
-          <span class="waterfall-caption">{item.alt}</span>
-        </div>
       </figure>
     ))}
   </div>
@@ -141,7 +138,7 @@ const { items, columns = 3 } = Astro.props;
   nextBtn.addEventListener('click', () => navigate(1));
 
   lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) hideImage();
+    if (e.target === lightbox || e.target === lightboxImg) hideImage();
   });
 
   window.addEventListener('keydown', (e) => {
@@ -201,32 +198,6 @@ const { items, columns = 3 } = Astro.props;
 
   .waterfall-item:hover .waterfall-img {
     transform: scale(1.05);
-  }
-
-  .waterfall-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top,
-      rgba(10, 10, 10, 0.8) 0%,
-      rgba(10, 10, 10, 0) 50%
-    );
-    display: flex;
-    align-items: flex-end;
-    padding: 20px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .waterfall-item:hover .waterfall-overlay {
-    opacity: 1;
-  }
-
-  .waterfall-caption {
-    font-family: 'LXGW WenKai', 'Noto Sans SC', sans-serif;
-    font-size: 14px;
-    color: var(--text-primary, #fafafa);
-    line-height: 1.5;
   }
 
   /* Lightbox styles */
@@ -316,22 +287,33 @@ const { items, columns = 3 } = Astro.props;
       padding: 40px 16px;
     }
 
+    /* Use CSS columns for true masonry on mobile */
     .waterfall-container {
-      --columns: 2 !important;
-      gap: 12px;
+      display: block;
+      columns: 2;
+      column-gap: 12px;
     }
 
     .waterfall-item {
+      break-inside: avoid;
+      margin-bottom: 12px;
       border-radius: 8px;
+      /* Reset parallax for mobile */
+      transform: translateY(40px);
     }
 
-    .waterfall-overlay {
-      opacity: 1;
-      padding: 12px;
+    .waterfall-item.revealed {
+      transform: translateY(0);
     }
 
-    .waterfall-caption {
-      font-size: 12px;
+    .waterfall-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Use natural aspect ratio on mobile */
+    .waterfall-img {
+      aspect-ratio: auto;
     }
 
     .lightbox-close,

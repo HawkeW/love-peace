@@ -7,23 +7,68 @@ export interface Props {
 }
 
 const { backgroundImage, title, subtitle, date } = Astro.props;
+
+// Parse the couple's names (format: "Name1 & Name2")
+const names = title.split(/\s*&\s*/);
+const name1 = names[0] || '';
+const name2 = names[1] || '';
+const name1Chars = [...name1];
+const name2Chars = [...name2];
 ---
 
-<section class="parallax-hero">
+<section class="parallax-hero" data-hero>
   <div class="hero-background" style={`background-image: url('${backgroundImage}')`}></div>
   <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <h1 class="hero-title">{title}</h1>
-    {subtitle && <p class="hero-subtitle">{subtitle}</p>}
-    {date && <p class="hero-date">{date}</p>}
+
+  <!-- Decorative frame -->
+  <div class="hero-frame">
+    <div class="frame-corner frame-tl"></div>
+    <div class="frame-corner frame-tr"></div>
+    <div class="frame-corner frame-bl"></div>
+    <div class="frame-corner frame-br"></div>
   </div>
+
+  <div class="hero-content">
+    <!-- Top accent -->
+    <div class="hero-accent">
+      <span class="accent-line"></span>
+      <span class="accent-text">Wedding Invitation</span>
+      <span class="accent-line"></span>
+    </div>
+
+    <!-- Main title -->
+    <h1 class="hero-title">
+      {name1Chars.map((char, i) => (
+        <span class="title-char" style={`--char-index: ${i}`}>{char}</span>
+      ))}
+      <span class="title-divider">&</span>
+      {name2Chars.map((char, i) => (
+        <span class="title-char" style={`--char-index: ${name1Chars.length + i}`}>{char}</span>
+      ))}
+    </h1>
+
+    {subtitle && <p class="hero-subtitle">{subtitle}</p>}
+  </div>
+
+  <!-- Date positioned separately for mobile flexibility -->
+  <div class="hero-date-container">
+    {date && (
+      <div class="hero-date">
+        <span class="date-label">Save the Date</span>
+        <span class="date-value">{date}</span>
+      </div>
+    )}
+  </div>
+
   <slot />
 </section>
 
 <script>
-  const hero = document.querySelector('.parallax-hero') as HTMLElement;
+  const hero = document.querySelector('[data-hero]') as HTMLElement;
   const background = document.querySelector('.hero-background') as HTMLElement;
   const content = document.querySelector('.hero-content') as HTMLElement;
+  const dateContainer = document.querySelector('.hero-date-container') as HTMLElement;
+  const frame = document.querySelector('.hero-frame') as HTMLElement;
 
   if (hero && background && content) {
     let ticking = false;
@@ -33,14 +78,24 @@ const { backgroundImage, title, subtitle, date } = Astro.props;
       const heroHeight = hero.offsetHeight;
       const scrollProgress = Math.min(scrollY / heroHeight, 1);
 
-      // Background parallax (slower scroll) + Ken Burns zoom
-      const bgTranslate = scrollY * 0.3;
-      const kenBurnsScale = 1 + scrollProgress * 0.1;
-      background.style.transform = `translateY(${bgTranslate}px) scale(${kenBurnsScale})`;
+      // Background parallax with subtle zoom
+      const bgTranslate = scrollY * 0.4;
+      const scale = 1 + scrollProgress * 0.05;
+      background.style.transform = `translateY(${bgTranslate}px) scale(${scale})`;
 
-      // Content fade out on scroll
-      content.style.opacity = String(1 - scrollProgress * 1.5);
-      content.style.transform = `translateY(${scrollY * 0.5}px)`;
+      // Content fade and lift
+      content.style.opacity = String(1 - scrollProgress * 1.8);
+      content.style.transform = `translateY(${scrollY * 0.3}px)`;
+
+      // Date fade
+      if (dateContainer) {
+        dateContainer.style.opacity = String(1 - scrollProgress * 2);
+      }
+
+      // Frame fade
+      if (frame) {
+        frame.style.opacity = String(1 - scrollProgress * 1.5);
+      }
 
       ticking = false;
     };
@@ -51,10 +106,13 @@ const { backgroundImage, title, subtitle, date } = Astro.props;
         ticking = true;
       }
     }, { passive: true });
-
-    // Ken Burns animation on load
-    background.style.animation = 'kenBurns 20s ease-in-out infinite alternate';
   }
+
+  // Staggered reveal animation
+  const chars = document.querySelectorAll('.title-char');
+  chars.forEach((char, i) => {
+    (char as HTMLElement).style.animationDelay = `${0.5 + i * 0.1}s`;
+  });
 </script>
 
 <style>
@@ -62,6 +120,7 @@ const { backgroundImage, title, subtitle, date } = Astro.props;
     position: relative;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     min-height: 600px;
     overflow: hidden;
     display: flex;
@@ -72,24 +131,66 @@ const { backgroundImage, title, subtitle, date } = Astro.props;
 
   .hero-background {
     position: absolute;
-    inset: -10%;
-    width: 120%;
-    height: 120%;
+    inset: -5%;
+    width: 110%;
+    height: 110%;
     background-size: cover;
-    background-position: center;
+    background-position: center 30%;
     will-change: transform;
     transform-origin: center center;
+    filter: brightness(0.9);
   }
 
   .hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(10, 10, 10, 0.3) 0%,
-      rgba(10, 10, 10, 0.5) 50%,
-      rgba(10, 10, 10, 0.8) 100%
-    );
+    background:
+      radial-gradient(ellipse at center top, transparent 0%, rgba(10, 10, 10, 0.4) 70%),
+      linear-gradient(to bottom, rgba(10, 10, 10, 0.1) 0%, rgba(10, 10, 10, 0.6) 100%);
+  }
+
+  /* Decorative Frame */
+  .hero-frame {
+    position: absolute;
+    inset: 24px;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    animation: fadeIn 1.2s ease-out 0.3s forwards;
+  }
+
+  .frame-corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-color: var(--gold, #c9a962);
+    border-style: solid;
+    border-width: 0;
+    opacity: 0.6;
+  }
+
+  .frame-tl {
+    top: 0; left: 0;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+
+  .frame-tr {
+    top: 0; right: 0;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+
+  .frame-bl {
+    bottom: 0; left: 0;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+
+  .frame-br {
+    bottom: 0; right: 0;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
   }
 
   .hero-content {
@@ -100,62 +201,199 @@ const { backgroundImage, title, subtitle, date } = Astro.props;
     will-change: transform, opacity;
   }
 
+  /* Top Accent */
+  .hero-accent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out 0.2s forwards;
+  }
+
+  .accent-line {
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold, #c9a962));
+  }
+
+  .accent-line:last-child {
+    background: linear-gradient(90deg, var(--gold, #c9a962), transparent);
+  }
+
+  .accent-text {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 11px;
+    font-style: italic;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold, #c9a962);
+  }
+
+  /* Title */
   .hero-title {
     font-family: 'Playfair Display', 'Noto Serif SC', 'Songti SC', Georgia, serif;
-    font-size: clamp(2.5rem, 10vw, 5rem);
+    font-size: clamp(3rem, 12vw, 6rem);
     font-weight: 400;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.08em;
     color: var(--text-primary, #fafafa);
-    margin: 0 0 16px;
-    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    margin: 0 0 20px;
+    text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .title-char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: charReveal 0.6s ease-out forwards;
+  }
+
+  .title-divider {
+    display: inline-block;
+    margin: 0 0.15em;
+    font-style: italic;
+    color: var(--gold, #c9a962);
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out 0.8s forwards;
+  }
+
+  @keyframes charReveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .hero-subtitle {
-    font-family: 'LXGW WenKai', 'Noto Sans SC', sans-serif;
-    font-size: clamp(1rem, 3vw, 1.25rem);
-    font-weight: 300;
-    letter-spacing: 0.2em;
+    font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    font-weight: 400;
+    letter-spacing: 0.25em;
     color: var(--text-secondary, #a0a0a0);
-    margin: 0 0 24px;
-    text-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out 1s forwards;
+  }
+
+  /* Date Container - positioned separately */
+  .hero-date-container {
+    position: absolute;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out 1.2s forwards;
   }
 
   .hero-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .date-label {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: clamp(1.25rem, 4vw, 1.75rem);
-    font-weight: 400;
-    letter-spacing: 0.3em;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #a0a0a0);
+  }
+
+  .date-value {
+    font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif;
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+    font-weight: 500;
+    letter-spacing: 0.2em;
     color: var(--gold, #c9a962);
-    margin: 0;
-    text-shadow: 0 2px 20px rgba(201, 169, 98, 0.3);
+    text-shadow: 0 2px 20px rgba(201, 169, 98, 0.4);
   }
 
-  @keyframes kenBurns {
-    0% {
-      transform: scale(1) translate(0, 0);
-    }
-    100% {
-      transform: scale(1.08) translate(-1%, -1%);
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
     }
   }
 
+  /* Responsive - Mobile */
   @media (max-width: 768px) {
     .parallax-hero {
-      min-height: 500px;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .hero-frame {
+      inset: 16px;
+    }
+
+    .frame-corner {
+      width: 40px;
+      height: 40px;
+    }
+
+    .hero-content {
+      padding-top: 60px;
+    }
+
+    .hero-accent {
+      margin-bottom: 24px;
+    }
+
+    .accent-line {
+      width: 24px;
+    }
+
+    .accent-text {
+      font-size: 9px;
+      letter-spacing: 0.2em;
     }
 
     .hero-title {
-      letter-spacing: 0.1em;
+      letter-spacing: 0.05em;
     }
 
     .hero-subtitle {
-      letter-spacing: 0.1em;
+      letter-spacing: 0.15em;
+    }
+
+    /* Date moves lower on mobile */
+    .hero-date-container {
+      bottom: 160px;
+    }
+
+    .date-label {
+      font-size: 9px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-date-container {
+      bottom: 170px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .hero-background {
       animation: none !important;
+    }
+
+    .title-char,
+    .hero-accent,
+    .hero-subtitle,
+    .hero-date-container,
+    .hero-frame,
+    .title-divider {
+      opacity: 1;
+      transform: none;
+      animation: none;
     }
   }
 </style>

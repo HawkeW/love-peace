@@ -1,6 +1,6 @@
 ---
 import ParallaxHero from '../components/ParallaxHero.astro';
-import ScrollIndicator from '../components/ScrollIndicator.astro';
+import EnvelopeSeal from '../components/EnvelopeSeal.astro';
 import SpringReveal from '../components/SpringReveal.astro';
 import WaterfallGallery from '../components/WaterfallGallery.astro';
 import fs from 'fs';
@@ -40,16 +40,16 @@ const items: Item[] = images.map((f) => {
 });
 
 // Hero image - use first image
-const heroImage = items[0]?.src || '/gallery/wedding/DXMJ2598.jpeg';
+const heroImage = '/gallery/wedding/DXMJ3399.jpeg';
 
 // Wedding details
-const coupleName = '新郎 & 新娘';
-const weddingDate = '2025年 · 春';
-const inviteMessage = '诚挚邀请您莅临见证我们的幸福时刻';
-const eventDate = '二零二五年 三月 十五日';
-const eventTime = '下午 六点整';
-const eventVenue = '上海 · 外滩半岛酒店';
-const eventAddress = '上海市黄浦区中山东一路32号';
+const coupleName = '王浩 & 何晓雅';
+const weddingDate = '2026年02月11日';
+const inviteMessage = '诚邀您共赴喜宴';
+const eventDate = '二零二六年 二月 十一日';
+const eventTime = '中午 十二点';
+const eventVenue = '信阳 · 艳阳天酒店';
+const eventAddress = '信阳市平桥区新六大街8号';
 ---
 
 <!doctype html>
@@ -79,7 +79,7 @@ const eventAddress = '上海市黄浦区中山东一路32号';
       subtitle={inviteMessage}
       date={weddingDate}
     >
-      <ScrollIndicator text="向下滑动" />
+      <EnvelopeSeal />
     </ParallaxHero>
 
     <!-- Section 2: Invitation Message -->
@@ -90,21 +90,21 @@ const eventAddress = '上海市黄浦区中山东一路32号';
         </SpringReveal>
 
         <SpringReveal delay={0.1}>
-          <h2 class="message-title">婚礼邀请</h2>
+          <h2 class="message-title">喜宴邀请</h2>
         </SpringReveal>
 
         <SpringReveal delay={0.2}>
           <p class="message-text">
-            时光荏苒，岁月静好<br />
-            我们携手走过春夏秋冬<br />
-            如今，终于迎来属于我们的幸福时刻
+            感谢一路相伴的亲朋好友<br />
+            在这个特别的日子里<br />
+            我们想与您一同分享这份幸福
           </p>
         </SpringReveal>
 
         <SpringReveal delay={0.3}>
           <p class="message-highlight">
-            诚挚邀请您与我们共同见证<br />
-            这一生一世的美好誓言
+            诚挚邀请您前来<br />
+            与我们共享这份喜悦
           </p>
         </SpringReveal>
 
@@ -117,8 +117,7 @@ const eventAddress = '上海市黄浦区中山东一路32号';
     <!-- Section 3: Waterfall Gallery -->
     <section class="gallery-section">
       <SpringReveal>
-        <h2 class="section-title">我们的故事</h2>
-        <p class="section-subtitle">记录每一个美好瞬间</p>
+        <h2 class="section-title">我们的瞬间</h2>
       </SpringReveal>
 
       <WaterfallGallery items={items} columns={3} />
@@ -128,7 +127,7 @@ const eventAddress = '上海市黄浦区中山东一路32号';
     <section class="event-details">
       <div class="details-container">
         <SpringReveal>
-          <h2 class="details-title">婚礼详情</h2>
+          <h2 class="details-title">宴会详情</h2>
         </SpringReveal>
 
         <div class="details-grid">
