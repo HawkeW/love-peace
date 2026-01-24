@@ -2,17 +2,17 @@
   /* 4.1 色彩 (Colors) - 电影感调色 (Siena Film 参考) */
   --color-primary: #D4AF37; /* 香槟金/复古金 */
   --color-secondary: #E94E77; /* 原有的柔粉，作为点缀 */
-  --color-text-main: #1A1A1A;
+  --color-text-main: #F2F0E9; /* 默认浅色文字 */
   --color-text-light: #FDFBF7;
   
-  --color-bg-light: #F2F0E9; /* 暖调米白 */
-  --color-bg-dark: #0A0908; /* 深邃黑 */
+  --color-bg-light: #0A0908; /* 默认黑色背景 */
+  --color-bg-dark: #0A0908;
   
   /* 4.1 玻璃拟态 (Glassmorphism) - 更通透细腻 */
-  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(255, 255, 255, 0.05); /* 提升一点不透明度以适应深色背景 */
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: 24px;
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 
   /* 4.2 动效 (Animation) - Smooothy 参考 */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -37,9 +37,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --glass-bg: rgba(0, 0, 0, 0.3);
-    --glass-border: rgba(255, 255, 255, 0.06);
-    --color-text-main: #F2F0E9;
+    /* 既然默认已经是深色，这里可以保持一致或做微调 */
+    --glass-bg: rgba(255, 255, 255, 0.05);
   }
 }
 

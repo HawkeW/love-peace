@@ -56,6 +56,12 @@ const { title, description, image } = Astro.props;
     height: auto;
   }
   
+  #smooth-wrapper, #smooth-content {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
   .lenis.lenis-smooth {
     scroll-behavior: auto !important;
   }

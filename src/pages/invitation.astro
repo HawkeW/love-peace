@@ -1,18 +1,22 @@
 ---
 import ParallaxLayout from '../layouts/ParallaxLayout.astro';
-import Scene3D from '../components/hero/Scene3D.astro';
-import StoryItem from '../components/story/StoryItem.astro';
-import RSVPForm from '../components/interactive/RSVPForm.astro';
-import Lightbox from '../components/Lightbox.astro';
-import { slides } from '../data/slides';
+import PrismWrapper from '../components/backgrounds/PrismWrapper.vue';
+import Ticket from '../components/Ticket.astro';
 import fs from 'fs';
 import path from 'path';
+import ShinyText from '../components/ShinyText/ShinyText.vue';
+import Masonry from '../components/Masonry.astro';
+import { emitImageMetadata } from 'astro/assets/utils';
 
 // Existing FS logic for Gallery
 interface Item {
-  src: string;
+  id: string;
+  img: string;
+  url: string;
   alt: string;
   title: string;
+  height: number;
+  width: number;
 }
 
 const weddingDir = path.resolve(process.cwd(), 'public/gallery/wedding');
@@ -26,72 +30,82 @@ try {
   console.error("Failed to read gallery directory", e);
 }
 
-const galleryItems: Item[] = images.map((f) => {
-  const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
-  return {
-    src: `/gallery/wedding/${f}`,
-    alt: base,
-    title: base
-  };
-});
+const getGalleryItems = async () => {
+  return await Promise.all(images.map(async (f) => {
+    const base = f.replace(/\.(jpe?g|png|webp)$/i, '');
+    const absPath = path.join(weddingDir, f);
+    let width = 600;
+    let height = 400;
+  
+    try {
+      const result = await emitImageMetadata(absPath);
+      if (result && result.width && result.height) {
+        width = result.width;
+        height = result.height;
+      }
+    } catch (e) {
+      console.error(`Error reading dimensions for ${f}`, e);
+    }
+  
+    return {
+      id: base,
+      img: `/gallery/wedding/${f}`,
+      url: `/gallery/wedding/${f}`,
+      alt: base,
+      title: base,
+      width,
+      height,
+    };
+  }));
+}
 
-const eventTitle = 'Love & Peace';
-const eventSub = '有些事，只有我们两个人在一起，才会有意义。';
-const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
+const galleryItems: Item[] = await getGalleryItems();
+
+const eventTitle = '王浩&何晓雅';
+const eventSub = '';
+const coverImage = '/gallery/wedding/DXMJ2611.jpeg';
+const eventAddress = '信阳市 艳阳天酒店';
+const locationDesc = '信阳平桥区新六大街6号';
 ---
 
 <ParallaxLayout title={eventTitle} description={eventSub} image={coverImage}>
   <!-- Hero Section -->
-  <section class="hero">
-    <Scene3D />
+  <section id="hero" class="hero">
+    <PrismWrapper client:load />
+    <div class="hero-overlay"></div>
     <div class="hero-content">
+      <div class="brand">
+        <span class="line"></span>
+        <span class="brand-text">喜宴邀请函</span>
+        <span class="line"></span>
+      </div>
       <h1 class="title">{eventTitle}</h1>
       <p class="subtitle">{eventSub}</p>
-      <div class="scroll-hint">
-        <span>我们的故事</span>
-        <div class="arrow">↓</div>
+      <div class="actions">
+        <a href="#rsvp" class="btn btn-primary">
+          <ShinyText client:load text="确认出席" />
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- Story Section -->
-  <section id="story" class="story-section">
-    {slides.map((slide, index) => (
-      <StoryItem 
-        src={slide.src}
-        title={slide.title}
-        copy={slide.copy}
-        index={index}
-      />
-    ))}
-  </section>
-
   <!-- Gallery Section -->
   <section id="gallery" class="gallery-section">
-    <h2>更多美好瞬间</h2>
-    <div class="grid">
-      {galleryItems.map((item, index) => (
-        <figure class="item" data-index={index}>
-          <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
-        </figure>
-      ))}
-    </div>
+    <h2>照片墙</h2>
+    <Masonry items={galleryItems} />
   </section>
 
-  <!-- RSVP Section -->
-  <section id="rsvp" class="rsvp-section">
-    <RSVPForm />
+  <!-- Ticket Section -->
+  <section id="ticket">
+    <Ticket 
+      location={eventAddress}
+      locationDesc={locationDesc}
+    />
   </section>
-
   <!-- Footer -->
   <footer class="footer">
     <p>Love & Peace · 2026</p>
-    <div class="map-link">
-        <a href="https://maps.example.com" target="_blank" rel="noopener">查看地图</a>
-    </div>
   </footer>
-
-  <Lightbox selector=".grid .item img" />
 </ParallaxLayout>
 
 <style>
@@ -103,22 +117,31 @@ const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
     align-items: center;
     justify-content: center;
     text-align: center;
-    color: var(--color-primary);
+    color: #fff;
+    overflow: hidden;
+    max-width: 100vw;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(1200px 600px at 50% 30%, rgba(0,0,0,0.35), rgba(0,0,0,0.6));
+    pointer-events: none;
+    z-index: 0;
   }
 
   .hero-content {
     position: relative;
     z-index: 1;
     padding: var(--space-4);
-    background: rgba(255,255,255,0.1); /* Fallback */
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    border-radius: 24px;
-    border: 1px solid var(--glass-border);
-    /* Animation for entry */
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 0;
+    border: none;
     animation: fadeUp 1s var(--ease-out-expo) forwards;
     opacity: 0;
     transform: translateY(20px);
+    text-shadow: 0 6px 20px rgba(0,0,0,0.4);
   }
   
   @keyframes fadeUp {
@@ -126,48 +149,94 @@ const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
   }
 
   .title {
-    font-size: clamp(2rem, 8vw, 4rem);
+    font-size: clamp(2.4rem, 8vw, 4.8rem);
     margin: 0 0 var(--space-2);
-    letter-spacing: 0.1em;
-    font-weight: 200;
+    letter-spacing: 0.08em;
+    font-weight: 300;
+    line-height: 1.1;
   }
 
   .subtitle {
-    font-size: clamp(1rem, 4vw, 1.2rem);
-    margin: 0 0 var(--space-4);
-    opacity: 0.8;
-    color: inherit;
+    font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+    margin: 0 0 var(--space-6);
+    opacity: 0.9;
+    color: rgba(255,255,255,0.9);
   }
 
-  .scroll-hint {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.9rem;
-    opacity: 0.6;
-    animation: bounce 2s infinite;
-    color: var(--color-primary);
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    opacity: 0.9;
   }
 
-  @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
-    40% { transform: translateX(-50%) translateY(-10px); }
-    60% { transform: translateX(-50%) translateY(-5px); }
+  .brand .line {
+    display: inline-block;
+    width: 48px;
+    height: 1px;
+    background: rgba(255,255,255,0.5);
   }
+
+  .brand .brand-text {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    transition: transform 0.2s var(--ease-out-expo), opacity 0.2s;
+    will-change: transform;
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+
+  .btn-outline {
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .btn-outline:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-primary {
+    color: #fff;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: saturate(120%) blur(6px);
+  }
+
+  :global(.dark) .btn-primary { color: #fff; }
+
+  .btn-primary:hover {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.45);
+  }
+
+  
 
   /* Sections */
-  .story-section {
-    background: var(--color-bg-light);
-  }
-  
-  :global(.dark) .story-section {
-      background: var(--color-bg-dark);
-  }
-
   .gallery-section {
     padding: var(--space-8) var(--space-4);
     background: var(--color-bg-light);
+    max-width: 100vw;
   }
   
   :global(.dark) .gallery-section {
@@ -190,47 +259,12 @@ const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
       background: var(--color-bg-dark);
   }
 
-  .grid {
-    column-count: 2;
-    column-gap: var(--space-2);
-  }
-  
-  @media (min-width: 640px) {
-    .grid { column-count: 3; }
-  }
-  
-  @media (min-width: 1024px) {
-    .grid { column-count: 4; }
-  }
-
-  .item {
-    margin: 0 0 var(--space-2) 0;
-    border-radius: 4px;
-    overflow: hidden;
-    break-inside: avoid; /* Prevent split across columns */
-    cursor: zoom-in;
-    transition: transform 0.3s var(--ease-out-expo), opacity 0.3s;
-    /* Initial state for scroll reveal if we add it */
-  }
-  
-  .item:hover {
-      transform: scale(1.02);
-      z-index: 2;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  }
-
-  .item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
   .rsvp-section {
     padding: var(--space-8) var(--space-4);
     display: flex;
     justify-content: center;
     background: var(--color-bg-light);
+    max-width: 100vw;
   }
   
   :global(.dark) .rsvp-section {
@@ -242,7 +276,7 @@ const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
     padding: var(--space-6);
     opacity: 0.6;
     font-size: 0.9rem;
-    background: var(--color-bg-light);
+    max-width: 100vw;
   }
   
   :global(.dark) .footer {
@@ -263,4 +297,7 @@ const coverImage = '/gallery/wedding/DXMJ2611.jpeg'; // Default cover
   .map-link a:hover {
       border-color: currentColor;
   }
+
+  .address { margin-top: var(--space-2); font-weight: 500; }
+  .location-desc { margin-top: var(--space-1); opacity: 0.8; }
 </style>

@@ -1,0 +1,146 @@
+---
+
+interface Item {
+  id: string;
+  img: string;
+  url?: string;
+  title?: string;
+  width?: number;
+  height?: number;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="masonry-grid">
+  {items.map((item) => (
+    <div class="masonry-item" data-masonry-item>
+      <div class="item-inner group">
+        <a 
+          href={item.img} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="block relative w-full h-full overflow-hidden rounded-xl shadow-lg cursor-zoom-in"
+        >
+          <img 
+            src={item.img} 
+            alt={item.title || ''}
+            width={item.width || 600}
+            height={item.height || 400}
+            class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+        </a>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .masonry-grid {
+    column-count: 2;
+    column-gap: 0.5rem;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .masonry-grid {
+      column-count: 2;
+      column-gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .masonry-grid {
+      column-count: 3;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .masonry-grid {
+      column-count: 4;
+    }
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 0.5rem;
+    opacity: 0; /* Initial state for animation */
+    will-change: transform, opacity, filter;
+  }
+
+  @media (min-width: 640px) {
+    .masonry-item {
+      margin-bottom: 1rem;
+    }
+  }
+  
+  /* Safari fix for break-inside */
+  .masonry-item {
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Focus Effect: Blur others when hovering grid */
+  .masonry-grid:hover .masonry-item:not(:hover) {
+    opacity: 0.7;
+    filter: blur(2px) grayscale(50%);
+    transform: scale(0.98);
+    transition: all 0.5s ease;
+  }
+</style>
+
+<noscript>
+  <style>
+    .masonry-item {
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
+    }
+  </style>
+</noscript>
+
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const grids = document.querySelectorAll('.masonry-grid');
+
+  grids.forEach((grid) => {
+    const items = grid.querySelectorAll('[data-masonry-item]');
+
+    if (items.length > 0) {
+      gsap.fromTo(
+        items,
+        {
+          y: 100,
+          opacity: 0,
+          filter: 'blur(10px)',
+          scale: 0.9,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          filter: 'blur(0px)',
+          scale: 1,
+          duration: 0.8,
+          stagger: 0.05,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: grid,
+            start: 'top 80%',
+            toggleActions: 'play none none reverse',
+          },
+        }
+      );
+    }
+  });
+</script>

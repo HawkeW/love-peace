@@ -6,12 +6,13 @@
   import { loadThree } from '../../scripts/three-loader';
 
   const canvas = document.getElementById('hero-canvas') as HTMLCanvasElement;
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   
   // Use IntersectionObserver to only render when visible
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        initScene(canvas);
+        if (!reduceMotion) initScene(canvas);
         observer.disconnect(); // Initialize once
       }
     });
@@ -29,6 +30,8 @@
   async function initScene(canvas: HTMLCanvasElement) {
     const THREE = await loadThree();
     if (!THREE) return;
+
+    canvas.style.opacity = '1';
 
     // Scene setup
     const scene = new THREE.Scene();
@@ -154,62 +157,71 @@
 
     // --- Animation Loop ---
     const clock = new THREE.Clock();
-    
-    function animate() {
-      requestAnimationFrame(animate);
-        
-        const elapsedTime = clock.getElapsedTime();
-        const deltaTime = clock.getDelta();
+    let rafId: number | null = null;
+    let paused = document.hidden;
+    let heroVisible = true;
 
-        // 1. Smooth Mouse Lerp (Smooothy feel)
-        // Adjust lerp factor (0.05) for heavier/lighter feel
-        mouse.x = lerp(mouse.x, targetMouse.x, 0.05);
-        mouse.y = lerp(mouse.y, targetMouse.y, 0.05);
-        
-        // 2. Camera Parallax
-        // Camera moves slightly opposite to mouse
-        camera.position.x = lerp(camera.position.x, mouse.x * 0.5, 0.05);
-        camera.position.y = lerp(camera.position.y, mouse.y * 0.5, 0.05);
-        camera.lookAt(0, 0, 0);
+    const start = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(tick);
+    };
 
-      // 3. Particle Flow
-      const baseSpin = 0.02 + (chapterIndex * 0.004); // chapter reacts
+    const stop = () => {
+      if (rafId === null) return;
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    };
+
+    const syncPause = () => {
+      paused = document.hidden || !heroVisible;
+      canvas.style.opacity = heroVisible ? '1' : '0';
+      if (paused) stop();
+      else start();
+    };
+
+    const tick = () => {
+      rafId = requestAnimationFrame(tick);
+        
+      const elapsedTime = clock.getElapsedTime();
+      const deltaTime = clock.getDelta();
+
+      if (paused) return;
+
+      mouse.x = lerp(mouse.x, targetMouse.x, 0.05);
+      mouse.y = lerp(mouse.y, targetMouse.y, 0.05);
+        
+      camera.position.x = lerp(camera.position.x, mouse.x * 0.5, 0.05);
+      camera.position.y = lerp(camera.position.y, mouse.y * 0.5, 0.05);
+      camera.lookAt(0, 0, 0);
+
+      const baseSpin = 0.02 + (chapterIndex * 0.004);
       particlesMesh.rotation.y = elapsedTime * baseSpin;
-      // Particles react to mouse
       particlesMesh.rotation.x = -mouse.y * (0.08 + chapterIndex * 0.01);
       particlesMesh.rotation.z = mouse.x * (0.08 + chapterIndex * 0.01);
 
-        const positions = particlesGeometry.attributes.position.array as Float32Array;
-        for(let i = 0; i < particlesCount; i++) {
-            const i3 = i * 3;
-            positions[i3 + 1] = basePositions[i3 + 1] + Math.sin(elapsedTime * 0.5 + basePositions[i3]) * targetWaveAmp;
+      const positions = particlesGeometry.attributes.position.array as Float32Array;
+      for(let i = 0; i < particlesCount; i++) {
+        const i3 = i * 3;
+        positions[i3 + 1] = basePositions[i3 + 1] + Math.sin(elapsedTime * 0.5 + basePositions[i3]) * targetWaveAmp;
+      }
+      particlesGeometry.attributes.position.needsUpdate = true;
+
+      characters.forEach((mesh) => {
+        if (mesh.material.opacity < 1) {
+          mesh.material.opacity += 0.02;
         }
-        particlesGeometry.attributes.position.needsUpdate = true;
 
-      // 4. Character Animation
-      characters.forEach((mesh, index) => {
-            // Fade in
-            if (mesh.material.opacity < 1) {
-                mesh.material.opacity += 0.02;
-            }
-
-            // Floating
-            mesh.position.y = mesh.userData.initialY + Math.sin(elapsedTime + mesh.userData.floatOffset) * 0.05;
+        mesh.position.y = mesh.userData.initialY + Math.sin(elapsedTime + mesh.userData.floatOffset) * 0.05;
             
-            // Subtle 3D rotation parallax (looking at mouse)
-            // Characters rotate slightly to face the cursor
-            const rotX = -mouse.y * 0.05;
-            const rotY = mouse.x * 0.05;
-            mesh.rotation.x = lerp(mesh.rotation.x, rotX, 0.1);
-            mesh.rotation.y = lerp(mesh.rotation.y, rotY, 0.1);
+        const rotX = -mouse.y * 0.05;
+        const rotY = mouse.x * 0.05;
+        mesh.rotation.x = lerp(mesh.rotation.x, rotX, 0.1);
+        mesh.rotation.y = lerp(mesh.rotation.y, rotY, 0.1);
             
-        // Depth Parallax: Move characters based on Z depth relative to mouse
-        // Closer objects (higher Z) move more
         const depthFactor = mesh.position.z * (0.18 + chapterIndex * 0.02);
         mesh.position.x = mesh.userData.initialX + (mouse.x * depthFactor);
       });
 
-      // Mood tint reacts to chapter (optional hooks for future shader tint)
       const targetMood = Math.min(1, Math.max(0, chapterIndex / 6));
       uniforms.mood.value = lerp(uniforms.mood.value, targetMood, 0.05);
 
@@ -218,9 +230,13 @@
       particleMaterial.opacity = lerp(particleMaterial.opacity, targetParticleOpacity, 0.06);
 
       renderer.render(scene, camera);
-    }
+    };
     
-    animate();
+    start();
+
+    document.addEventListener('visibilitychange', () => {
+      syncPause();
+    });
 
     // Resize handler
     window.addEventListener('resize', () => {
@@ -228,6 +244,19 @@
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
+    const hero = document.getElementById('hero');
+    if (hero) {
+      const heroObserver = new IntersectionObserver(
+        (entries) => {
+          const e = entries[0];
+          heroVisible = !!e?.isIntersecting;
+          syncPause();
+        },
+        { threshold: 0.15 }
+      );
+      heroObserver.observe(hero);
+    }
 
     // --- Chapter events linkage ---
     window.addEventListener('lp:chapter', (e: any) => {
@@ -251,7 +280,14 @@
     height: 100vh;
     display: block;
     z-index: 0;
-    /* Ensure it doesn't block scroll interactions on mobile if not clicking 3D elements */
-    pointer-events: auto; 
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 600ms var(--ease-out-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #hero-canvas {
+      display: none;
+    }
   }
 </style>

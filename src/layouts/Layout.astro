@@ -12,6 +12,7 @@ const {
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+import '../styles/tailwind.css';
 ---
 
 <!doctype html>
@@ -62,10 +63,17 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 </html>
 
 <style>
+	/* Global Reset */
+	*, *::before, *::after {
+		box-sizing: border-box;
+	}
+
 	html,
 	body {
 		margin: 0;
 		width: 100%;
 		height: 100%;
+		overflow-x: hidden; /* Prevent horizontal scroll */
+		scrollbar-gutter: stable;
 	}
 </style>

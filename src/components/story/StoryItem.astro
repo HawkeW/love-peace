@@ -62,6 +62,8 @@ const artifact = artifacts[index % artifacts.length];
     w.__lpStoryFx = true;
 
     const items = Array.from(document.querySelectorAll('.story-item')) as HTMLElement[];
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+    const enableParallax = !reduceMotion && window.matchMedia?.('(min-width: 769px)')?.matches;
 
     const io = new IntersectionObserver(
       (entries) => {
@@ -69,6 +71,7 @@ const artifact = artifacts[index % artifacts.length];
           const el = e.target as HTMLElement;
           if (e.isIntersecting) {
             el.classList.add('is-active');
+            el.classList.add('is-seen');
             const idx = Number(el.dataset.index ?? '0');
             document.documentElement.dataset.chapter = String(idx);
             window.dispatchEvent(new CustomEvent('lp:chapter', { detail: { index: idx } }));
@@ -77,30 +80,32 @@ const artifact = artifacts[index % artifacts.length];
           }
         }
       },
-      { threshold: 0.55 }
+      { threshold: 0.35 }
     );
 
     for (const item of items) io.observe(item);
 
-    const updateParallax = () => {
-      const viewHeight = window.innerHeight;
-      for (const item of items) {
-        const rect = item.getBoundingClientRect();
-        if (rect.top < viewHeight && rect.bottom > 0) {
-          const progress = (rect.top + rect.height / 2 - viewHeight / 2) / (viewHeight / 2);
-          const visual = item.querySelector('.visual-layer') as HTMLElement | null;
-          const content = item.querySelector('.content-layer') as HTMLElement | null;
-          const artifact = item.querySelector('.artifact') as HTMLElement | null;
+    if (enableParallax) {
+      const updateParallax = () => {
+        const viewHeight = window.innerHeight;
+        for (const item of items) {
+          const rect = item.getBoundingClientRect();
+          if (rect.top < viewHeight && rect.bottom > 0) {
+            const progress = (rect.top + rect.height / 2 - viewHeight / 2) / (viewHeight / 2);
+            const visual = item.querySelector('.visual-layer') as HTMLElement | null;
+            const content = item.querySelector('.content-layer') as HTMLElement | null;
+            const artifact = item.querySelector('.artifact') as HTMLElement | null;
 
-          if (visual) visual.style.transform = `translateY(${progress * 26}px)`;
-          if (content) content.style.transform = `translateY(${progress * -56}px)`;
-          if (artifact) artifact.style.transform = `translateY(${progress * 18}px) rotate(${progress * 1.8}deg)`;
+            if (visual) visual.style.transform = `translateY(${progress * 26}px)`;
+            if (content) content.style.transform = `translateY(${progress * -56}px)`;
+            if (artifact) artifact.style.transform = `translateY(${progress * 18}px) rotate(${progress * 1.8}deg)`;
+          }
         }
-      }
-      requestAnimationFrame(updateParallax);
-    };
+        requestAnimationFrame(updateParallax);
+      };
 
-    requestAnimationFrame(updateParallax);
+      requestAnimationFrame(updateParallax);
+    }
   }
 </script>
 
@@ -214,6 +219,7 @@ const artifact = artifacts[index % artifacts.length];
     transition-delay: calc(var(--i) * 90ms);
   }
 
+  .story-item.is-seen .line,
   .story-item.is-active .line {
     opacity: 1;
     transform: translateY(0);
@@ -232,6 +238,7 @@ const artifact = artifacts[index % artifacts.length];
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(10px);
     transform: rotate(-3.5deg);
+    opacity: 0;
     transition: transform 0.1s linear;
     will-change: transform;
   }
@@ -251,6 +258,11 @@ const artifact = artifacts[index % artifacts.length];
       radial-gradient(800px 240px at 20% 10%, rgba(212,175,55,0.15), rgba(212,175,55,0) 60%);
     pointer-events: none;
     mix-blend-mode: multiply;
+  }
+
+  .story-item.is-seen .artifact,
+  .story-item.is-active .artifact {
+    opacity: 1;
   }
 
   .artifact-head {

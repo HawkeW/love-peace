@@ -3,12 +3,12 @@ IDE 提示词 · love-peace
 — 项目要点（具体与可执行）
 - 入口：/invitation 为主入口，同页承载图片故事、滑屏与 RSVP 表单
 - 技术：Astro 5 + TypeScript 严格模式，包管理用 pnpm
-- 依赖：仅使用现有依赖（astro、@astrojs/sitemap、lenis），Swiper 通过 CDN
-- 页面与组件：统一使用 .astro，样式优先内联或组件内 style，移动端优先，支持明暗色
+- 依赖：优先使用现有依赖；允许引入 Vue 3 及基于 Vue 的轻量级 UI/动画组件库（如 Vue Bits）；避免重型框架
+- 页面与组件：统一使用 .astro，复杂交互或动画组件可使用 .vue（需配置 client 指令）；样式优先内联或组件内 style
 - 路由即文件：页面位于 src/pages，API 位于 src/pages/api
 - 数据来源：图片在 public/gallery/wedding，文案在 public/descs（md 首行为标题、正文摘要≤120 字）；文件名一一对应
 - 可访问性与性能：img alt 必填、图片懒加载/占位、语义化按钮与链接、避免阻塞脚本
-⚠️ 严禁新增第三方依赖（含 UI/状态库）；必要轮播仅用 CDN Swiper 与原生能力
+⚠️ 允许按需引入第三方依赖（如 Vue 相关库）；必要轮播可使用 CDN Swiper 或 Vue 组件
 
 — 开发命令（直接可运行）
 
@@ -111,7 +111,7 @@ pnpm run gen:wedding
 ⚠️ 暂无测试框架，当前阶段不引入额外测试依赖
 
 — 给 IDE 的工作提示词（精要）
-- 使用 Astro 5 + TS 严格，不新增库；仅用现有依赖与 CDN Swiper
+- 使用 Astro 5 + TS 严格；支持 Vue 3 组件
 - 以 src/pages/invitation.astro 为主入口，整合图片轮播、故事滑屏与 RSVP 表单
 - 图片与文案来源 public/gallery/wedding 与 public/descs（同名配对；md 首行标题、正文摘要 ≤120）
 - 新增内容遵循路由与命名约定（.astro、kebab-case 页面、PascalCase 组件、复数 API）
