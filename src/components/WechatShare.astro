@@ -1,0 +1,101 @@
+---
+export interface Props {
+  title: string;
+  desc: string;
+  imgUrl: string;
+  link: string;
+  api?: string; // 获取签名的后端接口地址
+}
+
+const { 
+  title, 
+  desc, 
+  imgUrl, 
+  link,
+  api = "/api/wechat/signature" // 默认接口地址
+} = Astro.props;
+---
+
+<!-- 引入微信 JS-SDK -->
+<script is:inline src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+
+<script define:vars={{ title, desc, imgUrl, link, api }}>
+  // 微信分享配置逻辑
+  async function initWechatShare() {
+    // 只有在微信浏览器中才执行
+    const ua = navigator.userAgent.toLowerCase();
+    if (!ua.includes('micromessenger')) return;
+
+    try {
+      // 1. 获取当前页面 URL (不包含 hash)
+      const currentUrl = window.location.href.split('#')[0];
+      
+      // 2. 请求后端获取签名
+      // 注意：这里假设后端接口接受 url 参数并返回 appId, timestamp, nonceStr, signature
+      // 实际使用时请根据后端接口格式调整
+      const response = await fetch(`${api}?url=${encodeURIComponent(currentUrl)}`);
+      if (!response.ok) return;
+      
+      const res = await response.json();
+      // 假设后端返回结构: { success: true, data: { appId, ... } }
+      // 如果结构不同，请修改此处
+      const data = res.data || res;
+      
+      if (!data || !data.appId) {
+        console.warn('微信签名数据无效', data);
+        return;
+      }
+
+      const { appId, timestamp, nonceStr, signature } = data;
+
+      // 3. 配置 JS-SDK
+      wx.config({
+        debug: false, // 开启调试模式
+        appId: appId,
+        timestamp: timestamp,
+        nonceStr: nonceStr,
+        signature: signature,
+        jsApiList: [
+          'updateAppMessageShareData',
+          'updateTimelineShareData'
+        ]
+      });
+
+      // 4. 配置分享内容
+      wx.ready(function () {
+        const shareData = {
+          title: title,
+          desc: desc,
+          link: link,
+          imgUrl: imgUrl,
+          success: function () {
+            // 设置成功
+            console.log('分享配置成功');
+          }
+        };
+
+        // 分享给朋友
+        wx.updateAppMessageShareData(shareData);
+        // 分享到朋友圈
+        wx.updateTimelineShareData(shareData);
+      });
+
+      wx.error(function (res) {
+        console.error('微信 JS-SDK 配置错误', res);
+      });
+
+    } catch (e) {
+      console.error('初始化微信分享失败', e);
+    }
+  }
+
+  // 页面加载完成后初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWechatShare);
+  } else {
+    initWechatShare();
+  }
+  
+  // 兼容 Astro 页面切换（如果有 View Transitions）
+  document.addEventListener('astro:page-load', initWechatShare);
+</script>

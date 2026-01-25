@@ -82,6 +82,7 @@ const {
 		min-height: 400px;
 		overflow: hidden;
 		cursor: default;
+		touch-action: pan-y; /* 允许垂直滚动 */
 	}
 
 	.falling-image-content {
@@ -412,6 +413,54 @@ const {
 
 			// 设置鼠标约束
 			const mouse = Mouse.create(this.container);
+
+			// 优化移动端滚动体验
+			// 移除 Matter.js 默认绑定的事件，避免拦截所有触摸导致的页面无法滚动
+			this.container.removeEventListener(
+				"mousewheel",
+				(mouse as any).mousewheel,
+			);
+			this.container.removeEventListener(
+				"DOMMouseScroll",
+				(mouse as any).mousewheel,
+			);
+			this.container.removeEventListener(
+				"touchstart",
+				(mouse as any).mousedown,
+			);
+			this.container.removeEventListener("touchmove", (mouse as any).mousemove);
+			this.container.removeEventListener("touchend", (mouse as any).mouseup);
+
+			// 自定义触摸事件处理：只有触摸图片时才拦截事件，允许在空白区域滚动
+			const handleTouch = (
+				e: TouchEvent,
+				originalHandler: (e: Event) => void,
+			) => {
+				const target = e.target as HTMLElement;
+				// 检查是否触摸了图片
+				if (target.classList.contains("falling-img")) {
+					// 如果触摸的是图片，调用 Matter.js 的处理函数（它会 preventDefault）
+					originalHandler(e);
+				}
+				// 否则不调用 handler，允许浏览器默认滚动行为
+			};
+
+			this.container.addEventListener(
+				"touchstart",
+				(e) => handleTouch(e, (mouse as any).mousedown),
+				{ passive: false },
+			);
+			this.container.addEventListener(
+				"touchmove",
+				(e) => handleTouch(e, (mouse as any).mousemove),
+				{ passive: false },
+			);
+			this.container.addEventListener(
+				"touchend",
+				(e) => handleTouch(e, (mouse as any).mouseup),
+				{ passive: false },
+			);
+
 			this.mouseConstraint = MouseConstraint.create(this.engine, {
 				mouse: mouse,
 				constraint: {

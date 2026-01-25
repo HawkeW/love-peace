@@ -4,6 +4,7 @@ import EnvelopeSeal from "../components/EnvelopeSeal.astro";
 import SpringReveal from "../components/SpringReveal.astro";
 import FallingImageEffect from "../components/effects/FallingImageEffect.astro";
 import RsvpModal from "../components/RsvpModal.astro";
+import WechatShare from "../components/WechatShare.astro";
 import fs from "fs";
 import path from "path";
 
@@ -53,6 +54,11 @@ const eventDate = "二零二六年 二月 十一日";
 const eventTime = "中午 十二点";
 const eventVenue = "信阳 · 艳阳天酒店";
 const eventAddress = "信阳市平桥区新六大街8号";
+
+// Share config
+const siteUrl = "https://shae-hughe-weddi.oncew.com";
+const shareImage = new URL(heroImage, siteUrl).href;
+const shareDesc = "诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。";
 ---
 
 <!doctype html>
@@ -63,7 +69,19 @@ const eventAddress = "信阳市平桥区新六大街8号";
 		<link rel="icon" type="image/svg+xml" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
 		<title>喜宴邀请函 - {coupleName}</title>
-		<meta name="description" content="诚挚邀请您参加我们的婚礼" />
+		<meta name="description" content={shareDesc} />
+
+		<!-- Open Graph / Wechat Share -->
+		<meta property="og:title" content={`喜宴邀请函 - ${coupleName}`} />
+		<meta property="og:description" content={shareDesc} />
+		<meta property="og:image" content={shareImage} />
+		<meta property="og:url" content={siteUrl} />
+		<meta property="og:type" content="website" />
+
+		<!-- Schema.org for Google / Wechat legacy -->
+		<meta itemprop="name" content={`喜宴邀请函 - ${coupleName}`} />
+		<meta itemprop="description" content={shareDesc} />
+		<meta itemprop="image" content={shareImage} />
 
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -223,9 +241,11 @@ const eventAddress = "信阳市平桥区新六大街8号";
 				<div class="footer-content">
 					<p class="footer-message">期待与您共度这美好时刻</p>
 					<button
+						id="rsvp-button"
 						type="button"
 						onclick="window.openRsvpModal()"
 						class="rsvp-button"
+						style="display: none;"
 					>
 						<span>确认出席</span>
 						<svg
@@ -247,6 +267,13 @@ const eventAddress = "信阳市平桥区新六大街8号";
 
 		<RsvpModal />
 
+		<WechatShare
+			title={`喜宴邀请函 - ${coupleName}`}
+			desc={shareDesc}
+			imgUrl={shareImage}
+			link={siteUrl}
+		/>
+
 		<!-- Lenis Smooth Scroll Script -->
 		<script>
 			import Lenis from "lenis";
@@ -266,6 +293,15 @@ const eventAddress = "信阳市平桥区新六大街8号";
 			}
 
 			requestAnimationFrame(raf);
+
+			// Debug mode check
+			const urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.has("showDebug")) {
+				const rsvpBtn = document.getElementById("rsvp-button");
+				if (rsvpBtn) {
+					rsvpBtn.style.display = "";
+				}
+			}
 		</script>
 	</body>
 </html>
