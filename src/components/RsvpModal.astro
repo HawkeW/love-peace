@@ -1,0 +1,480 @@
+---
+
+---
+
+<div id="rsvp-modal" class="rsvp-modal" aria-hidden="true">
+	<div class="modal-backdrop"></div>
+	<div class="modal-content">
+		<button class="modal-close" aria-label="Close modal">
+			<svg
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<line x1="18" y1="6" x2="6" y2="18"></line>
+				<line x1="6" y1="6" x2="18" y2="18"></line>
+			</svg>
+		</button>
+
+		<h2 class="modal-title">出席确认</h2>
+		<p class="modal-subtitle">期待您的到来</p>
+
+		<form id="rsvp-form" class="rsvp-form">
+			<div class="form-group">
+				<label for="name">姓名 <span class="required">*</span></label>
+				<input
+					type="text"
+					id="name"
+					name="name"
+					required
+					placeholder="请输入您的姓名"
+				/>
+			</div>
+
+			<div class="form-group">
+				<label for="phone">手机号码</label>
+				<input
+					type="tel"
+					id="phone"
+					name="phone"
+					placeholder="请输入手机号码（选填）"
+				/>
+			</div>
+
+			<div class="form-group">
+				<label for="count">出席人数</label>
+				<div class="number-input">
+					<button type="button" class="count-btn minus" aria-label="减少人数"
+						>-</button
+					>
+					<input
+						type="number"
+						id="count"
+						name="count"
+						value="1"
+						min="1"
+						max="10"
+						readonly
+					/>
+					<button type="button" class="count-btn plus" aria-label="增加人数"
+						>+</button
+					>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="remark">备注</label>
+				<textarea
+					id="remark"
+					name="remark"
+					rows="3"
+					placeholder="如有饮食禁忌或其他需求请告知"></textarea>
+			</div>
+
+			<div class="form-actions">
+				<button type="submit" class="submit-btn">
+					<span class="btn-text">确认提交</span>
+					<span class="btn-loading">
+						<svg class="spinner" viewBox="0 0 50 50"
+							><circle
+								class="path"
+								cx="25"
+								cy="25"
+								r="20"
+								fill="none"
+								stroke-width="5"></circle></svg
+						>
+					</span>
+				</button>
+			</div>
+
+			<div id="form-message" class="form-message"></div>
+		</form>
+	</div>
+</div>
+
+<style>
+	.rsvp-modal {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 1000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity 0.3s ease,
+			visibility 0.3s ease;
+	}
+
+	.rsvp-modal.active {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.modal-backdrop {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.8);
+		backdrop-filter: blur(8px);
+	}
+
+	.modal-content {
+		position: relative;
+		width: 90%;
+		max-width: 400px;
+		background: #141414;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 20px;
+		padding: 32px 24px;
+		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		transform: translateY(20px);
+		transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.rsvp-modal.active .modal-content {
+		transform: translateY(0);
+	}
+
+	.modal-close {
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		background: none;
+		border: none;
+		color: rgba(255, 255, 255, 0.5);
+		cursor: pointer;
+		padding: 8px;
+		transition: color 0.2s;
+	}
+
+	.modal-close:hover {
+		color: white;
+	}
+
+	.modal-title {
+		font-family: "Playfair Display", serif;
+		font-size: 1.75rem;
+		color: #c9a962;
+		text-align: center;
+		margin-bottom: 8px;
+	}
+
+	.modal-subtitle {
+		text-align: center;
+		color: rgba(255, 255, 255, 0.6);
+		margin-bottom: 32px;
+		font-size: 0.9rem;
+		letter-spacing: 0.1em;
+	}
+
+	.form-group {
+		margin-bottom: 20px;
+	}
+
+	.form-group label {
+		display: block;
+		color: rgba(255, 255, 255, 0.8);
+		font-size: 0.9rem;
+		margin-bottom: 8px;
+		letter-spacing: 0.05em;
+	}
+
+	.required {
+		color: #c9a962;
+	}
+
+	input[type="text"],
+	input[type="tel"],
+	textarea {
+		width: 100%;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		padding: 12px;
+		color: white;
+		font-family: inherit;
+		font-size: 1rem;
+		transition:
+			border-color 0.2s,
+			background 0.2s;
+	}
+
+	input:focus,
+	textarea:focus {
+		outline: none;
+		border-color: #c9a962;
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	.number-input {
+		display: flex;
+		align-items: center;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		padding: 4px;
+	}
+
+	.count-btn {
+		width: 40px;
+		height: 40px;
+		background: none;
+		border: none;
+		color: #c9a962;
+		font-size: 1.25rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: color 0.2s;
+	}
+
+	.count-btn:hover {
+		color: #e8d5a3;
+	}
+
+	input[type="number"] {
+		flex: 1;
+		background: none;
+		border: none;
+		text-align: center;
+		color: white;
+		font-size: 1.1rem;
+		font-weight: 500;
+		-moz-appearance: textfield;
+	}
+
+	input[type="number"]::-webkit-outer-spin-button,
+	input[type="number"]::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+
+	.submit-btn {
+		width: 100%;
+		padding: 14px;
+		background: linear-gradient(135deg, #c9a962, #e8d5a3);
+		border: none;
+		border-radius: 999px;
+		color: #0a0a0a;
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		cursor: pointer;
+		transition:
+			transform 0.2s,
+			box-shadow 0.2s;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.submit-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 15px rgba(201, 169, 98, 0.3);
+	}
+
+	.submit-btn:disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
+		transform: none;
+	}
+
+	.btn-loading {
+		display: none;
+		align-items: center;
+		justify-content: center;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: inherit;
+	}
+
+	.submit-btn.loading .btn-text {
+		visibility: hidden;
+	}
+
+	.submit-btn.loading .btn-loading {
+		display: flex;
+	}
+
+	.spinner {
+		animation: rotate 2s linear infinite;
+		width: 24px;
+		height: 24px;
+	}
+
+	.spinner .path {
+		stroke: #0a0a0a;
+		stroke-linecap: round;
+		animation: dash 1.5s ease-in-out infinite;
+	}
+
+	.form-message {
+		margin-top: 16px;
+		text-align: center;
+		font-size: 0.9rem;
+		min-height: 20px;
+		transition: color 0.3s;
+	}
+
+	.form-message.success {
+		color: #4caf50;
+	}
+
+	.form-message.error {
+		color: #ff5252;
+	}
+
+	@keyframes rotate {
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	@keyframes dash {
+		0% {
+			stroke-dasharray: 1, 150;
+			stroke-dashoffset: 0;
+		}
+		50% {
+			stroke-dasharray: 90, 150;
+			stroke-dashoffset: -35;
+		}
+		100% {
+			stroke-dasharray: 90, 150;
+			stroke-dashoffset: -124;
+		}
+	}
+</style>
+
+<script>
+	// @ts-nocheck
+	const API_URL = import.meta.env.PUBLIC_API_URL + "/api/wedding/rsvp";
+
+	const modal = document.getElementById("rsvp-modal");
+	const form = document.getElementById("rsvp-form");
+	const closeBtn = document.querySelector(".modal-close");
+	const backdrop = document.querySelector(".modal-backdrop");
+	const countInput = document.getElementById("count");
+	const minusBtn = document.querySelector(".count-btn.minus");
+	const plusBtn = document.querySelector(".count-btn.plus");
+	const messageEl = document.getElementById("form-message");
+	const submitBtn = document.querySelector(".submit-btn");
+
+	// Modal Control
+	function openModal() {
+		modal.classList.add("active");
+		modal.setAttribute("aria-hidden", "false");
+		document.body.style.overflow = "hidden";
+	}
+
+	function closeModal() {
+		modal.classList.remove("active");
+		modal.setAttribute("aria-hidden", "true");
+		document.body.style.overflow = "";
+		// Reset form after delay
+		setTimeout(() => {
+			if (!messageEl.classList.contains("success")) {
+				form.reset();
+				messageEl.textContent = "";
+				messageEl.className = "form-message";
+			}
+		}, 300);
+	}
+
+	// Expose openModal to global scope so it can be called from other components
+	window.openRsvpModal = openModal;
+
+	closeBtn.addEventListener("click", closeModal);
+	backdrop.addEventListener("click", closeModal);
+
+	// Number Input Control
+	minusBtn.addEventListener("click", () => {
+		const current = parseInt(countInput.value);
+		if (current > 1) countInput.value = current - 1;
+	});
+
+	plusBtn.addEventListener("click", () => {
+		const current = parseInt(countInput.value);
+		if (current < 10) countInput.value = current + 1;
+	});
+
+	// Form Submission
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		// Reset message
+		messageEl.textContent = "";
+		messageEl.className = "form-message";
+
+		// Validate
+		const name = document.getElementById("name").value.trim();
+		if (!name) {
+			showMessage("请输入您的姓名", "error");
+			return;
+		}
+
+		// Loading state
+		submitBtn.classList.add("loading");
+		submitBtn.disabled = true;
+
+		try {
+			const formData = {
+				name: name,
+				phone: document.getElementById("phone").value.trim() || undefined,
+				count: parseInt(countInput.value),
+				remark: document.getElementById("remark").value.trim() || undefined,
+			};
+
+			const response = await fetch(API_URL, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(formData),
+			});
+
+			const data = await response.json();
+
+			if (response.ok && data.success) {
+				showMessage("提交成功！期待您的到来", "success");
+				setTimeout(() => {
+					closeModal();
+					// Optional: clear success message after closing
+					setTimeout(() => {
+						form.reset();
+						messageEl.textContent = "";
+						messageEl.className = "form-message";
+						submitBtn.classList.remove("loading");
+						submitBtn.disabled = false;
+					}, 500);
+				}, 2000);
+			} else {
+				throw new Error(data.message || "提交失败，请稍后重试");
+			}
+		} catch (error) {
+			console.error("RSVP Error:", error);
+			showMessage(error.message || "提交失败，请检查网络", "error");
+			submitBtn.classList.remove("loading");
+			submitBtn.disabled = false;
+		}
+	});
+
+	function showMessage(text, type) {
+		messageEl.textContent = text;
+		messageEl.className = `form-message ${type}`;
+	}
+</script>

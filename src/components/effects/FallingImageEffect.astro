@@ -3,677 +3,786 @@
 // 使用 Matter.js 物理引擎实现真实的图片下落、碰撞、弹跳效果
 
 interface Props {
-  images?: string[];
-  imageSize?: number;
-  trigger?: 'auto' | 'hover' | 'click' | 'scroll';
-  gravity?: number;
-  mouseConstraintStiffness?: number;
-  restitution?: number;
-  friction?: number;
-  borderRadius?: number;
-  class?: string;
+	images?: string[];
+	imageSize?: number;
+	imageSizeRange?: string;
+	trigger?: "auto" | "hover" | "click" | "scroll";
+	gravity?: number;
+	mouseConstraintStiffness?: number;
+	restitution?: number;
+	friction?: number;
+	borderRadius?: number;
+	class?: string;
 }
 
 const {
-  images = [],
-  imageSize = 80,
-  trigger = "auto",
-  gravity = 1,
-  mouseConstraintStiffness = 0.2,
-  restitution = 0.6,
-  friction = 0.3,
-  borderRadius = 8,
-  class: className = "",
+	images = [],
+	imageSize = 80,
+	imageSizeRange,
+	trigger = "auto",
+	gravity = 1,
+	mouseConstraintStiffness = 0.2,
+	restitution = 0.6,
+	friction = 0.3,
+	borderRadius = 8,
+	class: className = "",
 } = Astro.props;
 ---
 
-<div 
-  class:list={["falling-image-container", className]}
-  data-images={JSON.stringify(images)}
-  data-image-size={imageSize}
-  data-trigger={trigger}
-  data-gravity={gravity}
-  data-mouse-stiffness={mouseConstraintStiffness}
-  data-restitution={restitution}
-  data-friction={friction}
-  data-border-radius={borderRadius}
+<div
+	class:list={["falling-image-container", className]}
+	data-images={JSON.stringify(images)}
+	data-image-size={imageSize}
+	data-image-size-range={imageSizeRange}
+	data-trigger={trigger}
+	data-gravity={gravity}
+	data-mouse-stiffness={mouseConstraintStiffness}
+	data-restitution={restitution}
+	data-friction={friction}
+	data-border-radius={borderRadius}
 >
-  <div class="falling-image-content"></div>
-  
-  <!-- Lightbox 大图预览 -->
-  <div class="falling-image-lightbox" aria-hidden="true">
-    <div class="lightbox-backdrop"></div>
-    <button class="lightbox-close" aria-label="关闭预览" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-    <div class="lightbox-content">
-      <img class="lightbox-image" src="" alt="Preview" />
-    </div>
-    <div class="lightbox-hint">点击任意位置关闭</div>
-  </div>
+	<div class="falling-image-content"></div>
+
+	<!-- Lightbox 大图预览 -->
+	<div class="falling-image-lightbox" aria-hidden="true">
+		<div class="lightbox-backdrop"></div>
+		<button class="lightbox-close" aria-label="关闭预览" type="button">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<line x1="18" y1="6" x2="6" y2="18"></line>
+				<line x1="6" y1="6" x2="18" y2="18"></line>
+			</svg>
+		</button>
+		<div class="lightbox-content">
+			<img class="lightbox-image" src="" alt="Preview" />
+		</div>
+		<div class="lightbox-hint">点击任意位置关闭</div>
+	</div>
 </div>
 
-<style define:vars={{ imageSize: `${imageSize}px`, borderRadius: `${borderRadius}px` }}>
-  .falling-image-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    min-height: 400px;
-    overflow: hidden;
-    cursor: default;
-  }
+<style
+	define:vars={{
+		imageSize: `${imageSize}px`,
+		borderRadius: `${borderRadius}px`,
+	}}
+>
+	.falling-image-container {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		min-height: 400px;
+		overflow: hidden;
+		cursor: default;
+	}
 
-  .falling-image-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
+	.falling-image-content {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
 
-  .falling-image-container :global(.falling-img) {
-    position: absolute;
-    width: var(--imageSize);
-    height: var(--imageSize);
-    object-fit: cover;
-    border-radius: var(--borderRadius);
-    user-select: none;
-    pointer-events: auto;
-    will-change: transform;
-    cursor: grab;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: box-shadow 0.2s ease;
-    border: 3px solid rgba(255, 255, 255, 0.9);
-  }
+	.falling-image-container :global(.falling-img) {
+		position: absolute;
+		width: var(--imageSize);
+		height: var(--imageSize);
+		object-fit: cover;
+		border-radius: var(--borderRadius);
+		user-select: none;
+		pointer-events: auto;
+		will-change: transform;
+		cursor: grab;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		transition: box-shadow 0.2s ease;
+		border: 3px solid rgba(255, 255, 255, 0.9);
+	}
 
-  .falling-image-container :global(.falling-img:hover) {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  }
+	.falling-image-container :global(.falling-img:hover) {
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+	}
 
-  .falling-image-container :global(.falling-img:active) {
-    cursor: grabbing;
-  }
+	.falling-image-container :global(.falling-img:active) {
+		cursor: grabbing;
+	}
 
-  /* Lightbox 样式 */
-  .falling-image-lightbox {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-  }
+	/* Lightbox 样式 */
+	.falling-image-lightbox {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		z-index: 9999;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity 0.3s ease,
+			visibility 0.3s ease;
+	}
 
-  .falling-image-lightbox.active {
-    opacity: 1;
-    visibility: visible;
-  }
+	.falling-image-lightbox.active {
+		opacity: 1;
+		visibility: visible;
+	}
 
-  .lightbox-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(10px);
-  }
+	.lightbox-backdrop {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.9);
+		backdrop-filter: blur(10px);
+	}
 
-  .lightbox-content {
-    position: relative;
-    z-index: 1;
-    max-width: 90vw;
-    max-height: 85vh;
-    transform: scale(0.9);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    cursor: pointer;
-  }
+	.lightbox-content {
+		position: relative;
+		z-index: 1;
+		max-width: 90vw;
+		max-height: 85vh;
+		transform: scale(0.9);
+		transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+		cursor: pointer;
+	}
 
-  .falling-image-lightbox.active .lightbox-content {
-    transform: scale(1);
-  }
+	.falling-image-lightbox.active .lightbox-content {
+		transform: scale(1);
+	}
 
-  .lightbox-image {
-    max-width: 90vw;
-    max-height: 85vh;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-  }
+	.lightbox-image {
+		max-width: 90vw;
+		max-height: 85vh;
+		object-fit: contain;
+		border-radius: 8px;
+		box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+		cursor: pointer;
+	}
 
-  .lightbox-close {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    border: none;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease, transform 0.2s ease;
-    z-index: 10;
-  }
+	.lightbox-close {
+		position: fixed;
+		top: 20px;
+		right: 20px;
+		width: 44px;
+		height: 44px;
+		border: none;
+		background: rgba(255, 255, 255, 0.15);
+		color: white;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition:
+			background 0.2s ease,
+			transform 0.2s ease;
+		z-index: 10;
+	}
 
-  .lightbox-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-  }
-  
-  .lightbox-close:active {
-    transform: scale(0.95);
-  }
+	.lightbox-close:hover {
+		background: rgba(255, 255, 255, 0.3);
+		transform: scale(1.1);
+	}
 
-  .lightbox-hint {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.875rem;
-    pointer-events: none;
-  }
+	.lightbox-close:active {
+		transform: scale(0.95);
+	}
 
-  /* 响应式调整 */
-  @media (max-width: 768px) {
-    .falling-image-container {
-      min-height: 350px;
-    }
+	.lightbox-hint {
+		position: absolute;
+		bottom: 30px;
+		left: 50%;
+		transform: translateX(-50%);
+		color: rgba(255, 255, 255, 0.5);
+		font-size: 0.875rem;
+		pointer-events: none;
+	}
 
-    .lightbox-close {
-      top: 15px;
-      right: 15px;
-    }
-  }
+	/* 响应式调整 */
+	@media (max-width: 768px) {
+		.falling-image-container {
+			min-height: 350px;
+		}
 
-  @media (max-width: 480px) {
-    .falling-image-container {
-      min-height: 300px;
-    }
-  }
+		.lightbox-close {
+			top: 15px;
+			right: 15px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.falling-image-container {
+			min-height: 300px;
+		}
+	}
 </style>
 
 <script>
-  import Matter from 'matter-js';
+	import Matter from "matter-js";
 
-  interface FallingImageConfig {
-    images: string[];
-    imageSize: number;
-    trigger: 'auto' | 'hover' | 'click' | 'scroll';
-    gravity: number;
-    mouseStiffness: number;
-    restitution: number;
-    friction: number;
-    borderRadius: number;
-  }
+	interface FallingImageConfig {
+		images: string[];
+		imageSize: number;
+		imageSizeRange?: [number, number];
+		trigger: "auto" | "hover" | "click" | "scroll";
+		gravity: number;
+		mouseStiffness: number;
+		restitution: number;
+		friction: number;
+		borderRadius: number;
+	}
 
-  class FallingImageEffect {
-    private container: HTMLElement;
-    private contentEl: HTMLElement;
-    private lightboxEl: HTMLElement;
-    private lightboxImage: HTMLImageElement;
-    private config: FallingImageConfig;
-    private engine: Matter.Engine | null = null;
-    private runner: Matter.Runner | null = null;
-    private bodies: Matter.Body[] = [];
-    private imageElements: HTMLImageElement[] = [];
-    private mouseConstraint: Matter.MouseConstraint | null = null;
-    private animationId: number | null = null;
-    private isInitialized: boolean = false;
-    private hasTriggered: boolean = false;
-    private isDragging: boolean = false;
-    private dragStartPos: { x: number; y: number } | null = null;
+	class FallingImageEffect {
+		private container: HTMLElement;
+		private contentEl: HTMLElement;
+		private lightboxEl: HTMLElement;
+		private lightboxImage: HTMLImageElement;
+		private config: FallingImageConfig;
+		private engine: Matter.Engine | null = null;
+		private runner: Matter.Runner | null = null;
+		private bodies: Matter.Body[] = [];
+		private imageElements: HTMLImageElement[] = [];
+		private mouseConstraint: Matter.MouseConstraint | null = null;
+		private animationId: number | null = null;
+		private isInitialized: boolean = false;
+		private hasTriggered: boolean = false;
+		private isDragging: boolean = false;
+		private dragStartPos: { x: number; y: number } | null = null;
 
-    constructor(container: HTMLElement) {
-      this.container = container;
-      this.contentEl = container.querySelector('.falling-image-content') as HTMLElement;
-      this.lightboxEl = container.querySelector('.falling-image-lightbox') as HTMLElement;
-      this.lightboxImage = container.querySelector('.lightbox-image') as HTMLImageElement;
-      
-      this.config = {
-        images: JSON.parse(container.dataset.images || '[]'),
-        imageSize: parseInt(container.dataset.imageSize || '80', 10),
-        trigger: (container.dataset.trigger as FallingImageConfig['trigger']) || 'auto',
-        gravity: parseFloat(container.dataset.gravity || '1'),
-        mouseStiffness: parseFloat(container.dataset.mouseStiffness || '0.2'),
-        restitution: parseFloat(container.dataset.restitution || '0.6'),
-        friction: parseFloat(container.dataset.friction || '0.3'),
-        borderRadius: parseInt(container.dataset.borderRadius || '8', 10),
-      };
+		constructor(container: HTMLElement) {
+			this.container = container;
+			this.contentEl = container.querySelector(
+				".falling-image-content",
+			) as HTMLElement;
+			this.lightboxEl = container.querySelector(
+				".falling-image-lightbox",
+			) as HTMLElement;
+			this.lightboxImage = container.querySelector(
+				".lightbox-image",
+			) as HTMLImageElement;
 
-      this.init();
-      this.setupLightbox();
-    }
+			this.config = {
+				images: JSON.parse(container.dataset.images || "[]"),
+				imageSize: parseInt(container.dataset.imageSize || "80", 10),
+				trigger:
+					(container.dataset.trigger as FallingImageConfig["trigger"]) ||
+					"auto",
+				gravity: parseFloat(container.dataset.gravity || "1"),
+				mouseStiffness: parseFloat(container.dataset.mouseStiffness || "0.2"),
+				restitution: parseFloat(container.dataset.restitution || "0.6"),
+				friction: parseFloat(container.dataset.friction || "0.3"),
+				borderRadius: parseInt(container.dataset.borderRadius || "8", 10),
+			};
 
-    private init() {
-      this.setupTrigger();
-    }
+			const rangeStr = container.dataset.imageSizeRange;
+			if (rangeStr) {
+				const parts = rangeStr.split("-").map((n) => parseInt(n.trim(), 10));
+				if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+					this.config.imageSizeRange = [parts[0], parts[1]];
+				}
+			}
 
-    private setupTrigger() {
-      switch (this.config.trigger) {
-        case 'auto':
-          this.setupIntersectionObserver();
-          break;
-        case 'hover':
-          this.container.addEventListener('mouseenter', () => this.trigger());
-          break;
-        case 'click':
-          this.container.addEventListener('click', () => this.trigger());
-          break;
-        case 'scroll':
-          this.setupScrollTrigger();
-          break;
-      }
-    }
+			this.init();
+			this.setupLightbox();
+		}
 
-    private setupIntersectionObserver() {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && !this.hasTriggered) {
-              this.trigger();
-            }
-          });
-        },
-        { threshold: 0.3 }
-      );
-      observer.observe(this.container);
-    }
+		private init() {
+			this.setupTrigger();
+		}
 
-    private setupScrollTrigger() {
-      const checkScroll = () => {
-        const rect = this.container.getBoundingClientRect();
-        const isVisible = rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
-        if (isVisible && !this.hasTriggered) {
-          this.trigger();
-        }
-      };
-      window.addEventListener('scroll', checkScroll, { passive: true });
-      checkScroll();
-    }
+		private setupTrigger() {
+			switch (this.config.trigger) {
+				case "auto":
+					this.setupIntersectionObserver();
+					break;
+				case "hover":
+					this.container.addEventListener("mouseenter", () => this.trigger());
+					break;
+				case "click":
+					this.container.addEventListener("click", () => this.trigger());
+					break;
+				case "scroll":
+					this.setupScrollTrigger();
+					break;
+			}
+		}
 
-    private trigger() {
-      if (this.hasTriggered) return;
-      this.hasTriggered = true;
-      this.initPhysics();
-    }
+		private setupIntersectionObserver() {
+			const observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach((entry) => {
+						if (entry.isIntersecting && !this.hasTriggered) {
+							this.trigger();
+						}
+					});
+				},
+				{ threshold: 0.3 },
+			);
+			observer.observe(this.container);
+		}
 
-    private initPhysics() {
-      if (this.isInitialized) return;
-      this.isInitialized = true;
+		private setupScrollTrigger() {
+			const checkScroll = () => {
+				const rect = this.container.getBoundingClientRect();
+				const isVisible =
+					rect.top < window.innerHeight * 0.7 && rect.bottom > 0;
+				if (isVisible && !this.hasTriggered) {
+					this.trigger();
+				}
+			};
+			window.addEventListener("scroll", checkScroll, { passive: true });
+			checkScroll();
+		}
 
-      const { Engine, Runner, Bodies, Composite, Mouse, MouseConstraint } = Matter;
+		private trigger() {
+			if (this.hasTriggered) return;
+			this.hasTriggered = true;
+			this.initPhysics();
+		}
 
-      const containerRect = this.container.getBoundingClientRect();
-      const width = containerRect.width;
-      const height = containerRect.height;
+		private initPhysics() {
+			if (this.isInitialized) return;
+			this.isInitialized = true;
 
-      // 创建引擎
-      this.engine = Engine.create();
-      this.engine.gravity.y = this.config.gravity;
+			const { Engine, Runner, Bodies, Composite, Mouse, MouseConstraint } =
+				Matter;
 
-      // 创建边界
-      const wallThickness = 50;
-      const walls = [
-        // 地面
-        Bodies.rectangle(width / 2, height + wallThickness / 2, width + 100, wallThickness, { 
-          isStatic: true,
-          friction: 0.8,
-          restitution: 0.2
-        }),
-        // 左墙
-        Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height * 2, { 
-          isStatic: true,
-          friction: 0.1
-        }),
-        // 右墙
-        Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height * 2, { 
-          isStatic: true,
-          friction: 0.1
-        }),
-        // 顶部边界 - 防止图片飞出容器
-        Bodies.rectangle(width / 2, -wallThickness / 2 - 50, width + 100, wallThickness, { 
-          isStatic: true,
-          friction: 0.1,
-          restitution: 0.3
-        }),
-      ];
+			const containerRect = this.container.getBoundingClientRect();
+			const width = containerRect.width;
+			const height = containerRect.height;
 
-      Composite.add(this.engine.world, walls);
+			// 创建引擎
+			this.engine = Engine.create();
+			this.engine.gravity.y = this.config.gravity;
 
-      // 创建图片
-      this.createImages(width, height);
+			// 创建边界
+			const wallThickness = 50;
+			const wallHeight = height * 5; // 增加墙壁高度，确保覆盖上方掉落区域
+			const walls = [
+				// 地面
+				Bodies.rectangle(
+					width / 2,
+					height + wallThickness / 2,
+					width + 100,
+					wallThickness,
+					{
+						isStatic: true,
+						friction: 0.8,
+						restitution: 0.2,
+					},
+				),
+				// 左墙 - 向上延伸
+				Bodies.rectangle(
+					-wallThickness / 2,
+					height - wallHeight / 2,
+					wallThickness,
+					wallHeight,
+					{
+						isStatic: true,
+						friction: 0.1,
+					},
+				),
+				// 右墙 - 向上延伸
+				Bodies.rectangle(
+					width + wallThickness / 2,
+					height - wallHeight / 2,
+					wallThickness,
+					wallHeight,
+					{
+						isStatic: true,
+						friction: 0.1,
+					},
+				),
+			];
 
-      // 设置鼠标约束
-      const mouse = Mouse.create(this.container);
-      this.mouseConstraint = MouseConstraint.create(this.engine, {
-        mouse: mouse,
-        constraint: {
-          stiffness: this.config.mouseStiffness,
-          render: { visible: false }
-        }
-      });
-      Composite.add(this.engine.world, this.mouseConstraint);
+			Composite.add(this.engine.world, walls);
 
-      // 启动物理引擎
-      this.runner = Runner.create();
-      Runner.run(this.runner, this.engine);
+			// 创建图片
+			this.createImages(width, height);
 
-      // 开始渲染循环
-      this.startRenderLoop();
-    }
+			// 设置鼠标约束
+			const mouse = Mouse.create(this.container);
+			this.mouseConstraint = MouseConstraint.create(this.engine, {
+				mouse: mouse,
+				constraint: {
+					stiffness: this.config.mouseStiffness,
+					render: { visible: false },
+				},
+			});
+			Composite.add(this.engine.world, this.mouseConstraint);
 
-    private createImages(containerWidth: number, containerHeight: number) {
-      const { Bodies, Composite, Body } = Matter;
-      const images = this.config.images;
-      const size = this.config.imageSize;
+			// 启动物理引擎
+			this.runner = Runner.create();
+			Runner.run(this.runner, this.engine);
 
-      if (images.length === 0) return;
+			// 开始渲染循环
+			this.startRenderLoop();
+		}
 
-      // 计算网格布局的初始位置
-      const cols = Math.ceil(Math.sqrt(images.length));
-      const spacing = size + 20;
-      const totalWidth = cols * spacing;
-      const startX = (containerWidth - totalWidth) / 2 + size / 2 + 10;
+		private createImages(containerWidth: number, containerHeight: number) {
+			const { Bodies, Composite, Body } = Matter;
+			const images = this.config.images;
+			const baseSize = this.config.imageSize;
+			const sizeRange = this.config.imageSizeRange;
 
-      images.forEach((src, index) => {
-        // 创建 DOM 元素
-        const imgEl = document.createElement('img');
-        imgEl.className = 'falling-img';
-        imgEl.src = src;
-        imgEl.alt = `Falling image ${index + 1}`;
-        imgEl.draggable = false;
-        imgEl.style.width = `${size}px`;
-        imgEl.style.height = `${size}px`;
+			if (images.length === 0) return;
 
-        // 添加点击查看大图功能（区分拖拽和点击）
-        imgEl.addEventListener('mousedown', (e) => {
-          this.dragStartPos = { x: e.clientX, y: e.clientY };
-          this.isDragging = false;
-        });
+			// 计算网格布局的初始位置
+			const spacing = baseSize + 20;
+			// 限制最大列数，防止超出容器宽度
+			const maxCols = Math.max(1, Math.floor((containerWidth - 40) / spacing));
+			const cols = Math.min(Math.ceil(Math.sqrt(images.length)), maxCols);
 
-        imgEl.addEventListener('mousemove', (e) => {
-          if (this.dragStartPos) {
-            const dx = Math.abs(e.clientX - this.dragStartPos.x);
-            const dy = Math.abs(e.clientY - this.dragStartPos.y);
-            if (dx > 5 || dy > 5) {
-              this.isDragging = true;
-            }
-          }
-        });
+			const totalWidth = cols * spacing;
+			// 确保起始位置至少在左边界内，且居中显示
+			const startX =
+				Math.max((containerWidth - totalWidth) / 2, 20) + baseSize / 2;
 
-        imgEl.addEventListener('mouseup', () => {
-          if (!this.isDragging && this.dragStartPos) {
-            this.openLightbox(src);
-          }
-          this.dragStartPos = null;
-        });
+			images.forEach((src, index) => {
+				// Determine size for this image
+				let size = baseSize;
+				if (sizeRange) {
+					size =
+						Math.floor(Math.random() * (sizeRange[1] - sizeRange[0] + 1)) +
+						sizeRange[0];
+				}
 
-        // 触摸设备支持
-        let touchStartPos: { x: number; y: number } | null = null;
-        let touchMoved = false;
+				// 创建 DOM 元素
+				const imgEl = document.createElement("img");
+				imgEl.className = "falling-img";
+				imgEl.src = src;
+				imgEl.alt = `Falling image ${index + 1}`;
+				imgEl.draggable = false;
+				imgEl.style.width = `${size}px`;
+				imgEl.style.height = `${size}px`;
 
-        imgEl.addEventListener('touchstart', (e) => {
-          const touch = e.touches[0];
-          touchStartPos = { x: touch.clientX, y: touch.clientY };
-          touchMoved = false;
-        }, { passive: true });
+				// 添加点击查看大图功能（区分拖拽和点击）
+				imgEl.addEventListener("mousedown", (e) => {
+					this.dragStartPos = { x: e.clientX, y: e.clientY };
+					this.isDragging = false;
+				});
 
-        imgEl.addEventListener('touchmove', (e) => {
-          if (touchStartPos) {
-            const touch = e.touches[0];
-            const dx = Math.abs(touch.clientX - touchStartPos.x);
-            const dy = Math.abs(touch.clientY - touchStartPos.y);
-            if (dx > 10 || dy > 10) {
-              touchMoved = true;
-            }
-          }
-        }, { passive: true });
+				imgEl.addEventListener("mousemove", (e) => {
+					if (this.dragStartPos) {
+						const dx = Math.abs(e.clientX - this.dragStartPos.x);
+						const dy = Math.abs(e.clientY - this.dragStartPos.y);
+						if (dx > 5 || dy > 5) {
+							this.isDragging = true;
+						}
+					}
+				});
 
-        imgEl.addEventListener('touchend', () => {
-          if (!touchMoved && touchStartPos) {
-            this.openLightbox(src);
-          }
-          touchStartPos = null;
-        });
+				imgEl.addEventListener("mouseup", () => {
+					if (!this.isDragging && this.dragStartPos) {
+						this.openLightbox(src);
+					}
+					this.dragStartPos = null;
+				});
 
-        this.contentEl.appendChild(imgEl);
-        this.imageElements.push(imgEl);
+				// 触摸设备支持
+				let touchStartPos: { x: number; y: number } | null = null;
+				let touchMoved = false;
 
-        // 计算初始位置（网格排列，从上方掉落）
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-        const x = startX + col * spacing;
-        const y = -size - row * spacing - Math.random() * 50; // 随机高度错开
+				imgEl.addEventListener(
+					"touchstart",
+					(e) => {
+						const touch = e.touches[0];
+						touchStartPos = { x: touch.clientX, y: touch.clientY };
+						touchMoved = false;
+					},
+					{ passive: true },
+				);
 
-        // 创建物理刚体
-        const body = Bodies.rectangle(x, y, size * 0.9, size * 0.9, {
-          restitution: this.config.restitution,
-          friction: this.config.friction,
-          frictionAir: 0.01,
-          angle: (Math.random() - 0.5) * 0.5,
-          chamfer: { radius: this.config.borderRadius * 0.5 },
-          render: { visible: false }
-        });
+				imgEl.addEventListener(
+					"touchmove",
+					(e) => {
+						if (touchStartPos) {
+							const touch = e.touches[0];
+							const dx = Math.abs(touch.clientX - touchStartPos.x);
+							const dy = Math.abs(touch.clientY - touchStartPos.y);
+							if (dx > 10 || dy > 10) {
+								touchMoved = true;
+							}
+						}
+					},
+					{ passive: true },
+				);
 
-        // 添加初始随机速度
-        Body.setVelocity(body, {
-          x: (Math.random() - 0.5) * 3,
-          y: Math.random() * 2
-        });
+				imgEl.addEventListener("touchend", () => {
+					if (!touchMoved && touchStartPos) {
+						this.openLightbox(src);
+					}
+					touchStartPos = null;
+				});
 
-        // 添加初始随机角速度
-        Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
+				this.contentEl.appendChild(imgEl);
+				this.imageElements.push(imgEl);
 
-        // 存储图片元素引用
-        (body as any).imageElement = imgEl;
-        (body as any).imageSize = size;
-        
-        // PC 端悬浮抖动效果
-        let hoverTimeout: number | null = null;
-        imgEl.addEventListener('mouseenter', () => {
-          // 防止频繁触发
-          if (hoverTimeout) return;
-          
-          // 施加随机力产生抖动
-          const forceStrength = 0.04;
-          const randomAngle = Math.random() * Math.PI * 2;
-          const force = {
-            x: Math.cos(randomAngle) * forceStrength,
-            y: Math.max(Math.sin(randomAngle) * forceStrength * 0.3, -0.005) // 限制向上力度
-          };
-          
-          Body.applyForce(body, body.position, force);
-          
-          // 添加随机角速度
-          Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.3);
-          
-          // 设置冷却时间
-          hoverTimeout = window.setTimeout(() => {
-            hoverTimeout = null;
-          }, 300);
-        });
+				// 计算初始位置（网格排列，从上方掉落）
+				const col = index % cols;
+				const row = Math.floor(index / cols);
+				const x = startX + col * spacing;
+				const y = -baseSize - row * spacing - Math.random() * 50; // 随机高度错开
 
-        this.bodies.push(body);
-        Composite.add(this.engine!.world, body);
-      });
-    }
+				// 创建物理刚体
+				const body = Bodies.rectangle(x, y, size * 0.9, size * 0.9, {
+					restitution: this.config.restitution,
+					friction: this.config.friction,
+					frictionAir: 0.01,
+					angle: (Math.random() - 0.5) * 0.5,
+					chamfer: { radius: this.config.borderRadius * 0.5 },
+					render: { visible: false },
+				});
 
-    private startRenderLoop() {
-      const { Body } = Matter;
-      const maxVelocity = 15; // 最大速度限制
-      
-      const render = () => {
-        this.bodies.forEach((body) => {
-          // 限制速度，防止图片飞得太快
-          const vx = body.velocity.x;
-          const vy = body.velocity.y;
-          const speed = Math.sqrt(vx * vx + vy * vy);
-          
-          if (speed > maxVelocity) {
-            const scale = maxVelocity / speed;
-            Body.setVelocity(body, {
-              x: vx * scale,
-              y: vy * scale
-            });
-          }
-          
-          const imgEl = (body as any).imageElement as HTMLImageElement;
-          const size = (body as any).imageSize as number;
+				// 添加初始随机速度
+				Body.setVelocity(body, {
+					x: (Math.random() - 0.5) * 3,
+					y: Math.random() * 2,
+				});
 
-          if (imgEl) {
-            const x = body.position.x - size / 2;
-            const y = body.position.y - size / 2;
-            const angle = body.angle * (180 / Math.PI);
+				// 添加初始随机角速度
+				Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
 
-            imgEl.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
-          }
-        });
+				// 存储图片元素引用
+				(body as any).imageElement = imgEl;
+				(body as any).imageSize = size;
 
-        this.animationId = requestAnimationFrame(render);
-      };
+				// PC 端悬浮抖动效果
+				let hoverTimeout: number | null = null;
+				imgEl.addEventListener("mouseenter", () => {
+					// 防止频繁触发
+					if (hoverTimeout) return;
 
-      render();
-    }
+					// 施加随机力产生抖动
+					const forceStrength = 0.04;
+					const randomAngle = Math.random() * Math.PI * 2;
+					const force = {
+						x: Math.cos(randomAngle) * forceStrength,
+						y: Math.max(Math.sin(randomAngle) * forceStrength * 0.3, -0.005), // 限制向上力度
+					};
 
-    private setupLightbox() {
-      // 辅助函数：同时绑定 click 和 touchend 事件
-      const addTapListener = (element: Element | null, handler: (e: Event) => void) => {
-        if (!element) return;
-        
-        let touchMoved = false;
-        
-        element.addEventListener('touchstart', () => {
-          touchMoved = false;
-        }, { passive: true });
-        
-        element.addEventListener('touchmove', () => {
-          touchMoved = true;
-        }, { passive: true });
-        
-        element.addEventListener('touchend', (e) => {
-          if (!touchMoved) {
-            e.preventDefault();
-            e.stopPropagation();
-            handler(e);
-          }
-        });
-        
-        element.addEventListener('click', (e) => {
-          e.stopPropagation();
-          handler(e);
-        });
-      };
+					Body.applyForce(body, body.position, force);
 
-      // 点击背景关闭
-      addTapListener(this.lightboxEl.querySelector('.lightbox-backdrop'), () => {
-        this.closeLightbox();
-      });
+					// 添加随机角速度
+					Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.3);
 
-      // 点击关闭按钮
-      const closeBtn = this.lightboxEl.querySelector('.lightbox-close');
-      addTapListener(closeBtn, (e) => {
-        e.preventDefault?.();
-        this.closeLightbox();
-      });
+					// 设置冷却时间
+					hoverTimeout = window.setTimeout(() => {
+						hoverTimeout = null;
+					}, 300);
+				});
 
-      // 点击图片也可以关闭
-      addTapListener(this.lightboxImage, () => {
-        this.closeLightbox();
-      });
+				this.bodies.push(body);
+				Composite.add(this.engine!.world, body);
+			});
+		}
 
-      // ESC 键关闭
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.lightboxEl.classList.contains('active')) {
-          this.closeLightbox();
-        }
-      });
+		private startRenderLoop() {
+			const { Body } = Matter;
+			const maxVelocity = 15; // 最大速度限制
 
-      // 点击 lightbox 容器关闭
-      let containerTouchMoved = false;
-      this.lightboxEl.addEventListener('touchstart', () => {
-        containerTouchMoved = false;
-      }, { passive: true });
-      
-      this.lightboxEl.addEventListener('touchmove', () => {
-        containerTouchMoved = true;
-      }, { passive: true });
-      
-      this.lightboxEl.addEventListener('touchend', (e) => {
-        if (!containerTouchMoved) {
-          const target = e.target as HTMLElement;
-          if (target === this.lightboxEl || target.classList.contains('lightbox-content')) {
-            e.preventDefault();
-            this.closeLightbox();
-          }
-        }
-      });
-      
-      this.lightboxEl.addEventListener('click', (e) => {
-        if (e.target === this.lightboxEl || (e.target as HTMLElement).classList.contains('lightbox-content')) {
-          this.closeLightbox();
-        }
-      });
-    }
+			const render = () => {
+				this.bodies.forEach((body) => {
+					// 限制速度，防止图片飞得太快
+					const vx = body.velocity.x;
+					const vy = body.velocity.y;
+					const speed = Math.sqrt(vx * vx + vy * vy);
 
-    private openLightbox(src: string) {
-      this.lightboxImage.src = src;
-      this.lightboxEl.classList.add('active');
-      this.lightboxEl.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
+					if (speed > maxVelocity) {
+						const scale = maxVelocity / speed;
+						Body.setVelocity(body, {
+							x: vx * scale,
+							y: vy * scale,
+						});
+					}
 
-    private closeLightbox() {
-      this.lightboxEl.classList.remove('active');
-      this.lightboxEl.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
+					const imgEl = (body as any).imageElement as HTMLImageElement;
+					const size = (body as any).imageSize as number;
 
-    public destroy() {
-      if (this.animationId) {
-        cancelAnimationFrame(this.animationId);
-      }
-      if (this.runner) {
-        Matter.Runner.stop(this.runner);
-      }
-      if (this.engine) {
-        Matter.Engine.clear(this.engine);
-      }
-      this.imageElements.forEach(el => el.remove());
-      this.imageElements = [];
-      this.bodies = [];
-    }
-  }
+					if (imgEl) {
+						const x = body.position.x - size / 2;
+						const y = body.position.y - size / 2;
+						const angle = body.angle * (180 / Math.PI);
 
-  // 初始化所有 falling-image 容器
-  function initFallingImage() {
-    const containers = document.querySelectorAll('.falling-image-container');
-    containers.forEach((container) => {
-      if (!(container as any).__fallingImage) {
-        (container as any).__fallingImage = new FallingImageEffect(container as HTMLElement);
-      }
-    });
-  }
+						imgEl.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+					}
+				});
 
-  // 多次初始化以确保在各种加载情况下都能工作
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFallingImage);
-  } else {
-    initFallingImage();
-  }
+				this.animationId = requestAnimationFrame(render);
+			};
 
-  // 支持 View Transitions
-  document.addEventListener('astro:page-load', initFallingImage);
+			render();
+		}
+
+		private setupLightbox() {
+			// 辅助函数：同时绑定 click 和 touchend 事件
+			const addTapListener = (
+				element: Element | null,
+				handler: (e: Event) => void,
+			) => {
+				if (!element) return;
+
+				let touchMoved = false;
+
+				element.addEventListener(
+					"touchstart",
+					() => {
+						touchMoved = false;
+					},
+					{ passive: true },
+				);
+
+				element.addEventListener(
+					"touchmove",
+					() => {
+						touchMoved = true;
+					},
+					{ passive: true },
+				);
+
+				element.addEventListener("touchend", (e) => {
+					if (!touchMoved) {
+						e.preventDefault();
+						e.stopPropagation();
+						handler(e);
+					}
+				});
+
+				element.addEventListener("click", (e) => {
+					e.stopPropagation();
+					handler(e);
+				});
+			};
+
+			// 点击背景关闭
+			addTapListener(
+				this.lightboxEl.querySelector(".lightbox-backdrop"),
+				() => {
+					this.closeLightbox();
+				},
+			);
+
+			// 点击关闭按钮
+			const closeBtn = this.lightboxEl.querySelector(".lightbox-close");
+			addTapListener(closeBtn, (e) => {
+				e.preventDefault?.();
+				this.closeLightbox();
+			});
+
+			// 点击图片也可以关闭
+			addTapListener(this.lightboxImage, () => {
+				this.closeLightbox();
+			});
+
+			// ESC 键关闭
+			document.addEventListener("keydown", (e) => {
+				if (
+					e.key === "Escape" &&
+					this.lightboxEl.classList.contains("active")
+				) {
+					this.closeLightbox();
+				}
+			});
+
+			// 点击 lightbox 容器关闭
+			let containerTouchMoved = false;
+			this.lightboxEl.addEventListener(
+				"touchstart",
+				() => {
+					containerTouchMoved = false;
+				},
+				{ passive: true },
+			);
+
+			this.lightboxEl.addEventListener(
+				"touchmove",
+				() => {
+					containerTouchMoved = true;
+				},
+				{ passive: true },
+			);
+
+			this.lightboxEl.addEventListener("touchend", (e) => {
+				if (!containerTouchMoved) {
+					const target = e.target as HTMLElement;
+					if (
+						target === this.lightboxEl ||
+						target.classList.contains("lightbox-content")
+					) {
+						e.preventDefault();
+						this.closeLightbox();
+					}
+				}
+			});
+
+			this.lightboxEl.addEventListener("click", (e) => {
+				if (
+					e.target === this.lightboxEl ||
+					(e.target as HTMLElement).classList.contains("lightbox-content")
+				) {
+					this.closeLightbox();
+				}
+			});
+		}
+
+		private openLightbox(src: string) {
+			this.lightboxImage.src = src;
+			this.lightboxEl.classList.add("active");
+			this.lightboxEl.setAttribute("aria-hidden", "false");
+			document.body.style.overflow = "hidden";
+		}
+
+		private closeLightbox() {
+			this.lightboxEl.classList.remove("active");
+			this.lightboxEl.setAttribute("aria-hidden", "true");
+			document.body.style.overflow = "";
+		}
+
+		public destroy() {
+			if (this.animationId) {
+				cancelAnimationFrame(this.animationId);
+			}
+			if (this.runner) {
+				Matter.Runner.stop(this.runner);
+			}
+			if (this.engine) {
+				Matter.Engine.clear(this.engine);
+			}
+			this.imageElements.forEach((el) => el.remove());
+			this.imageElements = [];
+			this.bodies = [];
+		}
+	}
+
+	// 初始化所有 falling-image 容器
+	function initFallingImage() {
+		const containers = document.querySelectorAll(".falling-image-container");
+		containers.forEach((container) => {
+			if (!(container as any).__fallingImage) {
+				(container as any).__fallingImage = new FallingImageEffect(
+					container as HTMLElement,
+				);
+			}
+		});
+	}
+
+	// 多次初始化以确保在各种加载情况下都能工作
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initFallingImage);
+	} else {
+		initFallingImage();
+	}
+
+	// 支持 View Transitions
+	document.addEventListener("astro:page-load", initFallingImage);
 </script>
