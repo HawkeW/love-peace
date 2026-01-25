@@ -5,5 +5,15 @@ import sitemap from "@astrojs/sitemap";
 // https://astro.build/config
 export default defineConfig({
   site: "https://wedding.example.com",
-  integrations: [sitemap()]
+  integrations: [sitemap()],
+  vite: {
+    server: {
+      proxy: {
+        "/api": {
+          target: "https://shae-hughe-weddi.oncew.com",
+          changeOrigin: true,
+        },
+      },
+    },
+  },
 });

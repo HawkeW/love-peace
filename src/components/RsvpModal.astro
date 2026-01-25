@@ -362,7 +362,7 @@
 
 <script>
 	// @ts-nocheck
-	const API_URL = import.meta.env.PUBLIC_API_URL + "/api/wedding/rsvp";
+	const API_URL = (import.meta.env.PUBLIC_API_URL || "") + "/api/wedding/rsvp";
 
 	const modal = document.getElementById("rsvp-modal");
 	const form = document.getElementById("rsvp-form");
