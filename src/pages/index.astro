@@ -59,7 +59,7 @@ const eventAddress = "信阳市平桥区新六大街8号";
 // Share config
 const siteUrl = "https://shae-hughe-weddi.oncew.com";
 const shareImage = new URL(heroImage, siteUrl).href;
-const shareDesc = "诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。";
+const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 ---
 
 <!doctype html>
@@ -69,7 +69,7 @@ const shareDesc = "诚挚邀请您参加我们的婚礼，见证我们的幸福�
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>喜宴邀请函 - {coupleName}</title>
+		<title>We're married ~ {coupleName}</title>
 		<meta name="description" content={shareDesc} />
 
 		<!-- Open Graph / Wechat Share -->
@@ -246,7 +246,6 @@ const shareDesc = "诚挚邀请您参加我们的婚礼，见证我们的幸福�
 						type="button"
 						onclick="window.openRsvpModal()"
 						class="rsvp-button"
-						style="display: none;"
 					>
 						<span>确认出席</span>
 						<svg
@@ -294,15 +293,6 @@ const shareDesc = "诚挚邀请您参加我们的婚礼，见证我们的幸福�
 			}
 
 			requestAnimationFrame(raf);
-
-			// Debug mode check
-			const urlParams = new URLSearchParams(window.location.search);
-			if (urlParams.has("showDebug")) {
-				const rsvpBtn = document.getElementById("rsvp-button");
-				if (rsvpBtn) {
-					rsvpBtn.style.display = "";
-				}
-			}
 		</script>
 	</body>
 </html>
