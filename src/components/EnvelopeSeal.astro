@@ -73,11 +73,7 @@ const sealImage = "/seal.png";
 			// Start fade out and scroll
 			setTimeout(() => {
 				overlay.classList.add("fade-out");
-
-				window.scrollTo({
-					top: window.innerHeight,
-					behavior: "smooth",
-				});
+				window.dispatchEvent(new CustomEvent('envelope-opened'));
 			}, 1400);
 
 			// Cleanup

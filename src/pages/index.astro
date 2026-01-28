@@ -117,20 +117,21 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 				</SpringReveal>
 
 				<SpringReveal delay={0.1}>
-					<h2 class="message-title">喜宴邀请</h2>
+					<h2 class="message-title">我们结婚啦~</h2>
 				</SpringReveal>
 
 				<SpringReveal delay={0.2}>
 					<p class="message-text">
-						吾家有喜 喜结良缘<br />
-						良辰已定 吉日待放<br />
+						在这个美好的冬天<br />
+						我们要举办婚礼啦<br />
+						{eventDate}
 					</p>
 				</SpringReveal>
 
 				<SpringReveal delay={0.3}>
 					<p class="message-highlight">
-						诚敬备薄酒诚邀您携家人前来<br />
-						与我们共享这份喜悦
+						诚挚邀请您和家人前来<br />
+						见证我们人生中幸福时刻
 					</p>
 				</SpringReveal>
 
@@ -260,7 +261,12 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 							<polyline points="12,5 19,12 12,19"></polyline>
 						</svg>
 					</button>
-					<p class="footer-signature">Love & Peace</p>
+					<div class="footer-bottom">
+						<p class="footer-signature">Love & Peace</p>
+						<p class="footer-copyright">
+							Made by 一度 with <span class="footer-heart" aria-hidden="true">♥</span>
+						</p>
+					</div>
 				</div>
 			</SpringReveal>
 		</footer>
@@ -293,6 +299,16 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 			}
 
 			requestAnimationFrame(raf);
+
+			window.addEventListener('envelope-opened', () => {
+				const target = document.querySelector('.invitation-message');
+				if (target) {
+					lenis.scrollTo(target as HTMLElement, {
+						duration: 1.5,
+						easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+					});
+				}
+			});
 		</script>
 	</body>
 </html>
@@ -513,8 +529,9 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 	}
 
 	.footer-content {
-		max-width: 500px;
+		max-width: 800px;
 		margin: 0 auto;
+		position: relative;
 	}
 
 	.footer-message {
@@ -555,8 +572,15 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 		transform: translateX(4px);
 	}
 
-	.footer-signature {
+	.footer-bottom {
 		margin-top: 60px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+	}
+
+	.footer-signature {
 		font-family: "Playfair Display", Georgia, serif;
 		font-size: 1.125rem;
 		font-style: italic;
@@ -564,11 +588,41 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 		letter-spacing: 0.2em;
 	}
 
+	.footer-copyright {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		font-size: 0.8rem;
+		color: var(--text-secondary);
+		letter-spacing: 0.05em;
+		opacity: 0.8;
+	}
+
+	.footer-heart {
+		color: #e25555;
+		display: inline-block;
+		margin: 0 0.2em;
+		animation: heart-glow 2.6s ease-in-out infinite;
+	}
+
+	@keyframes heart-glow {
+		0%,
+		100% {
+			opacity: 0.4;
+			transform: scale(0.9);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1.08);
+		}
+	}
+
 	/* Responsive */
 	@media (max-width: 768px) {
 		.invitation-message {
 			padding: 60px 20px;
-			min-height: auto;
+			min-height: 100vh;
+			min-height: 100svh;
 		}
 
 		.gold-line {
@@ -624,8 +678,15 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 			padding: 14px 32px;
 		}
 
-		.footer-signature {
+		.footer-bottom {
 			margin-top: 40px;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		.footer-copyright {
+			position: static;
+			font-size: 0.75rem;
 		}
 	}
 
@@ -636,6 +697,10 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 
 		.rsvp-button {
 			transition: none;
+		}
+
+		.footer-heart {
+			animation: none;
 		}
 	}
 </style>
