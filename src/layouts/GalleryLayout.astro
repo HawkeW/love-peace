@@ -50,6 +50,9 @@ const { title = "Gallery" } = Astro.props;
 				autoRaf: false,
 			});
 
+			// 暴露 Lenis 实例到全局，以便其他组件可以检测和同步
+			window.lenis = lenis;
+
 			// Custom RAF loop for better control
 			function raf(time) {
 				lenis.raf(time);

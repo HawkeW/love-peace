@@ -1,0 +1,281 @@
+---
+interface Props {
+  videoSrc: string;
+  videoPoster?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+const { videoSrc, videoPoster, title, subtitle } = Astro.props;
+---
+
+<section id="fixed-video-section" class="fixed-video-section">
+  <!-- 固定的视频容器 -->
+  <div class="video-pin-container">
+    <video 
+      id="fixed-video"
+      class="video-element" 
+      preload="auto"
+      playsinline
+      muted
+      src={videoSrc}
+      poster={videoPoster}
+    ></video>
+    
+    <div class="video-overlay">
+      <div class="overlay-content">
+        {title && <h2 class="video-title">{title}</h2>}
+        {subtitle && <p class="video-subtitle">{subtitle}</p>}
+        
+        <div class="debug-info">
+          <div>状态: <span id="fixed-status">初始化中</span></div>
+          <div>进度: <span id="fixed-progress">0%</span></div>
+          <div>时间: <span id="fixed-time">0s / 0s</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 滚动占位空间 -->
+  <div class="scroll-spacer"></div>
+</section>
+
+<script>
+  async function initFixedVideoScroll() {
+    console.log('🚀 初始化修复版视频滚动');
+    
+    // 动态加载GSAP
+    if (typeof window.gsap === 'undefined') {
+      const script1 = document.createElement('script');
+      script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js';
+      document.head.appendChild(script1);
+      await new Promise(resolve => script1.onload = resolve);
+    }
+
+    if (typeof window.ScrollTrigger === 'undefined') {
+      const script2 = document.createElement('script');
+      script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js';
+      document.head.appendChild(script2);
+      await new Promise(resolve => script2.onload = resolve);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    if (!window.gsap || !window.ScrollTrigger) {
+      console.error('❌ GSAP加载失败');
+      return;
+    }
+
+    window.gsap.registerPlugin(window.ScrollTrigger);
+    console.log('✅ GSAP已加载');
+
+    const section = document.getElementById('fixed-video-section');
+    const video = document.getElementById('fixed-video') as HTMLVideoElement;
+    const statusEl = document.getElementById('fixed-status');
+    const progressEl = document.getElementById('fixed-progress');
+    const timeEl = document.getElementById('fixed-time');
+    
+    if (!section || !video) {
+      console.error('❌ 找不到元素');
+      return;
+    }
+
+    let isReady = false;
+    let duration = 0;
+
+    function updateDebug(status: string, progress: number, currentTime: number, totalTime: number) {
+      if (statusEl) statusEl.textContent = status;
+      if (progressEl) progressEl.textContent = Math.round(progress * 100) + '%';
+      if (timeEl) timeEl.textContent = `${currentTime.toFixed(1)}s / ${totalTime.toFixed(1)}s`;
+    }
+
+    // 视频准备
+    const prepareVideo = async () => {
+      console.log('🎥 准备视频...');
+      updateDebug('加载中', 0, 0, 0);
+      
+      // 强制加载
+      video.load();
+      
+      // 等待元数据
+      await new Promise<void>((resolve) => {
+        const checkReady = () => {
+          console.log('检查视频状态:', video.readyState, video.duration);
+          if (video.readyState >= 1 && video.duration > 0) {
+            duration = video.duration;
+            console.log('✅ 视频准备就绪，时长:', duration);
+            updateDebug('准备就绪', 0, 0, duration);
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        
+        video.addEventListener('loadedmetadata', checkReady);
+        video.addEventListener('loadeddata', checkReady);
+        checkReady();
+      });
+
+      // 测试播放
+      try {
+        await video.play();
+        console.log('✅ 视频可以播放');
+        video.pause();
+        video.currentTime = 0;
+        updateDebug('播放测试成功', 0, 0, duration);
+      } catch (e) {
+        console.log('⚠️ 自动播放被阻止（正常）');
+        updateDebug('播放被阻止', 0, 0, duration);
+      }
+
+      isReady = true;
+      return duration;
+    };
+
+    // 准备视频
+    await prepareVideo();
+
+    // 创建ScrollTrigger
+    console.log('🎯 创建ScrollTrigger...');
+    
+    const scrollTrigger = window.ScrollTrigger.create({
+      trigger: section,
+      pin: '.video-pin-container',
+      start: 'top top',
+      end: '+=300vh', // 3个视口高度的滚动距离
+      scrub: 1,
+      markers: true,
+      pinSpacing: false,
+      anticipatePin: 1,
+      
+      onUpdate: (self: any) => {
+        if (!isReady || duration <= 0) return;
+        
+        const progress = self.progress;
+        const targetTime = progress * duration;
+        
+        // 设置视频时间
+        if (Math.abs(video.currentTime - targetTime) > 0.1) {
+          video.currentTime = targetTime;
+        }
+        
+        updateDebug('播放中', progress, targetTime, duration);
+        console.log('📊 滚动进度:', progress.toFixed(3), '视频时间:', targetTime.toFixed(3));
+      },
+      
+      onEnter: () => {
+        console.log('🎬 进入视频区域');
+        updateDebug('进入区域', 0, 0, duration);
+      },
+      
+      onLeave: () => {
+        console.log('🎬 离开视频区域');
+        updateDebug('离开区域', 1, duration, duration);
+      }
+    });
+
+    console.log('✅ ScrollTrigger创建完成');
+
+    // 窗口大小改变时刷新
+    window.addEventListener('resize', () => {
+      window.ScrollTrigger.refresh();
+    });
+  }
+
+  // 启动
+  initFixedVideoScroll().catch(console.error);
+</script>
+
+<style>
+  .fixed-video-section {
+    position: relative;
+  }
+
+  .video-pin-container {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    background: #000;
+  }
+
+  .video-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+  }
+
+  /* 确保视频不会闪烁 */
+  .video-element::-webkit-media-controls {
+    display: none !important;
+  }
+
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .overlay-content {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    max-width: 600px;
+    margin: 0 20px;
+  }
+
+  .video-title {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    margin-bottom: 1rem;
+    color: #c9a962;
+    font-weight: 500;
+  }
+
+  .video-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    margin-bottom: 1.5rem;
+    color: #e8d5a3;
+    line-height: 1.6;
+  }
+
+  .debug-info {
+    margin-top: 20px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #888;
+    text-align: left;
+  }
+
+  .debug-info div {
+    margin-bottom: 5px;
+  }
+
+  /* 滚动占位空间 - 这很重要！ */
+  .scroll-spacer {
+    height: 300vh; /* 与ScrollTrigger的end保持一致 */
+    background: transparent;
+    pointer-events: none;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .overlay-content {
+      padding: 20px;
+    }
+    
+    .debug-info {
+      font-size: 10px;
+    }
+  }
+</style>

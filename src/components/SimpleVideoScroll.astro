@@ -1,0 +1,217 @@
+---
+interface Props {
+  videoSrc: string;
+  videoPoster?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+const { videoSrc, videoPoster, title, subtitle } = Astro.props;
+---
+
+<section id="simple-video-section" class="simple-video-section">
+  <div class="video-container">
+    <video 
+      id="simple-video"
+      class="video-element" 
+      preload="auto"
+      playsinline
+      muted
+      src={videoSrc}
+      poster={videoPoster}
+    ></video>
+    
+    <div class="video-overlay">
+      <div class="overlay-content">
+        {title && <h2 class="video-title">{title}</h2>}
+        {subtitle && <p class="video-subtitle">{subtitle}</p>}
+        
+        <!-- 简化的调试信息 -->
+        <div class="debug-simple">
+          <div>进度: <span id="simple-progress">0%</span></div>
+          <div>时间: <span id="simple-time">0s</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  async function initSimpleVideoScroll() {
+    console.log('🚀 初始化简单视频滚动');
+    
+    // 动态加载GSAP
+    if (typeof window.gsap === 'undefined') {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    if (typeof window.ScrollTrigger === 'undefined') {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // 等待GSAP完全加载
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    if (!window.gsap || !window.ScrollTrigger) {
+      console.error('❌ GSAP加载失败');
+      return;
+    }
+
+    window.gsap.registerPlugin(window.ScrollTrigger);
+    console.log('✅ GSAP已加载并注册');
+
+    const section = document.getElementById('simple-video-section');
+    const video = document.getElementById('simple-video') as HTMLVideoElement;
+    const progressEl = document.getElementById('simple-progress');
+    const timeEl = document.getElementById('simple-time');
+    
+    if (!section || !video) {
+      console.error('❌ 找不到元素');
+      return;
+    }
+
+    let isReady = false;
+    let duration = 0;
+
+    // 等待视频准备就绪
+    const waitForVideo = () => {
+      return new Promise<void>((resolve) => {
+        const checkReady = () => {
+          if (video.readyState >= 1 && video.duration > 0) {
+            duration = video.duration;
+            isReady = true;
+            console.log('✅ 视频准备就绪，时长:', duration);
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        checkReady();
+      });
+    };
+
+    // 强制加载视频
+    video.load();
+    
+    // 尝试播放然后暂停
+    try {
+      await video.play();
+      video.pause();
+      video.currentTime = 0;
+      console.log('✅ 视频播放测试成功');
+    } catch (e) {
+      console.log('⚠️ 自动播放被阻止（正常）');
+    }
+
+    // 等待视频准备就绪
+    await waitForVideo();
+
+    // 创建ScrollTrigger - 使用最简单的配置
+    window.ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: 'bottom top',
+      pin: true,
+      scrub: 0.5,
+      markers: true,
+      
+      onUpdate: (self: any) => {
+        if (!isReady) return;
+        
+        const progress = self.progress;
+        const targetTime = progress * duration;
+        
+        // 直接设置视频时间
+        video.currentTime = targetTime;
+        
+        // 更新调试信息
+        if (progressEl) progressEl.textContent = Math.round(progress * 100) + '%';
+        if (timeEl) timeEl.textContent = targetTime.toFixed(1) + 's / ' + duration.toFixed(1) + 's';
+        
+        console.log('📊 进度:', progress.toFixed(3), '时间:', targetTime.toFixed(3));
+      }
+    });
+
+    console.log('✅ ScrollTrigger设置完成');
+  }
+
+  // 启动
+  initSimpleVideoScroll().catch(console.error);
+</script>
+
+<style>
+  .simple-video-section {
+    height: 100vh;
+    position: relative;
+    background: #000;
+  }
+
+  .video-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .video-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .overlay-content {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    color: white;
+  }
+
+  .video-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #c9a962;
+  }
+
+  .video-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #e8d5a3;
+  }
+
+  .debug-simple {
+    margin-top: 20px;
+    font-family: monospace;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .debug-simple div {
+    margin-bottom: 5px;
+  }
+</style>

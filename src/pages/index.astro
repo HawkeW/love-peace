@@ -3,6 +3,7 @@ import ParallaxHero from "../components/ParallaxHero.astro";
 import EnvelopeSeal from "../components/EnvelopeSeal.astro";
 import SpringReveal from "../components/SpringReveal.astro";
 import FallingImageEffect from "../components/effects/FallingImageEffect.astro";
+import VideoScrollSection from "../components/VideoScrollSection.astro";
 import RsvpModal from "../components/RsvpModal.astro";
 import WechatShare from "../components/WechatShare.astro";
 import fs from "fs";
@@ -140,6 +141,16 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 				</SpringReveal>
 			</div>
 		</section>
+
+		<!-- Section 2.5: Video Scroll Section -->
+		<VideoScrollSection 
+			videoSrc="/Dynamic_Embrace_Animation_Generation.mp4"
+			title="爱的拥抱"
+			subtitle="让时光在指尖流淌，见证我们的美好瞬间"
+			scrollDistance={3}
+			scrubSpeed={0.5}
+			showDebug={false}
+		/>
 
 		<!-- Section 3: Waterfall Gallery -->
 		<section class="gallery-section">
@@ -292,6 +303,9 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 				wheelMultiplier: 0.8,
 				autoRaf: false,
 			});
+
+			// 暴露 Lenis 实例到全局，以便 VideoScrollSection 可以检测和同步
+			window.lenis = lenis;
 
 			function raf(time: number) {
 				lenis.raf(time);

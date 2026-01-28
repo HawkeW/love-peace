@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>纯净视频滚动测试（无Lenis）</title>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #000; 
+      color: white;
+      overflow-x: hidden;
+    }
+    
+    .spacer {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .before { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); }
+    .after { background: linear-gradient(135deg, #2a2a2a, #3a3a3a); }
+    
+    /* 视频区域 */
+    #video-section {
+      position: relative;
+    }
+    
+    .pin-container {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+      background: #000;
+    }
+    
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .overlay-content {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 20px;
+    }
+    
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #c9a962;
+    }
+    
+    .subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: #e8d5a3;
+    }
+    
+    .debug {
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #666;
+      text-align: left;
+    }
+    
+    .debug div { margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <div class="spacer before">
+    <div>
+      <h1>纯净视频滚动测试</h1>
+      <p style="font-size: 1rem; margin-top: 20px; opacity: 0.8;">
+        无Lenis，纯GSAP ScrollTrigger<br>
+        向下滚动查看视频
+      </p>
+    </div>
+  </div>
+
+  <section id="video-section">
+    <div class="pin-container">
+      <video 
+        id="video"
+        muted
+        playsinline
+        preload="auto"
+        src="/Dynamic_Embrace_Animation_Generation.mp4"
+      ></video>
+      
+      <div class="overlay">
+        <div class="overlay-content">
+          <h2 class="title">爱的拥抱</h2>
+          <p class="subtitle">纯净版本测试 - 应该流畅播放</p>
+          
+          <div class="debug">
+            <div>状态: <span id="status">初始化中...</span></div>
+            <div>进度: <span id="progress">0%</span></div>
+            <div>时间: <span id="time">0s / 0s</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="spacer after">
+    <div>
+      <h1>测试完成</h1>
+      <p style="font-size: 1rem; margin-top: 20px; opacity: 0.8;">
+        如果视频正常播放，说明基础功能OK<br>
+        可以向上滚动重新体验
+      </p>
+    </div>
+  </div>
+
+  <!-- 动态加载GSAP -->
+  <script>
+    console.log('🚀 开始加载GSAP...');
+    
+    const video = document.getElementById('video');
+    const statusEl = document.getElementById('status');
+    const progressEl = document.getElementById('progress');
+    const timeEl = document.getElementById('time');
+    
+    function updateDebug(status, progress, currentTime, duration) {
+      statusEl.textContent = status;
+      progressEl.textContent = Math.round(progress * 100) + '%';
+      timeEl.textContent = `${currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`;
+    }
+    
+    // 动态加载脚本
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => {
+          console.log('✅ 加载成功:', src);
+          resolve();
+        };
+        script.onerror = () => {
+          console.error('❌ 加载失败:', src);
+          reject(new Error('Script load failed: ' + src));
+        };
+        document.head.appendChild(script);
+      });
+    }
+    
+    async function init() {
+      try {
+        updateDebug('加载GSAP', 0, 0, 0);
+        
+        // 加载GSAP核心库
+        console.log('📦 加载GSAP核心库...');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js');
+        
+        // 加载ScrollTrigger插件
+        console.log('📦 加载ScrollTrigger插件...');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js');
+        
+        // 等待一小段时间确保全局变量可用
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 验证GSAP已加载
+        if (typeof window.gsap === 'undefined' || typeof window.ScrollTrigger === 'undefined') {
+          throw new Error('GSAP加载失败');
+        }
+        
+        console.log('✅ GSAP已完全加载');
+        
+        // 注册ScrollTrigger插件
+        window.gsap.registerPlugin(window.ScrollTrigger);
+        console.log('✅ ScrollTrigger已注册');
+        
+        updateDebug('加载视频', 0, 0, 0);
+        console.log('📹 加载视频...');
+        
+        // 强制加载视频
+        video.load();
+        
+        // 等待视频元数据
+        await new Promise((resolve) => {
+          const checkReady = () => {
+            console.log('检查视频:', video.readyState, video.duration);
+            if (video.readyState >= 1 && video.duration > 0) {
+              console.log('✅ 视频准备就绪，时长:', video.duration);
+              resolve();
+            } else {
+              setTimeout(checkReady, 100);
+            }
+          };
+          
+          video.addEventListener('loadedmetadata', checkReady);
+          video.addEventListener('loadeddata', checkReady);
+          checkReady();
+        });
+        
+        const duration = video.duration;
+        updateDebug('准备就绪', 0, 0, duration);
+        
+        // 测试播放
+        try {
+          await video.play();
+          console.log('✅ 视频可以播放');
+          video.pause();
+          video.currentTime = 0;
+        } catch (e) {
+          console.log('⚠️ 自动播放被阻止（正常）');
+        }
+        
+        // 创建ScrollTrigger
+        console.log('🎯 创建ScrollTrigger...');
+        
+        const vh = window.innerHeight;
+        const scrollDistance = vh * 3; // 减少到3个视口高度
+        
+        window.ScrollTrigger.create({
+          trigger: '#video-section',
+          pin: '.pin-container',
+          start: 'top top',
+          end: '+=' + scrollDistance + 'px',
+          scrub: 0.5, // 减小scrub值，让视频响应更快
+          markers: true,
+          pinSpacing: false,
+          anticipatePin: 1,
+          
+          onUpdate: (self) => {
+            const progress = self.progress;
+            const targetTime = progress * duration;
+            
+            video.currentTime = targetTime;
+            updateDebug('播放中', progress, targetTime, duration);
+            
+            console.log('📊 进度:', progress.toFixed(3), '时间:', targetTime.toFixed(3));
+          },
+          
+          onEnter: () => {
+            console.log('🎬 进入视频区域');
+            updateDebug('进入区域', 0, 0, duration);
+          },
+          
+          onLeave: () => {
+            console.log('🎬 离开视频区域');
+            updateDebug('离开区域', 1, duration, duration);
+          },
+          
+          onEnterBack: () => {
+            console.log('🎬 重新进入视频区域');
+          },
+          
+          onLeaveBack: () => {
+            console.log('🎬 向上离开视频区域');
+            updateDebug('离开区域', 0, 0, duration);
+          }
+        });
+        
+        console.log('✅ ScrollTrigger创建完成');
+        console.log('📏 滚动距离:', scrollDistance + 'px');
+        updateDebug('就绪', 0, 0, duration);
+        
+      } catch (error) {
+        console.error('❌ 初始化失败:', error);
+        updateDebug('初始化失败', 0, 0, 0);
+      }
+    }
+    
+    // 启动初始化
+    init();
+  </script>
+</body>
+</html>
+  

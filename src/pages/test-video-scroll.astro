@@ -1,0 +1,303 @@
+---
+import VideoScrollSection from "../components/VideoScrollSection.astro";
+
+const pageTitle = "VideoScrollSection 组件测试";
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{pageTitle}</title>
+  
+  <!-- Lenis CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.8/dist/lenis.css" />
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    
+    .test-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+    }
+    
+    .section-before {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    }
+    
+    .section-after {
+      background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+    }
+    
+    .test-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .test-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #c9a962 0%, #e8d5a3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .test-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: #aaa;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    
+    .test-info {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 2rem;
+      text-align: left;
+    }
+    
+    .test-info h3 {
+      color: #c9a962;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+    
+    .test-info ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .test-info li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-info li:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      color: #888;
+      font-size: 0.9rem;
+    }
+    
+    .info-value {
+      color: #fff;
+      font-weight: 500;
+      font-family: monospace;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      margin-right: 8px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .scroll-hint {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #666;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .console-hint {
+      background: rgba(201, 169, 98, 0.1);
+      border: 1px solid rgba(201, 169, 98, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #e8d5a3;
+    }
+    
+    .console-hint code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <!-- 测试前区域 -->
+  <section class="test-section section-before">
+    <div class="test-content">
+      <h1 class="test-title">VideoScrollSection 测试</h1>
+      <p class="test-subtitle">
+        这是一个专门用于测试 VideoScrollSection 组件的页面<br>
+        包含 Lenis 平滑滚动集成
+      </p>
+      
+      <div class="test-info">
+        <h3><span class="status-indicator"></span>测试环境</h3>
+        <ul>
+          <li>
+            <span class="info-label">Lenis 平滑滚动</span>
+            <span class="info-value">✓ 已启用</span>
+          </li>
+          <li>
+            <span class="info-label">GSAP ScrollTrigger</span>
+            <span class="info-value">✓ 已集成</span>
+          </li>
+          <li>
+            <span class="info-label">视频源</span>
+            <span class="info-value">/Dynamic_Embrace_Animation_Generation.mp4</span>
+          </li>
+          <li>
+            <span class="info-label">滚动距离</span>
+            <span class="info-value">3x 视口高度</span>
+          </li>
+          <li>
+            <span class="info-label">Scrub 速度</span>
+            <span class="info-value">0.5</span>
+          </li>
+          <li>
+            <span class="info-label">调试模式</span>
+            <span class="info-value">✓ 已开启</span>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="console-hint">
+        💡 提示：打开浏览器开发者工具（F12）查看控制台日志<br>
+        你应该看到 <code>🔍 [Lenis Detection]</code> 和 <code>🔗 [Lenis Sync]</code> 相关日志
+      </div>
+      
+      <div class="scroll-hint">
+        ↓ 向下滚动查看视频 ↓
+      </div>
+    </div>
+  </section>
+
+  <!-- VideoScrollSection 组件 -->
+  <VideoScrollSection 
+    videoSrc="/Dynamic_Embrace_Animation_Generation.mp4"
+    title="爱的拥抱"
+    subtitle="测试视频滚动效果 - 应该平滑跟随滚动播放"
+    scrollDistance={3}
+    scrubSpeed={0.5}
+    showDebug={true}
+  />
+
+  <!-- 测试后区域 -->
+  <section class="test-section section-after">
+    <div class="test-content">
+      <h2 class="test-title">测试完成</h2>
+      <p class="test-subtitle">
+        如果视频正常跟随滚动播放，说明组件工作正常
+      </p>
+      
+      <div class="test-info">
+        <h3>✓ 验证清单</h3>
+        <ul>
+          <li>
+            <span class="info-label">视频跟随滚动播放</span>
+            <span class="info-value">检查 ✓</span>
+          </li>
+          <li>
+            <span class="info-label">向下滚动 - 正向播放</span>
+            <span class="info-value">检查 ✓</span>
+          </li>
+          <li>
+            <span class="info-label">向上滚动 - 逆向播放</span>
+            <span class="info-value">检查 ✓</span>
+          </li>
+          <li>
+            <span class="info-label">滚动平滑流畅</span>
+            <span class="info-value">检查 ✓</span>
+          </li>
+          <li>
+            <span class="info-label">调试信息显示</span>
+            <span class="info-value">检查 ✓</span>
+          </li>
+          <li>
+            <span class="info-label">控制台无错误</span>
+            <span class="info-value">检查 ✓</span>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="console-hint">
+        📊 调试信息应该显示在视频上方，包括：<br>
+        • 状态（进入区域、播放中、离开区域）<br>
+        • 进度（0% - 100%）<br>
+        • 时间（当前时间 / 总时长）
+      </div>
+      
+      <div class="scroll-hint">
+        ↑ 向上滚动重新体验 ↑
+      </div>
+    </div>
+  </section>
+
+  <!-- Lenis 平滑滚动脚本 -->
+  <script>
+    import Lenis from "lenis";
+
+    console.log('🚀 [Test Page] 初始化 Lenis 平滑滚动...');
+
+    const lenis = new Lenis({
+      lerp: 0.08,
+      duration: 1.5,
+      smoothWheel: true,
+      syncTouch: false,
+      wheelMultiplier: 0.8,
+      autoRaf: false,
+    });
+
+    // 暴露到全局，供 VideoScrollSection 检测
+    window.lenis = lenis;
+    console.log('✅ [Test Page] Lenis 实例已暴露到 window.lenis');
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+    console.log('✅ [Test Page] Lenis RAF 循环已启动');
+
+    // 监听滚动事件（可选，用于调试）
+    lenis.on('scroll', (e) => {
+      // console.log('📜 [Test Page] Scroll:', e.scroll.toFixed(2));
+    });
+  </script>
+</body>
+</html>

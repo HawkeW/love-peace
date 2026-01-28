@@ -1,0 +1,411 @@
+---
+interface Props {
+  videoSrc: string;
+  videoPoster?: string;
+  title?: string;
+  subtitle?: string;
+  scrollDistance?: number; // 滚动距离倍数，默认3
+  scrubSpeed?: number; // scrub速度，默认0.5
+  showDebug?: boolean; // 是否显示调试信息
+}
+
+const { 
+  videoSrc, 
+  videoPoster, 
+  title, 
+  subtitle,
+  scrollDistance = 3,
+  scrubSpeed = 0.5,
+  showDebug = false
+} = Astro.props;
+---
+
+<section id="video-scroll-section" class="video-scroll-section">
+  <div class="video-pinned-container">
+    <!-- Video Container -->
+    <div class="video-media-container">
+      <video 
+        id="scroll-video"
+        class="scroll-video" 
+        tabindex="-1" 
+        width="1920" 
+        height="1080" 
+        preload="auto"
+        playsinline
+        muted
+        src={videoSrc}
+        poster={videoPoster}
+      ></video>
+    </div>
+    
+    <!-- Overlay Content -->
+    <div class="video-overlay-container">
+      <div class="video-overlay-wrapper">
+        <div class="video-overlay-content">
+          {title && <h2 class="video-title">{title}</h2>}
+          {subtitle && <p class="video-subtitle">{subtitle}</p>}
+          
+          {showDebug && (
+            <div class="debug-info">
+              <div>状态: <span id="video-status">初始化中...</span></div>
+              <div>进度: <span id="scroll-progress">0%</span></div>
+              <div>时间: <span id="video-time">0s / 0s</span></div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ scrollDistance, scrubSpeed, showDebug }}>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  // 注册ScrollTrigger插件
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Lenis 检测函数
+  function detectLenis() {
+    try {
+      // 检查全局 window.lenis 实例
+      if (typeof window !== 'undefined' && window.lenis) {
+        const lenis = window.lenis;
+        
+        // 验证 Lenis 实例是否有必需的方法
+        if (typeof lenis.on === 'function' && typeof lenis.raf === 'function') {
+          console.log('🔍 [Lenis Detection] Lenis 实例已检测到');
+          return lenis;
+        } else {
+          console.warn('🔍 [Lenis Detection] window.lenis 存在但缺少必需方法');
+          return null;
+        }
+      }
+      
+      console.log('🔍 [Lenis Detection] 未检测到 Lenis，使用原生滚动');
+      return null;
+    } catch (error) {
+      console.warn('🔍 [Lenis Detection] 检测过程出错:', error);
+      return null;
+    }
+  }
+
+  // Lenis 同步函数
+  function setupLenisSync(lenis) {
+    try {
+      console.log('🔗 [Lenis Sync] 开始配置 Lenis 与 GSAP ScrollTrigger 同步...');
+      
+      // 步骤 1: 绑定 Lenis 滚动事件到 ScrollTrigger
+      // 这是最关键的一步，确保 ScrollTrigger 能接收到 Lenis 的滚动更新
+      lenis.on('scroll', ScrollTrigger.update);
+      console.log('🔗 [Lenis Sync] ✓ 已绑定滚动事件');
+      
+      // 步骤 2: 禁用 GSAP 延迟平滑
+      // 这可以防止 GSAP 尝试补偿帧率下降，与 Lenis 的平滑滚动冲突
+      gsap.ticker.lagSmoothing(0);
+      console.log('🔗 [Lenis Sync] ✓ 已禁用延迟平滑');
+      
+      // 注意：不需要再次调用 lenis.raf()，因为页面已经有自己的 RAF 循环
+      // 重复调用会导致冲突和性能问题
+      
+      console.log('✅ [Lenis Sync] Lenis 同步配置完成');
+    } catch (error) {
+      console.error('❌ [Lenis Sync] 同步配置失败:', error);
+      throw error;
+    }
+  }
+
+  // 调试函数
+  function updateDebugInfo(status, progress, currentTime, duration) {
+    if (!showDebug) return;
+    
+    const statusEl = document.getElementById('video-status');
+    const progressEl = document.getElementById('scroll-progress');
+    const timeEl = document.getElementById('video-time');
+    
+    if (statusEl) statusEl.textContent = status;
+    if (progressEl) progressEl.textContent = Math.round(progress * 100) + '%';
+    if (timeEl) timeEl.textContent = currentTime.toFixed(1) + 's / ' + duration.toFixed(1) + 's';
+  }
+
+  // 主初始化函数
+  async function initVideoScroll() {
+    try {
+      console.log('🎬 初始化视频滚动组件...');
+
+      // 检测 Lenis 实例
+      const lenisInstance = detectLenis();
+      
+      // 如果检测到 Lenis，配置同步
+      if (lenisInstance) {
+        try {
+          setupLenisSync(lenisInstance);
+        } catch (syncError) {
+          console.error('❌ [Error] Lenis 同步失败，继续使用原生滚动:', syncError);
+        }
+      }
+
+      const videoSection = document.getElementById('video-scroll-section');
+      const video = document.getElementById('scroll-video');
+      
+      if (!videoSection || !video) {
+        console.error('❌ 找不到视频元素');
+        return;
+      }
+
+      console.log('✅ 找到视频元素');
+      updateDebugInfo('加载视频', 0, 0, 0);
+
+      let videoDuration = 0;
+
+      // 强制加载视频
+      video.load();
+
+      // 等待视频准备就绪
+      await new Promise((resolve) => {
+        const checkReady = () => {
+          if (video.readyState >= 1 && video.duration > 0) {
+            videoDuration = video.duration;
+            console.log('✅ 视频准备就绪，时长:', videoDuration + 's');
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        
+        video.addEventListener('loadedmetadata', checkReady);
+        video.addEventListener('loadeddata', checkReady);
+        checkReady();
+      });
+
+      updateDebugInfo('准备就绪', 0, 0, videoDuration);
+
+      // 测试播放
+      try {
+        await video.play();
+        console.log('✅ 视频可以播放');
+        video.pause();
+        video.currentTime = 0;
+      } catch (e) {
+        console.log('⚠️ 自动播放被阻止（正常）');
+      }
+
+      // 创建ScrollTrigger
+      console.log('🎯 创建ScrollTrigger...');
+      
+      const vh = window.innerHeight;
+      const scrollDist = vh * scrollDistance;
+      
+      ScrollTrigger.create({
+        trigger: videoSection,
+        pin: '.video-pinned-container',
+        pinSpacing: false,
+        scrub: scrubSpeed,
+        start: 'top top',
+        end: '+=' + scrollDist + 'px',
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const targetTime = progress * videoDuration;
+          
+          video.currentTime = targetTime;
+          updateDebugInfo('播放中', progress, targetTime, videoDuration);
+          
+          if (showDebug) {
+            console.log('📊 进度:', progress.toFixed(3), '时间:', targetTime.toFixed(3));
+          }
+        },
+        
+        onEnter: () => {
+          console.log('🎬 进入视频区域');
+          updateDebugInfo('进入区域', 0, 0, videoDuration);
+          if (!video.paused) {
+            video.pause();
+          }
+        },
+        
+        onLeave: () => {
+          console.log('🎬 离开视频区域（向下）');
+          updateDebugInfo('离开区域', 1, videoDuration, videoDuration);
+          if (videoDuration > 0) {
+            video.currentTime = videoDuration;
+          }
+        },
+        
+        onEnterBack: () => {
+          console.log('🎬 重新进入视频区域（向上）');
+          updateDebugInfo('重新进入', 1, video.currentTime, videoDuration);
+          if (!video.paused) {
+            video.pause();
+          }
+        },
+        
+        onLeaveBack: () => {
+          console.log('🎬 离开视频区域（向上）');
+          updateDebugInfo('离开区域', 0, 0, videoDuration);
+          video.currentTime = 0;
+        }
+      });
+
+      console.log('✅ ScrollTrigger创建完成');
+      console.log('📏 滚动距离:', scrollDist + 'px (' + scrollDistance + '个视口高度)');
+
+      // 文字淡入动画
+      gsap.fromTo('.video-overlay-content', 
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          scrollTrigger: {
+            trigger: videoSection,
+            start: 'top center',
+            end: 'center center',
+            scrub: 1
+          }
+        }
+      );
+
+      // 窗口大小改变时刷新
+      window.addEventListener('resize', () => {
+        ScrollTrigger.refresh();
+      });
+
+    } catch (error) {
+      console.error('❌ 初始化失败:', error);
+      updateDebugInfo('初始化失败', 0, 0, 0);
+    }
+  }
+
+  // 启动初始化
+  initVideoScroll();
+</script>
+
+<style>
+  .video-scroll-section {
+    position: relative;
+    background: var(--bg-primary, #0a0a0a);
+    overflow: hidden;
+  }
+
+  .video-pinned-container {
+    position: relative;
+    height: 100vh;
+    min-height: 600px;
+  }
+
+  .video-media-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-secondary, #141414);
+    overflow: hidden;
+  }
+
+  .scroll-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background: #000;
+  }
+
+  /* 隐藏视频控件 */
+  .scroll-video::-webkit-media-controls {
+    display: none !important;
+  }
+
+  .scroll-video::-webkit-media-controls-play-button {
+    display: none !important;
+  }
+
+  .scroll-video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+    -webkit-appearance: none;
+  }
+
+  .video-overlay-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .video-overlay-wrapper {
+    max-width: 800px;
+    padding: 0 24px;
+    text-align: center;
+  }
+
+  .video-overlay-content {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 40px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .video-title {
+    font-family: "Playfair Display", "Noto Serif SC", Georgia, serif;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--text-primary, #fafafa);
+    margin-bottom: 16px;
+  }
+
+  .video-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    line-height: 1.8;
+    color: var(--gold-light, #e8d5a3);
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+
+  .debug-info {
+    margin-top: 20px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #666;
+    text-align: left;
+  }
+
+  .debug-info div {
+    margin-bottom: 5px;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .video-pinned-container {
+      min-height: 500px;
+    }
+
+    .video-overlay-content {
+      padding: 32px 24px;
+      margin: 0 16px;
+    }
+
+    .video-title {
+      margin-bottom: 12px;
+    }
+  }
+
+  /* 减少动画效果（用户偏好） */
+  @media (prefers-reduced-motion: reduce) {
+    .video-overlay-content {
+      transition: none;
+    }
+  }
+</style>
