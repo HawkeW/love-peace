@@ -1,0 +1,253 @@
+---
+// ThemeSwitcher.astro - Theme switcher component
+import { themes, defaultTheme } from "../data/themes";
+---
+
+<div class="theme-switcher">
+  <button id="theme-toggle" class="theme-toggle-btn" aria-label="切换主题">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </button>
+
+  <div id="theme-menu" class="theme-menu">
+    {Object.values(themes).map((theme) => (
+      <button
+        class="theme-option"
+        data-theme={theme.name}
+        aria-label={`切换到${theme.label}`}
+      >
+        <span class="theme-preview" style={`background: ${theme.colors.bgPrimary}; border-color: ${theme.colors.accent};`}>
+          <span class="theme-accent" style={`background: ${theme.colors.accent};`}></span>
+        </span>
+        <span class="theme-label">{theme.label}</span>
+      </button>
+    ))}
+  </div>
+</div>
+
+<script>
+  import { themes, defaultTheme } from "../data/themes";
+
+  class ThemeSwitcher {
+    toggleBtn: HTMLButtonElement;
+    menu: HTMLElement;
+    isOpen = false;
+
+    constructor() {
+      this.toggleBtn = document.getElementById("theme-toggle") as HTMLButtonElement;
+      this.menu = document.getElementById("theme-menu") as HTMLElement;
+
+      this.init();
+    }
+
+    init() {
+      // Load saved theme or default
+      const savedTheme = localStorage.getItem("wedding-theme") || defaultTheme;
+      this.applyTheme(savedTheme);
+
+      // Toggle menu
+      this.toggleBtn.addEventListener("click", () => this.toggleMenu());
+
+      // Theme options
+      const options = document.querySelectorAll(".theme-option");
+      options.forEach((option) => {
+        option.addEventListener("click", () => {
+          const themeName = (option as HTMLElement).dataset.theme;
+          if (themeName) {
+            this.applyTheme(themeName);
+            this.closeMenu();
+          }
+        });
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!this.toggleBtn.contains(e.target as Node) && !this.menu.contains(e.target as Node)) {
+          this.closeMenu();
+        }
+      });
+    }
+
+    toggleMenu() {
+      this.isOpen = !this.isOpen;
+      this.menu.classList.toggle("active", this.isOpen);
+      this.toggleBtn.classList.toggle("active", this.isOpen);
+    }
+
+    closeMenu() {
+      this.isOpen = false;
+      this.menu.classList.remove("active");
+      this.toggleBtn.classList.remove("active");
+    }
+
+    applyTheme(themeName: string) {
+      const theme = themes[themeName];
+      if (!theme) return;
+
+      const root = document.documentElement;
+      root.style.setProperty("--bg-primary", theme.colors.bgPrimary);
+      root.style.setProperty("--bg-secondary", theme.colors.bgSecondary);
+      root.style.setProperty("--text-primary", theme.colors.textPrimary);
+      root.style.setProperty("--text-secondary", theme.colors.textSecondary);
+      root.style.setProperty("--gold", theme.colors.accent);
+      root.style.setProperty("--gold-light", theme.colors.accentLight);
+      root.style.setProperty("--gold-glow", theme.colors.accentGlow);
+      root.style.setProperty("--border-subtle", theme.colors.borderSubtle);
+
+      // Save to localStorage
+      localStorage.setItem("wedding-theme", themeName);
+
+      // Update active state
+      document.querySelectorAll(".theme-option").forEach((opt) => {
+        opt.classList.toggle("active", (opt as HTMLElement).dataset.theme === themeName);
+      });
+    }
+  }
+
+  // Initialize
+  document.addEventListener("DOMContentLoaded", () => {
+    new ThemeSwitcher();
+  });
+</script>
+
+<style>
+  .theme-switcher {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    z-index: 9998;
+    display: none; /* 隐藏主题切换器 */
+  }
+
+  .theme-toggle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid var(--border-subtle);
+    color: var(--gold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .theme-toggle-btn:hover {
+    transform: scale(1.1);
+    background: rgba(20, 20, 20, 0.95);
+    box-shadow: 0 4px 20px var(--gold-glow);
+  }
+
+  .theme-toggle-btn.active {
+    transform: rotate(180deg) scale(1.1);
+  }
+
+  .theme-menu {
+    position: absolute;
+    top: 54px;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 12px;
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .theme-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .theme-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 6px;
+  }
+
+  .theme-option:last-child {
+    margin-bottom: 0;
+  }
+
+  .theme-option:hover {
+    background: var(--bg-primary);
+    border-color: var(--gold-glow);
+  }
+
+  .theme-option.active {
+    background: var(--bg-primary);
+    border-color: var(--gold);
+  }
+
+  .theme-preview {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .theme-accent {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .theme-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .theme-switcher {
+      top: 70px;
+      right: 20px;
+    }
+
+    .theme-toggle-btn {
+      width: 38px;
+      height: 38px;
+    }
+
+    .theme-toggle-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .theme-menu {
+      min-width: 180px;
+    }
+  }
+</style>
