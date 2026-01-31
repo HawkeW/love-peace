@@ -9,6 +9,7 @@ import MusicPlayer from "../components/MusicPlayer.astro";
 import CurvedLoop from "../components/CurvedLoop.astro";
 import Countdown from "../components/Countdown.astro";
 import ThemeSwitcher from "../components/ThemeSwitcher.astro";
+import PreLoader from "../components/PreLoader.astro";
 import fs from "fs";
 import path from "path";
 
@@ -51,9 +52,9 @@ const items: Item[] = images.map((f) => {
 // Hero images - dual layer design
 const heroBackground = "/gallery/hero/hero-bg.jpeg";
 const heroForegroundImages = [
-  "/gallery/hero/hero-front.png",
-  "/gallery/hero/hero-front2.png",
-  "/gallery/hero/hero-front3.png",
+  "/gallery/hero/hero-front.webp",
+  "/gallery/hero/hero-front2.webp",
+  "/gallery/hero/hero-front3.webp",
 ];
 
 // Wedding details
@@ -69,6 +70,13 @@ const eventAddress = "信阳市平桥区新六大街8号";
 const siteUrl = "https://shae-hughe-weddi.oncew.com";
 const shareImage = new URL(heroForegroundImages[0], siteUrl).href;
 const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
+
+// Preload images
+const preloadImages = [
+  heroBackground,
+  ...heroForegroundImages,
+  "/gallery/seal.png", // Envelope seal
+];
 ---
 
 <!doctype html>
@@ -109,6 +117,9 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
   </head>
 
   <body>
+    <!-- Preloader -->
+    <PreLoader images={preloadImages} />
+
     <!-- Section 1: Cinematic Hero -->
     <ParallaxHero
       backgroundImage={heroBackground}

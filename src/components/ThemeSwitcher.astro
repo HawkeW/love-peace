@@ -5,7 +5,14 @@ import { themes, defaultTheme } from "../data/themes";
 
 <div class="theme-switcher">
   <button id="theme-toggle" class="theme-toggle-btn" aria-label="切换主题">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
       <circle cx="12" cy="12" r="5"></circle>
       <line x1="12" y1="1" x2="12" y2="3"></line>
       <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -19,18 +26,26 @@ import { themes, defaultTheme } from "../data/themes";
   </button>
 
   <div id="theme-menu" class="theme-menu">
-    {Object.values(themes).map((theme) => (
-      <button
-        class="theme-option"
-        data-theme={theme.name}
-        aria-label={`切换到${theme.label}`}
-      >
-        <span class="theme-preview" style={`background: ${theme.colors.bgPrimary}; border-color: ${theme.colors.accent};`}>
-          <span class="theme-accent" style={`background: ${theme.colors.accent};`}></span>
-        </span>
-        <span class="theme-label">{theme.label}</span>
-      </button>
-    ))}
+    {
+      Object.values(themes).map((theme) => (
+        <button
+          class="theme-option"
+          data-theme={theme.name}
+          aria-label={`切换到${theme.label}`}
+        >
+          <span
+            class="theme-preview"
+            style={`background: ${theme.colors.bgPrimary}; border-color: ${theme.colors.accent};`}
+          >
+            <span
+              class="theme-accent"
+              style={`background: ${theme.colors.accent};`}
+            />
+          </span>
+          <span class="theme-label">{theme.label}</span>
+        </button>
+      ))
+    }
   </div>
 </div>
 
@@ -43,7 +58,9 @@ import { themes, defaultTheme } from "../data/themes";
     isOpen = false;
 
     constructor() {
-      this.toggleBtn = document.getElementById("theme-toggle") as HTMLButtonElement;
+      this.toggleBtn = document.getElementById(
+        "theme-toggle"
+      ) as HTMLButtonElement;
       this.menu = document.getElementById("theme-menu") as HTMLElement;
 
       this.init();
@@ -71,7 +88,10 @@ import { themes, defaultTheme } from "../data/themes";
 
       // Close menu when clicking outside
       document.addEventListener("click", (e) => {
-        if (!this.toggleBtn.contains(e.target as Node) && !this.menu.contains(e.target as Node)) {
+        if (
+          !this.toggleBtn.contains(e.target as Node) &&
+          !this.menu.contains(e.target as Node)
+        ) {
           this.closeMenu();
         }
       });
@@ -108,7 +128,10 @@ import { themes, defaultTheme } from "../data/themes";
 
       // Update active state
       document.querySelectorAll(".theme-option").forEach((opt) => {
-        opt.classList.toggle("active", (opt as HTMLElement).dataset.theme === themeName);
+        opt.classList.toggle(
+          "active",
+          (opt as HTMLElement).dataset.theme === themeName
+        );
       });
     }
   }

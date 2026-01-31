@@ -1,0 +1,263 @@
+---
+// PreLoader.astro - Full screen preloader with image preloading
+interface Props {
+  images: string[];
+}
+
+const { images } = Astro.props;
+---
+
+<div id="preloader" class="preloader">
+  <div class="preloader-content">
+    <div class="loader-ring">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+    </div>
+    <p class="loader-text">加载中...</p>
+    <div class="loader-progress">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <p class="loader-percent" id="loader-percent">0%</p>
+  </div>
+</div>
+
+<script define:vars={{ images }}>
+  class PreLoader {
+    constructor(imagesToLoad) {
+      this.preloader = document.getElementById("preloader");
+      this.progressBar = document.getElementById("progress-bar");
+      this.percentText = document.getElementById("loader-percent");
+      this.images = imagesToLoad;
+      this.loadedCount = 0;
+      this.totalCount = this.images.length;
+
+      this.init();
+    }
+
+    init() {
+      // Prevent scrolling during loading
+      document.body.style.overflow = "hidden";
+
+      // Start preloading
+      this.preloadImages();
+    }
+
+    preloadImages() {
+      if (this.totalCount === 0) {
+        this.complete();
+        return;
+      }
+
+      this.images.forEach((src) => {
+        const img = new Image();
+
+        img.onload = () => this.onImageLoad();
+        img.onerror = () => this.onImageLoad(); // Continue even if error
+
+        img.src = src;
+      });
+    }
+
+    onImageLoad() {
+      this.loadedCount++;
+      this.updateProgress();
+
+      if (this.loadedCount >= this.totalCount) {
+        this.complete();
+      }
+    }
+
+    updateProgress() {
+      const percent = Math.round((this.loadedCount / this.totalCount) * 100);
+      this.progressBar.style.width = `${percent}%`;
+      this.percentText.textContent = `${percent}%`;
+    }
+
+    complete() {
+      // Add completion class
+      this.preloader.classList.add("loaded");
+
+      // Remove preloader after animation
+      setTimeout(() => {
+        this.preloader.style.display = "none";
+        document.body.style.overflow = "";
+      }, 800);
+    }
+  }
+
+  // Initialize preloader when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      new PreLoader(images);
+    });
+  } else {
+    new PreLoader(images);
+  }
+</script>
+
+<style>
+  .preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg-primary);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      opacity 0.8s ease,
+      visibility 0.8s ease;
+  }
+
+  .preloader.loaded {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .preloader-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* Loader Ring Animation */
+  .loader-ring {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }
+
+  .ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--gold);
+    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+  }
+
+  .ring:nth-child(2) {
+    border-top-color: var(--gold-light);
+    animation-delay: -0.5s;
+    width: 70px;
+    height: 70px;
+    top: 5px;
+    left: 5px;
+  }
+
+  .ring:nth-child(3) {
+    border-top-color: rgba(232, 163, 147, 0.5);
+    animation-delay: -1s;
+    width: 60px;
+    height: 60px;
+    top: 10px;
+    left: 10px;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Loader Text */
+  .loader-text {
+    font-family: "Dongjingjiejiao", Georgia, serif;
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    color: var(--text-primary);
+    letter-spacing: 0.2em;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Progress Bar */
+  .loader-progress {
+    width: 200px;
+    height: 3px;
+    background: var(--bg-secondary);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+      90deg,
+      var(--gold),
+      var(--gold-light),
+      var(--gold)
+    );
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px var(--gold-glow);
+  }
+
+  /* Percent Text */
+  .loader-percent {
+    font-family: "Dongjingjiejiao", Georgia, serif;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+    min-width: 50px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .loader-ring {
+      width: 60px;
+      height: 60px;
+    }
+
+    .ring:nth-child(2) {
+      width: 50px;
+      height: 50px;
+      top: 5px;
+      left: 5px;
+    }
+
+    .ring:nth-child(3) {
+      width: 40px;
+      height: 40px;
+      top: 10px;
+      left: 10px;
+    }
+
+    .loader-progress {
+      width: 160px;
+    }
+  }
+
+  /* Reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    .ring {
+      animation: none;
+      border-top-color: var(--gold);
+    }
+
+    .loader-text {
+      animation: none;
+      opacity: 1;
+    }
+  }
+</style>
