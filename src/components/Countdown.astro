@@ -1,0 +1,203 @@
+---
+// Countdown.astro - Wedding countdown component
+interface Props {
+  targetDate: string; // Format: "2026-02-11"
+  className?: string;
+}
+
+const { targetDate, className = "" } = Astro.props;
+---
+
+<div class={`countdown-container ${className}`} data-target-date={targetDate}>
+  <div class="countdown-display">
+    <div class="countdown-unit">
+      <span class="countdown-value" data-days>00</span>
+      <span class="countdown-label">天</span>
+    </div>
+    <span class="countdown-separator">:</span>
+    <div class="countdown-unit">
+      <span class="countdown-value" data-hours>00</span>
+      <span class="countdown-label">时</span>
+    </div>
+    <span class="countdown-separator">:</span>
+    <div class="countdown-unit">
+      <span class="countdown-value" data-minutes>00</span>
+      <span class="countdown-label">分</span>
+    </div>
+    <span class="countdown-separator">:</span>
+    <div class="countdown-unit">
+      <span class="countdown-value" data-seconds>00</span>
+      <span class="countdown-label">秒</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  class CountdownTimer {
+    container: HTMLElement;
+    targetDate: Date;
+    daysElement: HTMLElement;
+    hoursElement: HTMLElement;
+    minutesElement: HTMLElement;
+    secondsElement: HTMLElement;
+    intervalId: number | null = null;
+
+    constructor(container: HTMLElement) {
+      this.container = container;
+      const targetDateStr = container.dataset.targetDate || "";
+      this.targetDate = new Date(targetDateStr + "T11:08:00");
+
+      this.daysElement = container.querySelector("[data-days]") as HTMLElement;
+      this.hoursElement = container.querySelector(
+        "[data-hours]"
+      ) as HTMLElement;
+      this.minutesElement = container.querySelector(
+        "[data-minutes]"
+      ) as HTMLElement;
+      this.secondsElement = container.querySelector(
+        "[data-seconds]"
+      ) as HTMLElement;
+
+      this.start();
+    }
+
+    start() {
+      this.update();
+      this.intervalId = window.setInterval(() => this.update(), 1000);
+    }
+
+    update() {
+      const now = new Date().getTime();
+      const distance = this.targetDate.getTime() - now;
+
+      if (distance < 0) {
+        this.stop();
+        this.showCompleted();
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      this.daysElement.textContent = this.formatNumber(days);
+      this.hoursElement.textContent = this.formatNumber(hours);
+      this.minutesElement.textContent = this.formatNumber(minutes);
+      this.secondsElement.textContent = this.formatNumber(seconds);
+    }
+
+    formatNumber(num: number): string {
+      return num.toString().padStart(2, "0");
+    }
+
+    showCompleted() {
+      this.daysElement.textContent = "00";
+      this.hoursElement.textContent = "00";
+      this.minutesElement.textContent = "00";
+      this.secondsElement.textContent = "00";
+    }
+
+    stop() {
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
+    }
+
+    destroy() {
+      this.stop();
+    }
+  }
+
+  // Initialize all countdown timers
+  document.addEventListener("DOMContentLoaded", () => {
+    const containers = document.querySelectorAll(".countdown-container");
+    containers.forEach((container) => {
+      new CountdownTimer(container as HTMLElement);
+    });
+  });
+</script>
+
+<style>
+  .countdown-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .countdown-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .countdown-value {
+    font-family: "Dongjingjiejiao", "Playfair Display", Georgia, serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    color: var(--gold-light);
+    line-height: 1;
+    letter-spacing: 0.05em;
+    min-width: 1.5em;
+    text-align: center;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .countdown-label {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+
+  .countdown-separator {
+    font-family: "Dongjingjiejiao", Georgia, serif;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    color: var(--gold);
+    line-height: 1;
+    margin: 0 4px;
+    opacity: 0.6;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .countdown-display {
+      gap: 6px;
+    }
+
+    .countdown-unit {
+      gap: 2px;
+    }
+
+    .countdown-separator {
+      margin: 0 2px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .countdown-display {
+      gap: 4px;
+    }
+
+    .countdown-value {
+      min-width: 1.3em;
+    }
+
+    .countdown-separator {
+      margin: 0 1px;
+    }
+  }
+</style>

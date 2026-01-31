@@ -1,0 +1,290 @@
+---
+// CurvedLoop.astro - Curved text loop component
+interface Props {
+  marqueeText?: string;
+  speed?: number;
+  className?: string;
+  curveAmount?: number;
+  direction?: "left" | "right";
+  interactive?: boolean;
+}
+
+const {
+  marqueeText = "",
+  speed = 2,
+  className = "",
+  curveAmount = 400,
+  direction = "left",
+  interactive = true,
+} = Astro.props;
+
+const uid = Math.random().toString(36).substr(2, 9);
+const pathId = `curve-${uid}`;
+---
+
+<div
+  class="curved-loop-container"
+  data-speed={speed}
+  data-direction={direction}
+  data-interactive={interactive}
+  data-curve-amount={curveAmount}
+  data-path-id={pathId}
+>
+  <svg class="curved-loop-svg" viewBox="0 0 1440 180">
+    <text class="measure-text" data-measure-text>{marqueeText}</text>
+
+    <defs>
+      <path id={pathId} data-path fill="none" stroke="transparent"></path>
+    </defs>
+
+    <text data-visible-text class={`fill-white ${className}`}>
+      <textPath data-text-path href={`#${pathId}`} startOffset="0px">
+        {marqueeText}
+      </textPath>
+    </text>
+  </svg>
+</div>
+
+<script>
+  class CurvedLoopComponent {
+    container: HTMLElement;
+    svg: SVGElement;
+    measureText: SVGTextElement;
+    visibleText: SVGTextElement;
+    textPath: SVGTextPathElement;
+    path: SVGPathElement;
+
+    marqueeText: string;
+    speed: number;
+    direction: "left" | "right";
+    interactive: boolean;
+    curveAmount: number;
+    pathId: string;
+
+    spacing = 0;
+    offset = 0;
+    totalText = "";
+    ready = false;
+
+    dragRef = false;
+    lastXRef = 0;
+    dirRef: "left" | "right";
+    velRef = 0;
+
+    animationFrame: number | null = null;
+
+    constructor(container: HTMLElement) {
+      this.container = container;
+      this.svg = container.querySelector(".curved-loop-svg") as SVGElement;
+      this.measureText = container.querySelector(
+        "[data-measure-text]"
+      ) as SVGTextElement;
+      this.visibleText = container.querySelector(
+        "[data-visible-text]"
+      ) as SVGTextElement;
+      this.textPath = container.querySelector(
+        "[data-text-path]"
+      ) as SVGTextPathElement;
+      this.path = container.querySelector("[data-path]") as SVGPathElement;
+
+      this.speed = parseFloat(container.dataset.speed || "2");
+      this.direction = (container.dataset.direction || "left") as
+        | "left"
+        | "right";
+      this.interactive = container.dataset.interactive === "true";
+      this.curveAmount = parseFloat(container.dataset.curveAmount || "400");
+      this.pathId = container.dataset.pathId || "";
+
+      const textElement = this.measureText.textContent || "";
+      const hasTrailing = /\s|\u00A0$/.test(textElement);
+      this.marqueeText =
+        (hasTrailing ? textElement.replace(/\s+$/, "") : textElement) +
+        "\u00A0";
+
+      this.dirRef = this.direction;
+
+      this.init();
+    }
+
+    init() {
+      this.updatePath();
+      this.updateSpacing();
+      this.updateTotalText();
+      this.animate();
+
+      if (this.interactive) {
+        this.attachEvents();
+      }
+    }
+
+    updatePath() {
+      const d = `M0,90 Q720,${90 - this.curveAmount} 1440,90`;
+      this.path.setAttribute("d", d);
+    }
+
+    updateSpacing() {
+      if (this.measureText) {
+        this.spacing = this.measureText.getComputedTextLength();
+        if (this.spacing > 0) {
+          this.ready = true;
+          this.container.style.visibility = "visible";
+        }
+      }
+    }
+
+    updateTotalText() {
+      if (this.spacing > 0) {
+        const repeatCount = Math.ceil(1440 / this.spacing) + 3;
+        this.totalText = Array(repeatCount).fill(this.marqueeText).join("");
+        this.textPath.textContent = this.totalText;
+      }
+    }
+
+    animate() {
+      const step = () => {
+        if (!this.dragRef && this.textPath && this.ready && this.spacing > 0) {
+          const delta = this.dirRef === "right" ? this.speed : -this.speed;
+          const currentOffset = parseFloat(
+            this.textPath.getAttribute("startOffset") || "0"
+          );
+          let newOffset = currentOffset + delta;
+
+          const wrapPoint = this.spacing;
+          // 更平滑的循环逻辑
+          while (newOffset <= -wrapPoint) newOffset += wrapPoint;
+          while (newOffset >= wrapPoint) newOffset -= wrapPoint;
+
+          this.textPath.setAttribute("startOffset", newOffset + "px");
+          this.offset = newOffset;
+        }
+        this.animationFrame = requestAnimationFrame(step);
+      };
+      step();
+    }
+
+    stopAnimation() {
+      if (this.animationFrame) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+      }
+    }
+
+    attachEvents() {
+      this.svg.addEventListener("pointerdown", this.onPointerDown.bind(this));
+      this.svg.addEventListener("pointermove", this.onPointerMove.bind(this));
+      this.svg.addEventListener("pointerup", this.endDrag.bind(this));
+      this.svg.addEventListener("pointerleave", this.endDrag.bind(this));
+    }
+
+    onPointerDown(e: PointerEvent) {
+      if (!this.interactive) return;
+      this.dragRef = true;
+      this.lastXRef = e.clientX;
+      this.velRef = 0;
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      this.svg.style.cursor = "grabbing";
+    }
+
+    onPointerMove(e: PointerEvent) {
+      if (
+        !this.interactive ||
+        !this.dragRef ||
+        !this.textPath ||
+        this.spacing <= 0
+      )
+        return;
+      const dx = e.clientX - this.lastXRef;
+      this.lastXRef = e.clientX;
+      this.velRef = dx;
+
+      const currentOffset = parseFloat(
+        this.textPath.getAttribute("startOffset") || "0"
+      );
+      let newOffset = currentOffset + dx;
+
+      const wrapPoint = this.spacing;
+      while (newOffset <= -wrapPoint) newOffset += wrapPoint;
+      while (newOffset >= wrapPoint) newOffset -= wrapPoint;
+
+      this.textPath.setAttribute("startOffset", newOffset + "px");
+      this.offset = newOffset;
+    }
+
+    endDrag() {
+      if (!this.interactive) return;
+      this.dragRef = false;
+      this.dirRef = this.velRef > 0 ? "right" : "left";
+      this.svg.style.cursor = "grab";
+    }
+
+    destroy() {
+      this.stopAnimation();
+    }
+  }
+
+  // Initialize all CurvedLoop components
+  document.addEventListener("DOMContentLoaded", () => {
+    const containers = document.querySelectorAll(".curved-loop-container");
+    containers.forEach((container) => {
+      new CurvedLoopComponent(container as HTMLElement);
+    });
+  });
+</script>
+
+<style>
+  .curved-loop-container {
+    min-height: 30vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    visibility: hidden;
+  }
+
+  .curved-loop-svg {
+    user-select: none;
+    width: 100%;
+    overflow: visible;
+    display: block;
+    aspect-ratio: 8 / 1;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: bold;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .curved-loop-svg[data-interactive="true"] {
+    cursor: grab;
+  }
+
+  .curved-loop-svg[data-interactive="true"]:active {
+    cursor: grabbing;
+  }
+
+  .measure-text {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .curved-loop-container {
+      min-height: 25vh;
+    }
+
+    .curved-loop-svg {
+      font-size: 3.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .curved-loop-container {
+      min-height: 20vh;
+    }
+
+    .curved-loop-svg {
+      font-size: 4rem;
+    }
+  }
+</style>

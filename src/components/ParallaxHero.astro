@@ -1,12 +1,24 @@
 ---
 export interface Props {
-  backgroundImage: string;
+  backgroundImage?: string;
+  foregroundImages?: string[]; // 支持多张图片循环
+  foregroundImage?: string; // 向后兼容单张图片
   title: string;
   subtitle?: string;
   date?: string;
 }
 
-const { backgroundImage, title, subtitle, date } = Astro.props;
+const {
+  backgroundImage,
+  foregroundImages,
+  foregroundImage,
+  title,
+  subtitle,
+  date,
+} = Astro.props;
+
+// 处理前景图片：优先使用数组，否则回退到单张图片
+const fgImages = foregroundImages || (foregroundImage ? [foregroundImage] : []);
 
 // Parse the couple's names (format: "Name1 & Name2")
 const names = title.split(/\s*&\s*/);
@@ -17,79 +29,146 @@ const name2Chars = [...name2];
 ---
 
 <section class="parallax-hero" data-hero>
-  <div
-    class="hero-background"
-    style={`background-image: url('${backgroundImage}')`}
-  >
-  </div>
-  <div class="hero-overlay"></div>
-
-  <!-- Decorative frame -->
-  <div class="hero-frame">
-    <div class="frame-corner frame-tl"></div>
-    <div class="frame-corner frame-tr"></div>
-    <div class="frame-corner frame-bl"></div>
-    <div class="frame-corner frame-br"></div>
-  </div>
-
-  <div class="hero-content">
-    <!-- Top accent -->
-    <div class="hero-accent">
-      <span class="accent-line"></span>
-      <span class="accent-text">Wedding Invitation</span>
-      <span class="accent-line"></span>
-    </div>
-
-    <!-- Main title -->
-    <h1 class="hero-title">
-      {
-        name1Chars.map((char, i) => (
-          <span class="title-char" style={`--char-index: ${i}`}>
-            {char}
-          </span>
-        ))
-      }
-      <span class="title-divider">&</span>
-      {
-        name2Chars.map((char, i) => (
-          <span
-            class="title-char"
-            style={`--char-index: ${name1Chars.length + i}`}
-          >
-            {char}
-          </span>
-        ))
-      }
-    </h1>
-
-    {subtitle && <p class="hero-subtitle">{subtitle}</p>}
-  </div>
-
-  <!-- Date positioned separately for mobile flexibility -->
-  <div class="hero-date-container">
+  <!-- Image Area (60vh) -->
+  <div class="hero-image-area">
+    <!-- Background layer (pattern/texture) -->
     {
-      date && (
-        <div class="hero-date">
-          <span class="date-value">{date}</span>
-          <span class="date-label">诚邀您共赴喜宴</span>
+      backgroundImage && (
+        <div
+          class="hero-bg-layer"
+          style={`background-image: url('${backgroundImage}')`}
+        />
+      )
+    }
+
+    <!-- Foreground layer (people photos - carousel) -->
+    {
+      fgImages.length > 0 && (
+        <div class="hero-fg-layer" data-fg-carousel>
+          {fgImages.map((src, index) => (
+            <img
+              src={src}
+              alt={`Wedding Photo ${index + 1}`}
+              class={`hero-fg-image ${index === 0 ? "active" : ""}`}
+              data-index={index}
+            />
+          ))}
         </div>
       )
     }
+
+    <!-- Gradient overlay for smooth transition -->
+    <div class="hero-overlay"></div>
+
+    <!-- Decorative frame -->
+    <div class="hero-frame">
+      <div class="frame-corner frame-tl"></div>
+      <div class="frame-corner frame-tr"></div>
+    </div>
   </div>
 
-  <slot />
+  <!-- Content Area (40vh) -->
+  <div class="hero-content">
+    <div class="content-inner">
+      <!-- Top accent -->
+      <div class="hero-accent">
+        <span class="accent-line"></span>
+        <span class="accent-text">Wedding Invitation</span>
+        <span class="accent-line"></span>
+      </div>
+
+      <!-- Main title -->
+      <h1 class="hero-title">
+        {
+          name1Chars.map((char, i) => (
+            <span class="title-char" style={`--char-index: ${i}`}>
+              {char}
+            </span>
+          ))
+        }
+        <span class="title-divider">&</span>
+        {
+          name2Chars.map((char, i) => (
+            <span
+              class="title-char"
+              style={`--char-index: ${name1Chars.length + i}`}
+            >
+              {char}
+            </span>
+          ))
+        }
+      </h1>
+
+      {subtitle && <p class="hero-subtitle">{subtitle}</p>}
+
+      <!-- Slot for EnvelopeSeal -->
+      <div class="hero-slot-container">
+        <slot />
+      </div>
+    </div>
+  </div>
 </section>
 
 <script>
   const hero = document.querySelector("[data-hero]") as HTMLElement;
-  const background = document.querySelector(".hero-background") as HTMLElement;
-  const content = document.querySelector(".hero-content") as HTMLElement;
-  const dateContainer = document.querySelector(
-    ".hero-date-container"
+  const bgLayer = document.querySelector(".hero-bg-layer") as HTMLElement;
+  const fgCarousel = document.querySelector(
+    "[data-fg-carousel]"
   ) as HTMLElement;
+  const fgImages = document.querySelectorAll(
+    ".hero-fg-image"
+  ) as NodeListOf<HTMLImageElement>;
+  const content = document.querySelector(".hero-content") as HTMLElement;
   const frame = document.querySelector(".hero-frame") as HTMLElement;
 
-  if (hero && background && content) {
+  // 图片循环切换和随机角度变化
+  if (fgImages.length > 1) {
+    let currentIndex = 0;
+    const totalImages = fgImages.length;
+
+    // 生成随机角度 (-10 到 10 度)
+    const getRandomRotation = () => {
+      return (Math.random() - 0.5) * 20; // -10 到 10 度
+    };
+
+    // 设置初始随机角度并启动摆动动画
+    const activateImage = (img: HTMLImageElement) => {
+      const rotation = getRandomRotation();
+      img.style.setProperty("--rotation", `${rotation}deg`);
+      img.classList.add("active");
+      // 启动摆动动画
+      img.classList.remove("wobbling");
+      void img.offsetWidth; // 强制 reflow
+      img.classList.add("wobbling");
+    };
+
+    // 初始化第一张图片
+    activateImage(fgImages[0]);
+
+    // 切换图片
+    const switchImage = () => {
+      // 移除当前图片的 active 状态
+      fgImages[currentIndex].classList.remove("active", "wobbling");
+
+      // 计算下一张图片索引
+      currentIndex = (currentIndex + 1) % totalImages;
+
+      // 激活新图片并启动摆动
+      activateImage(fgImages[currentIndex]);
+    };
+
+    // 每 3 秒切换一次（2秒摆动 + 1秒停顿）
+    setInterval(switchImage, 3000);
+  } else if (fgImages.length === 1) {
+    // 单张图片也添加随机角度和摆动
+    const img = fgImages[0];
+    const rotation = (Math.random() - 0.5) * 20;
+    img.style.setProperty("--rotation", `${rotation}deg`);
+    img.classList.add("wobbling");
+  }
+
+  // 视差滚动效果
+  if (hero && content) {
     let ticking = false;
 
     const updateParallax = () => {
@@ -97,19 +176,15 @@ const name2Chars = [...name2];
       const heroHeight = hero.offsetHeight;
       const scrollProgress = Math.min(scrollY / heroHeight, 1);
 
-      // Background parallax with subtle zoom
-      const bgTranslate = scrollY * 0.4;
-      const scale = 1 + scrollProgress * 0.05;
-      background.style.transform = `translateY(${bgTranslate}px) scale(${scale})`;
+      // Background layer - slow parallax
+      if (bgLayer) {
+        const bgTranslate = scrollY * 0.2;
+        bgLayer.style.transform = `translateY(${bgTranslate}px)`;
+      }
 
       // Content fade and lift
-      content.style.opacity = String(1 - scrollProgress * 1.8);
-      content.style.transform = `translateY(${scrollY * 0.3}px)`;
-
-      // Date fade
-      if (dateContainer) {
-        dateContainer.style.opacity = String(1 - scrollProgress * 2);
-      }
+      content.style.opacity = String(1 - scrollProgress * 1.5);
+      content.style.transform = `translateY(${scrollY * 0.15}px)`;
 
       // Frame fade
       if (frame) {
@@ -148,51 +223,125 @@ const name2Chars = [...name2];
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    transition:
+      opacity 0.5s ease,
+      transform 0.5s ease;
   }
 
-  .hero-background {
-    position: absolute;
-    inset: 0%;
-    width: 110%;
-    height: 110%;
-    background-size: cover;
-    background-position: center 30%;
-    will-change: transform;
-    transform-origin: center center;
-    filter: brightness(0.9);
+  /* 信封开启过渡动画 */
+  .parallax-hero.transitioning {
+    opacity: 0.3;
+    transform: scale(0.98);
   }
 
-  .hero-overlay {
+  /* Image Area - 60vh */
+  .hero-image-area {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    height: 60dvh;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  /* Background Layer - Pattern/Texture - Repeat Fill */
+  .hero-bg-layer {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: auto;
+    background-repeat: repeat;
+    background-position: center;
+    will-change: transform;
+    z-index: 1;
+  }
+
+  /* Foreground Layer - People Photo Carousel */
+  .hero-fg-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .hero-fg-image {
+    --rotation: 0deg;
+    position: absolute;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    will-change: transform;
+    opacity: 0;
+    transform: rotate(var(--rotation));
+    pointer-events: none;
+  }
+
+  .hero-fg-image.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* 俯皮的角度切换动画 - 每0.5秒切换一次，共3次 */
+  .hero-fg-image.wobbling {
+    animation: playfulTilt 1.5s steps(1) forwards;
+  }
+
+  @keyframes playfulTilt {
+    0% {
+      transform: rotate(var(--rotation));
+    }
+    33.33% {
+      transform: rotate(calc(var(--rotation) + 8deg));
+    }
+    66.66% {
+      transform: rotate(calc(var(--rotation) - 6deg));
+    }
+    100% {
+      transform: rotate(calc(var(--rotation) + 3deg));
+    }
+  }
+
+  /* Gradient overlay - bottom fade for seamless transition */
+  .hero-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      rgba(10, 10, 10, 0.3) 60%,
-      #0a0a0a 100%
+      rgba(10, 10, 10, 0.3) 40%,
+      rgba(10, 10, 10, 0.7) 70%,
+      var(--bg-primary, #0a0a0a) 100%
     );
+    z-index: 3;
+    pointer-events: none;
   }
 
-  /* Decorative Frame */
+  /* Decorative Frame - only top corners */
   .hero-frame {
     position: absolute;
-    inset: 24px;
+    inset: 20px;
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
     opacity: 0;
     animation: fadeIn 1.2s ease-out 0.3s forwards;
   }
 
   .frame-corner {
     position: absolute;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-color: var(--gold, #c9a962);
     border-style: solid;
     border-width: 0;
-    opacity: 0.6;
+    opacity: 0.5;
   }
 
   .frame-tl {
@@ -209,26 +358,31 @@ const name2Chars = [...name2];
     border-right-width: 1px;
   }
 
-  .frame-bl {
-    bottom: 0;
-    left: 0;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-  }
-
-  .frame-br {
-    bottom: 0;
-    right: 0;
-    border-bottom-width: 1px;
-    border-right-width: 1px;
-  }
-
+  /* Content Area - 40vh */
   .hero-content {
     position: relative;
-    z-index: 2;
+    width: 100%;
+    height: 40vh;
+    height: 40dvh;
+    flex-shrink: 0;
+    background: var(--bg-primary, #0a0a0a);
+    z-index: 5;
     text-align: center;
-    padding: 0 24px;
+    padding: 24px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
     will-change: transform, opacity;
+  }
+
+  .content-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
 
   /* Top Accent */
@@ -237,7 +391,6 @@ const name2Chars = [...name2];
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-bottom: 32px;
     opacity: 0;
     animation: fadeIn 0.8s ease-out 0.2s forwards;
   }
@@ -263,13 +416,12 @@ const name2Chars = [...name2];
 
   /* Title */
   .hero-title {
-    font-family:
-      "Playfair Display", "Noto Serif SC", "Songti SC", Georgia, serif;
-    font-size: clamp(3rem, 12vw, 6rem);
+    font-family: "Dongjingjiejiao", Georgia, serif;
+    font-size: clamp(2.5rem, 10vw, 5rem);
     font-weight: 400;
     letter-spacing: 0.08em;
     color: var(--text-primary, #fafafa);
-    margin: 0 0 20px;
+    margin: 0;
     text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
@@ -302,7 +454,7 @@ const name2Chars = [...name2];
   }
 
   .hero-subtitle {
-    font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
+    font-family: "Dongjingjiejiao", Georgia, serif;
     font-size: clamp(0.9rem, 2.5vw, 1.1rem);
     font-weight: 400;
     letter-spacing: 0.25em;
@@ -312,40 +464,11 @@ const name2Chars = [...name2];
     animation: fadeIn 0.8s ease-out 1s forwards;
   }
 
-  /* Date Container - positioned separately */
-  .hero-date-container {
-    position: absolute;
-    bottom: 140px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
+  /* Slot container for EnvelopeSeal */
+  .hero-slot-container {
+    margin-top: 8px;
     opacity: 0;
     animation: fadeIn 0.8s ease-out 1.2s forwards;
-  }
-
-  .hero-date {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .date-label {
-    font-family: "Playfair Display", Georgia, serif;
-    font-size: 16px;
-    font-style: italic;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--text-secondary, #a0a0a0);
-  }
-
-  .date-value {
-    font-family: "Playfair Display", "Noto Serif SC", Georgia, serif;
-    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    color: var(--gold, #c9a962);
-    text-shadow: 0 2px 20px rgba(201, 169, 98, 0.4);
   }
 
   @keyframes fadeIn {
@@ -354,28 +477,49 @@ const name2Chars = [...name2];
     }
   }
 
-  /* Responsive - Mobile */
+  /* Mobile Optimization */
   @media (max-width: 768px) {
     .parallax-hero {
       min-height: 100vh;
       min-height: 100dvh;
     }
 
+    .hero-image-area {
+      height: 60vh;
+      height: 60dvh;
+    }
+
+    /* 移动端图片充分利用60vh空间 */
+    .hero-fg-image {
+      max-width: 100%;
+      max-height: 100%;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
     .hero-frame {
-      inset: 16px;
+      inset: 12px;
     }
 
     .frame-corner {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
     }
 
     .hero-content {
-      padding-top: 100px;
+      height: 40vh;
+      height: 40dvh;
+      padding: 20px 20px 24px;
+    }
+
+    .content-inner {
+      gap: 10px;
     }
 
     .hero-accent {
-      margin-bottom: 24px;
+      gap: 12px;
     }
 
     .accent-line {
@@ -395,31 +539,20 @@ const name2Chars = [...name2];
       letter-spacing: 0.15em;
     }
 
-    /* Date moves lower on mobile */
-    .hero-date-container {
-      bottom: 160px;
-    }
-
-    .date-label {
-      font-size: 14px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .hero-date-container {
-      bottom: 170px;
+    .hero-slot-container {
+      margin-top: 4px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero-background {
+    .hero-fg-image {
       animation: none !important;
     }
 
     .title-char,
     .hero-accent,
     .hero-subtitle,
-    .hero-date-container,
+    .hero-slot-container,
     .hero-frame,
     .title-divider {
       opacity: 1;
