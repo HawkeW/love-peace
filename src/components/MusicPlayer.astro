@@ -1,0 +1,226 @@
+---
+// MusicPlayer.astro - 背景音乐播放控制组件
+interface Props {
+  audioSrc: string;
+}
+
+const { audioSrc } = Astro.props;
+---
+
+<div class="music-player">
+  <audio id="bg-audio" loop preload="auto">
+    <source src={audioSrc} type="audio/mpeg" />
+  </audio>
+  <button id="music-toggle" class="music-button" aria-label="播放/暂停音乐">
+    <svg
+      class="icon-play"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+    <svg
+      class="icon-pause"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <line x1="6" y1="4" x2="6" y2="20"></line>
+      <line x1="18" y1="4" x2="18" y2="20"></line>
+    </svg>
+  </button>
+</div>
+
+<script>
+  const audio = document.getElementById("bg-audio") as HTMLAudioElement;
+  const toggleBtn = document.getElementById(
+    "music-toggle"
+  ) as HTMLButtonElement;
+  let isPlaying = false;
+
+  // 自动播放尝试（某些浏览器可能会阻止）
+  const tryAutoPlay = async () => {
+    try {
+      await audio.play();
+      isPlaying = true;
+      toggleBtn.classList.add("playing");
+    } catch (err) {
+      console.log("自动播放被阻止，等待用户交互");
+    }
+  };
+
+  // 切换播放/暂停
+  toggleBtn.addEventListener("click", async () => {
+    if (isPlaying) {
+      audio.pause();
+      isPlaying = false;
+      toggleBtn.classList.remove("playing");
+    } else {
+      try {
+        await audio.play();
+        isPlaying = true;
+        toggleBtn.classList.add("playing");
+      } catch (err) {
+        console.error("播放失败:", err);
+      }
+    }
+  });
+
+  // 页面加载后尝试自动播放
+  if (document.readyState === "complete") {
+    tryAutoPlay();
+  } else {
+    window.addEventListener("load", tryAutoPlay);
+  }
+</script>
+
+<style>
+  .music-player {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+  }
+
+  .music-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid var(--border-subtle);
+    color: var(--gold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      transform 0.3s ease,
+      background 0.3s ease,
+      box-shadow 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .music-button:hover {
+    transform: scale(1.1);
+    background: rgba(20, 20, 20, 0.95);
+    box-shadow: 0 4px 20px var(--gold-glow);
+  }
+
+  .music-button:active {
+    transform: scale(0.95);
+  }
+
+  /* 图标切换 */
+  .icon-play,
+  .icon-pause {
+    position: absolute;
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+
+  .icon-play {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .icon-pause {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  .music-button.playing .icon-play {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  .music-button.playing .icon-pause {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* 播放时旋转动画 */
+  .music-button.playing {
+    animation: rotate 8s linear infinite;
+  }
+
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 播放时的脉冲效果 */
+  .music-button.playing::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    opacity: 0;
+    animation: pulse 2s ease-out infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(1.3);
+      opacity: 0;
+    }
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .music-player {
+      top: 24px;
+      right: 24px;
+    }
+
+    .music-button {
+      width: 40px;
+      height: 40px;
+    }
+
+    .icon-play,
+    .icon-pause {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  /* 减少动画效果（为可访问性考虑） */
+  @media (prefers-reduced-motion: reduce) {
+    .music-button,
+    .icon-play,
+    .icon-pause {
+      transition: none;
+    }
+
+    .music-button.playing {
+      animation: none;
+    }
+
+    .music-button.playing::before {
+      animation: none;
+    }
+  }
+</style>

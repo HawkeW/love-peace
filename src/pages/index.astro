@@ -5,6 +5,7 @@ import SpringReveal from "../components/SpringReveal.astro";
 import FallingImageEffect from "../components/effects/FallingImageEffect.astro";
 import RsvpModal from "../components/RsvpModal.astro";
 import WechatShare from "../components/WechatShare.astro";
+import MusicPlayer from "../components/MusicPlayer.astro";
 import fs from "fs";
 import path from "path";
 
@@ -272,13 +273,15 @@ const shareDesc = "诚挚您共赴喜宴，见证我们的幸福时刻。";
 		</footer>
 
 		<RsvpModal />
-
+		
 		<WechatShare
 			title={`喜宴邀请函 - ${coupleName}`}
 			desc={shareDesc}
 			imgUrl={shareImage}
 			link={siteUrl}
 		/>
+		
+		<MusicPlayer audioSrc="/mp3/小さな恋のうた .mp3" />
 
 		<!-- Lenis Smooth Scroll Script -->
 		<script>
